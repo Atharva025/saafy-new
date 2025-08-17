@@ -284,7 +284,7 @@ export default function Home() {
             title="Trending Now"
             icon={TrendingUp}
             gradient="gradient-secondary"
-            onViewAll={() => navigate('/search')}
+            onViewAll={() => navigate('/app')}
             delay={0.7}
           />
 
@@ -341,7 +341,7 @@ export default function Home() {
           </motion.div>
         </motion.section>
 
-        
+
 
         {/* Popular Artists */}
         {popularArtists.length > 0 && (
