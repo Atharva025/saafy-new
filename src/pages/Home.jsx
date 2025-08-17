@@ -341,41 +341,7 @@ export default function Home() {
           </motion.div>
         </motion.section>
 
-        {/* Featured Playlists */}
-        {featuredPlaylists.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.9, duration: 0.8 }}
-            className="mb-16"
-          >
-            <SectionHeader
-              title="Featured Playlists"
-              icon={Music}
-              gradient="gradient-primary"
-              onViewAll={() => navigate('/search')}
-              delay={0.9}
-            />
-
-            <div className="flex overflow-x-auto space-x-6 pb-6 scrollbar-hide">
-              {featuredPlaylists.slice(0, 10).map((playlist, index) => (
-                <motion.div
-                  key={playlist.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.0 + index * 0.05, duration: 0.5 }}
-                  whileHover={{ scale: 1.05, y: -8 }}
-                  className="flex-shrink-0 w-64"
-                >
-                  <PlaylistCard
-                    playlist={playlist}
-                    onClick={(playlist) => navigate(`/playlist/${playlist.id}`)}
-                  />
-                </motion.div>
-              ))}
-            </div>
-          </motion.section>
-        )}
+        
 
         {/* Popular Artists */}
         {popularArtists.length > 0 && (
