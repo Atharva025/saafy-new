@@ -108,17 +108,17 @@ export default function SongCard({ song, showIndex = false, index, variant = 'de
           className="absolute inset-0 bg-gradient-glass"
         />
 
-        <div className="relative p-4">
-          <div className="flex items-center space-x-4">
+        <div className="relative p-3 sm:p-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {/* Premium Index/Play Button */}
-            <div className="w-12 flex-shrink-0 flex items-center justify-center relative">
+            <div className="w-8 sm:w-12 flex-shrink-0 flex items-center justify-center relative">
               <AnimatePresence mode="wait">
                 {showIndex && !isCurrentSong && !isHovered ? (
                   <motion.span
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="text-text-tertiary text-lg font-mono font-semibold"
+                    className="text-text-tertiary text-sm sm:text-lg font-mono font-semibold"
                   >
                     {(index + 1).toString().padStart(2, '0')}
                   </motion.span>
@@ -134,7 +134,7 @@ export default function SongCard({ song, showIndex = false, index, variant = 'de
                       whileTap={{ scale: 0.9 }}
                       onClick={handlePlay}
                       className={`
-                        w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200 shadow-elevated
+                        w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-200 shadow-elevated
                         ${isCurrentSong
                           ? 'bg-gradient-primary text-white shadow-glow-md'
                           : 'bg-surface-secondary/50 text-text-primary hover:bg-surface-secondary'
@@ -149,7 +149,7 @@ export default function SongCard({ song, showIndex = false, index, variant = 'de
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.8, opacity: 0 }}
                           >
-                            <Pause className="w-4 h-4" />
+                            <Pause className="w-3 h-3 sm:w-4 sm:h-4" />
                           </motion.div>
                         ) : (
                           <motion.div
@@ -158,7 +158,7 @@ export default function SongCard({ song, showIndex = false, index, variant = 'de
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.8, opacity: 0 }}
                           >
-                            <Play className="w-4 h-4 ml-0.5" />
+                            <Play className="w-3 h-3 sm:w-4 sm:h-4 ml-0.5" />
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -173,7 +173,7 @@ export default function SongCard({ song, showIndex = false, index, variant = 'de
               whileHover={{ scale: 1.05 }}
               className="relative"
             >
-              <div className="w-14 h-14 rounded-xl overflow-hidden bg-surface-secondary/50 flex-shrink-0 shadow-elevated">
+              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl overflow-hidden bg-surface-secondary/50 flex-shrink-0 shadow-elevated">
                 {displayImage && !imageError ? (
                   <img
                     src={getOptimizedImageUrl(displayImage, 'small')}
@@ -184,7 +184,7 @@ export default function SongCard({ song, showIndex = false, index, variant = 'de
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-text-tertiary bg-gradient-to-br from-surface-secondary/30 to-surface-secondary/60">
-                    <Music className="w-6 h-6" />
+                    <Music className="w-4 h-4 sm:w-6 sm:h-6" />
                   </div>
                 )}
               </div>
@@ -192,7 +192,7 @@ export default function SongCard({ song, showIndex = false, index, variant = 'de
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="absolute -inset-0.5 bg-gradient-primary rounded-xl blur opacity-50"
+                  className="absolute -inset-0.5 bg-gradient-primary rounded-lg sm:rounded-xl blur opacity-50"
                 />
               )}
             </motion.div>
@@ -201,7 +201,7 @@ export default function SongCard({ song, showIndex = false, index, variant = 'de
             <div className="flex-1 min-w-0">
               <motion.h3
                 className={`
-                  font-heading font-semibold text-base truncate mb-1 transition-colors duration-200
+                  font-heading font-semibold text-sm sm:text-base truncate mb-1 transition-colors duration-200
                   ${isCurrentSong
                     ? 'text-accent-primary'
                     : 'text-text-primary group-hover:text-accent-primary'
@@ -210,32 +210,33 @@ export default function SongCard({ song, showIndex = false, index, variant = 'de
               >
                 {cleanText(song.name)}
               </motion.h3>
-              <p className="text-text-secondary text-sm truncate">
+              <p className="text-text-secondary text-xs sm:text-sm truncate">
                 {cleanText(song.primaryArtists)}
               </p>
 
-              {/* Premium Quality Badges */}
-              <div className="flex items-center space-x-2 mt-2">
+              {/* Premium Quality Badges - Hidden on very small screens */}
+              <div className="hidden xs:flex items-center space-x-1 sm:space-x-2 mt-1 sm:mt-2">
                 {song.download_url && (
-                  <span className="px-2 py-0.5 bg-gradient-primary/10 border border-accent-primary/20 rounded-lg text-xs text-accent-primary font-medium flex items-center space-x-1">
-                    <Headphones className="w-3 h-3" />
-                    <span>HQ</span>
+                  <span className="px-1.5 sm:px-2 py-0.5 bg-gradient-primary/10 border border-accent-primary/20 rounded-md sm:rounded-lg text-xs text-accent-primary font-medium flex items-center space-x-1">
+                    <Headphones className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                    <span className="hidden sm:inline">HQ</span>
                   </span>
                 )}
-                <span className="px-2 py-0.5 bg-accent-secondary/10 border border-accent-secondary/20 rounded-lg text-xs text-accent-secondary font-medium">
-                  320kbps
+                <span className="px-1.5 sm:px-2 py-0.5 bg-accent-secondary/10 border border-accent-secondary/20 rounded-md sm:rounded-lg text-xs text-accent-secondary font-medium">
+                  <span className="hidden sm:inline">320kbps</span>
+                  <span className="sm:hidden">HQ</span>
                 </span>
                 {song.hasLyrics && (
-                  <span className="px-2 py-0.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-xs text-purple-400 font-medium">
+                  <span className="hidden sm:inline-flex px-2 py-0.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-xs text-purple-400 font-medium">
                     LYRICS
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Album Info */}
+            {/* Album Info - Hidden on tablets and smaller */}
             {song.album?.name && (
-              <div className="hidden lg:block flex-1 min-w-0">
+              <div className="hidden xl:block flex-1 min-w-0">
                 <p className="text-text-secondary text-sm truncate">
                   {cleanText(song.album.name)}
                 </p>
@@ -246,36 +247,36 @@ export default function SongCard({ song, showIndex = false, index, variant = 'de
             )}
 
             {/* Duration with Premium Styling */}
-            <div className="text-text-tertiary text-sm font-mono flex-shrink-0 min-w-[50px] text-right">
+            <div className="text-text-tertiary text-xs sm:text-sm font-mono flex-shrink-0 min-w-[40px] sm:min-w-[50px] text-right">
               {song.duration ? formatDuration(song.duration) : '--:--'}
             </div>
 
-            {/* Ultra-Premium Action Buttons */}
+            {/* Ultra-Premium Action Buttons - Progressive visibility */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: isHovered ? 1 : 0, x: isHovered ? 0 : 20 }}
               transition={{ duration: 0.2 }}
-              className="flex items-center space-x-1"
+              className="hidden sm:flex items-center space-x-1"
             >
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={toggleLike}
                 className={`
-                  w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200
+                  w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-200
                   ${isLiked
                     ? 'text-accent-danger bg-accent-danger/10'
                     : 'text-text-tertiary hover:text-accent-danger hover:bg-surface-secondary/50'
                   }
                 `}
               >
-                <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+                <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${isLiked ? 'fill-current' : ''}`} />
               </motion.button>
 
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-text-tertiary hover:text-text-primary hover:bg-surface-secondary/50 transition-all duration-200"
+                className="hidden md:flex w-8 h-8 rounded-xl items-center justify-center text-text-tertiary hover:text-text-primary hover:bg-surface-secondary/50 transition-all duration-200"
               >
                 <Download className="w-4 h-4" />
               </motion.button>
@@ -283,9 +284,9 @@ export default function SongCard({ song, showIndex = false, index, variant = 'de
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-text-tertiary hover:text-text-primary hover:bg-surface-secondary/50 transition-all duration-200"
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center text-text-tertiary hover:text-text-primary hover:bg-surface-secondary/50 transition-all duration-200"
               >
-                <MoreHorizontal className="w-4 h-4" />
+                <MoreHorizontal className="w-3 h-3 sm:w-4 sm:h-4" />
               </motion.button>
             </motion.div>
           </div>

@@ -151,25 +151,25 @@ const Header = () => {
     <motion.header
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="fixed top-0 left-0 right-0 z-50 bg-background-primary/80 backdrop-blur-strong border-b border-surface-primary/30"
+      className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10"
     >
-      <div className="max-w-7xl mx-auto px-6 py-4">
-        <div className="flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
           {/* Left Section - Logo */}
-          <div className="flex items-center">
+          <div className="flex items-center flex-shrink-0">
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center space-x-3 cursor-pointer"
+              className="flex items-center space-x-2 sm:space-x-3 cursor-pointer"
               onClick={() => navigate('/')}
             >
               <div className="relative">
-                <div className="w-10 h-10 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-glow-sm">
-                  <Crown className="w-5 h-5 text-white" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-primary rounded-xl sm:rounded-2xl flex items-center justify-center shadow-glow-sm">
+                  <Crown className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
-                <div className="absolute -inset-1 bg-gradient-primary rounded-2xl blur opacity-30 animate-pulse-glow"></div>
+                <div className="absolute -inset-1 bg-gradient-primary rounded-xl sm:rounded-2xl blur opacity-30 animate-pulse-glow"></div>
               </div>
-              <span className="text-white text-2xl font-heading font-bold bg-gradient-primary bg-clip-text">
+              <span className="text-white text-lg sm:text-2xl font-heading font-bold bg-gradient-primary bg-clip-text">
                 Saafy
               </span>
             </motion.div>
@@ -180,20 +180,20 @@ const Header = () => {
             ref={searchRef}
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="flex-1 max-w-2xl mx-8 relative"
+            className="flex-1 max-w-xl lg:max-w-2xl mx-2 sm:mx-4 lg:mx-8 relative"
           >
             <form onSubmit={handleSearchSubmit} className="relative">
-              <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors duration-200 z-10 ${isSearchFocused ? 'text-accent-primary' : 'text-text-tertiary'
+              <Search className={`absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-200 z-10 ${isSearchFocused ? 'text-accent-primary' : 'text-text-tertiary'
                 }`} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={handleSearchChange}
-                placeholder="What do you want to listen to?"
+                placeholder="Search music..."
                 onFocus={() => setIsSearchFocused(true)}
                 className={`
-                  w-full pl-12 pr-12 py-4 bg-surface-primary/50 border border-surface-secondary/30 
-                  rounded-2xl text-text-primary placeholder-text-tertiary transition-all duration-250
+                  w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-4 bg-surface-primary/50 border border-surface-secondary/30 
+                  rounded-xl sm:rounded-2xl text-sm sm:text-base text-text-primary placeholder-text-tertiary transition-all duration-250
                   focus:outline-none focus:bg-surface-primary focus:border-accent-primary/50 focus:shadow-glow-sm
                   ${isSearchFocused ? 'shadow-glow-sm' : ''}
                 `}
@@ -204,16 +204,16 @@ const Header = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   type="button"
                   onClick={clearSearch}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-tertiary hover:text-text-primary transition-colors duration-200 z-10"
+                  className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-text-tertiary hover:text-text-primary transition-colors duration-200 z-10"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4 sm:w-5 sm:h-5" />
                 </motion.button>
               )}
               {isSearchFocused && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="absolute -inset-1 bg-gradient-primary rounded-2xl blur opacity-20"
+                  className="absolute -inset-1 bg-gradient-primary rounded-xl sm:rounded-2xl blur opacity-20"
                 />
               )}
             </form>
@@ -348,35 +348,35 @@ const Header = () => {
           </motion.div>
 
           {/* Right Section - Now Playing Mini & Queue */}
-          <div className="flex items-center space-x-3">
-            {/* Now Playing Mini */}
+          <div className="flex items-center space-x-1 sm:space-x-3 flex-shrink-0">
+            {/* Now Playing Mini - Hidden on very small screens */}
             <AnimatePresence>
               {currentSong && (
                 <motion.div
                   initial={{ opacity: 0, x: 20, scale: 0.8 }}
                   animate={{ opacity: 1, x: 0, scale: 1 }}
                   exit={{ opacity: 0, x: 20, scale: 0.8 }}
-                  className="flex items-center space-x-3 bg-surface-primary/50 rounded-xl p-2 border border-surface-secondary/30 backdrop-blur-sm"
+                  className="hidden sm:flex items-center space-x-2 lg:space-x-3 bg-surface-primary/50 rounded-lg lg:rounded-xl p-1.5 lg:p-2 border border-surface-secondary/30 backdrop-blur-sm"
                 >
                   {/* Song Image */}
                   <div className="relative flex-shrink-0">
                     <img
                       src={getOptimizedImageUrl(currentSong.image?.[0]?.link || currentSong.image?.[1]?.link || currentSong.image?.[2]?.link, 'small')}
                       alt={currentSong.name}
-                      className="w-8 h-8 rounded-lg object-cover"
+                      className="w-6 h-6 lg:w-8 lg:h-8 rounded-md lg:rounded-lg object-cover"
                       onError={(e) => {
                         e.target.src = 'https://via.placeholder.com/32x32/6366f1/ffffff?text=♪'
                       }}
                     />
                     {isPlaying && (
-                      <div className="absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center">
+                      <div className="absolute inset-0 bg-black/20 rounded-md lg:rounded-lg flex items-center justify-center">
                         <div className="w-1 h-1 bg-white rounded-full animate-pulse"></div>
                       </div>
                     )}
                   </div>
 
-                  {/* Song Info */}
-                  <div className="min-w-0 max-w-32">
+                  {/* Song Info - Hidden on small screens */}
+                  <div className="hidden md:block min-w-0 max-w-24 lg:max-w-32">
                     <p className="text-text-primary text-xs font-medium truncate">
                       {currentSong.name}
                     </p>
@@ -390,12 +390,12 @@ const Header = () => {
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={togglePlay}
-                    className="w-7 h-7 bg-gradient-primary rounded-lg flex items-center justify-center shadow-sm hover:shadow-glow-sm transition-all duration-200"
+                    className="w-6 h-6 lg:w-7 lg:h-7 bg-gradient-primary rounded-md lg:rounded-lg flex items-center justify-center shadow-sm hover:shadow-glow-sm transition-all duration-200"
                   >
                     {isPlaying ? (
-                      <Pause className="w-3 h-3 text-white" />
+                      <Pause className="w-2.5 h-2.5 lg:w-3 lg:h-3 text-white" />
                     ) : (
-                      <Play className="w-3 h-3 text-white ml-0.5" />
+                      <Play className="w-2.5 h-2.5 lg:w-3 lg:h-3 text-white ml-0.5" />
                     )}
                   </motion.button>
                 </motion.div>
@@ -409,8 +409,8 @@ const Header = () => {
               className="relative cursor-pointer"
               onClick={() => navigate('/app/queue')}
             >
-              <div className="w-10 h-10 bg-surface-primary/50 border border-surface-secondary/30 rounded-xl flex items-center justify-center hover:bg-surface-primary transition-all duration-200">
-                <ListMusic className="w-5 h-5 text-text-primary" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-surface-primary/50 border border-surface-secondary/30 rounded-lg sm:rounded-xl flex items-center justify-center hover:bg-surface-primary transition-all duration-200">
+                <ListMusic className="w-4 h-4 sm:w-5 sm:h-5 text-text-primary" />
               </div>
 
               {/* Queue Count Badge */}
@@ -418,7 +418,7 @@ const Header = () => {
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-accent-primary rounded-full flex items-center justify-center"
+                  className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-accent-primary rounded-full flex items-center justify-center"
                 >
                   <span className="text-white text-xs font-semibold">
                     {queue.length > 99 ? '99+' : queue.length}

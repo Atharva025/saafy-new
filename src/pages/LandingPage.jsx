@@ -240,7 +240,7 @@ const LandingPage = () => {
                             ease: "easeInOut"
                         }}
                     >
-                        <Music className="w-6 h-6" />
+                        <Music className="w-4 h-4 sm:w-6 sm:h-6" />
                     </motion.div>
                 ))}
             </div>
@@ -248,7 +248,7 @@ const LandingPage = () => {
             {/* Hero Section */}
             <motion.section
                 ref={heroRef}
-                className="relative min-h-screen flex items-center justify-center px-4"
+                className="relative min-h-screen flex items-center justify-center px-3 sm:px-4"
             >
                 {/* Floating Artist Icons - Left Side */}
                 <div className="absolute inset-0 hidden lg:block pointer-events-none">
@@ -430,18 +430,18 @@ const LandingPage = () => {
                         initial={{ opacity: 0, y: -30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
-                        className="text-center mb-12"
+                        className="text-center mb-8 sm:mb-12"
                     >
                         <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             transition={{ delay: 0.3, type: "spring", bounce: 0.5 }}
-                            className="inline-flex items-center gap-3 mb-6"
+                            className="inline-flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6"
                         >
-                            <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center">
-                                <Crown className="w-6 h-6 text-white" />
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-primary rounded-lg sm:rounded-xl flex items-center justify-center">
+                                <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                             </div>
-                            <h1 className="text-4xl md:text-5xl font-heading font-bold text-text-primary">
+                            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-heading font-bold text-text-primary">
                                 Saafy Music
                             </h1>
                         </motion.div>
@@ -450,7 +450,7 @@ const LandingPage = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.6, duration: 0.8 }}
-                            className="text-lg text-text-secondary max-w-2xl mx-auto"
+                            className="text-sm sm:text-base lg:text-lg text-text-secondary max-w-2xl mx-auto px-4"
                         >
                             Experience premium music streaming with 320kbps quality, zero ads, and instant access to the latest releases
                         </motion.p>
@@ -461,34 +461,25 @@ const LandingPage = () => {
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.9, duration: 0.8 }}
-                        className="text-center space-y-8"
+                        className="text-center space-y-6 sm:space-y-8"
                     >
                         {/* Main CTA Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
                             <motion.button
                                 onClick={() => navigate('/app')}
                                 whileHover={{ scale: 1.05, y: -2 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="group relative px-8 py-4 bg-gradient-primary rounded-2xl text-white font-semibold text-lg shadow-glow-md hover:shadow-glow-lg transition-all duration-300 overflow-hidden"
+                                className="w-full sm:w-auto bg-gradient-primary hover:shadow-glow-lg text-white font-semibold py-3 sm:py-4 px-6 sm:px-8 rounded-xl sm:rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 group"
                             >
-                                <motion.div
-                                    className="absolute inset-0 bg-white/20"
-                                    initial={{ x: "-100%" }}
-                                    whileHover={{ x: "100%" }}
-                                    transition={{ duration: 0.6 }}
-                                />
-                                <span className="relative flex items-center gap-2">
-                                    <Play className="w-5 h-5" />
-                                    Start Listening Now
-                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                </span>
+                                <Play className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform" />
+                                <span className="text-base sm:text-lg">Start Listening</span>
                             </motion.button>
 
                             <motion.button
                                 onClick={() => featuresRef.current?.scrollIntoView({ behavior: 'smooth' })}
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="px-8 py-4 border-2 border-accent-primary/50 rounded-2xl text-accent-primary font-semibold text-lg hover:bg-accent-primary/10 transition-all duration-300"
+                                className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 border-2 border-accent-primary/50 rounded-xl sm:rounded-2xl text-accent-primary font-semibold text-base sm:text-lg hover:bg-accent-primary/10 transition-all duration-300"
                             >
                                 Explore Features
                             </motion.button>
@@ -499,7 +490,7 @@ const LandingPage = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 1.2, duration: 0.6 }}
-                            className="flex flex-wrap justify-center gap-4"
+                            className="flex flex-wrap justify-center gap-3 sm:gap-4 px-4"
                         >
                             {[
                                 { icon: Shield, text: "Ad-Free", color: "from-green-500 to-emerald-500" },
@@ -512,12 +503,12 @@ const LandingPage = () => {
                                     animate={{ opacity: 1, scale: 1 }}
                                     transition={{ delay: 1.4 + index * 0.1, duration: 0.5 }}
                                     whileHover={{ scale: 1.05 }}
-                                    className="flex items-center gap-2 px-4 py-2 bg-surface-primary/50 backdrop-blur-sm border border-surface-secondary/30 rounded-xl"
+                                    className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-surface-primary/50 backdrop-blur-sm border border-surface-secondary/30 rounded-lg sm:rounded-xl"
                                 >
-                                    <div className={`w-6 h-6 bg-gradient-to-br ${feature.color} rounded-lg flex items-center justify-center`}>
-                                        <feature.icon className="w-3 h-3 text-white" />
+                                    <div className={`w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-br ${feature.color} rounded-md sm:rounded-lg flex items-center justify-center`}>
+                                        <feature.icon className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
                                     </div>
-                                    <span className="text-sm font-medium text-text-primary">{feature.text}</span>
+                                    <span className="text-xs sm:text-sm font-medium text-text-primary">{feature.text}</span>
                                 </motion.div>
                             ))}
                         </motion.div>
