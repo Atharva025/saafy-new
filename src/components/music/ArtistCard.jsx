@@ -14,10 +14,10 @@ export default function ArtistCard({ artist, onClick, className }) {
         <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className={cn("group cursor-pointer", className)}
+            className={cn("group cursor-pointer w-full", className)}
             onClick={() => onClick?.(artist)}
         >
-            <Card className="bg-surface-primary/30 backdrop-blur-glass border border-surface-secondary/30 hover:border-surface-secondary/50 transition-all duration-300 ease-out overflow-hidden rounded-2xl hover:shadow-elevated group-hover:bg-surface-primary/50">
+            <Card className="bg-surface-primary/30 backdrop-blur-glass border border-surface-secondary/30 hover:border-surface-secondary/50 transition-all duration-300 ease-out overflow-hidden rounded-xl sm:rounded-2xl hover:shadow-elevated group-hover:bg-surface-primary/50">
                 <div className="relative">
                     {/* Artist Image */}
                     <div className="aspect-square bg-surface-secondary/50 overflow-hidden relative">
@@ -25,7 +25,7 @@ export default function ArtistCard({ artist, onClick, className }) {
                             <img
                                 src={imageUrl}
                                 alt={artist.name}
-                                className="w-full h-full object-cover rounded-full p-4 group-hover:scale-105 transition-transform duration-300 ease-out"
+                                className="w-full h-full object-cover rounded-full p-3 sm:p-4 group-hover:scale-105 transition-transform duration-300 ease-out"
                                 onError={(e) => {
                                     e.target.style.display = 'none'
                                     e.target.nextSibling.style.display = 'flex'
@@ -41,8 +41,8 @@ export default function ArtistCard({ artist, onClick, className }) {
                             )}
                             style={{ display: hasValidImage ? 'none' : 'flex' }}
                         >
-                            <div className="w-20 h-20 rounded-full bg-gradient-secondary/20 flex items-center justify-center">
-                                <User className="w-10 h-10" />
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-secondary/20 flex items-center justify-center">
+                                <User className="w-8 h-8 sm:w-10 sm:h-10" />
                             </div>
                         </div>
                     </div>
@@ -59,18 +59,18 @@ export default function ArtistCard({ artist, onClick, className }) {
                         >
                             <Button
                                 size="icon"
-                                className="w-12 h-12 rounded-full bg-gradient-primary hover:shadow-glow-md text-white border-0"
+                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-primary hover:shadow-glow-md text-white border-0"
                             >
-                                <Play className="w-5 h-5 ml-0.5" />
+                                <Play className="w-4 h-4 sm:w-5 sm:h-5 ml-0.5" />
                             </Button>
                         </motion.div>
                     </motion.div>
                 </div>
 
-                <CardContent className="p-4 text-center">
+                <CardContent className="p-3 sm:p-4 text-center">
                     {/* Artist Info */}
-                    <div className="space-y-2">
-                        <h3 className="font-heading font-semibold text-text-primary text-sm leading-tight line-clamp-2">
+                    <div className="space-y-1 sm:space-y-2">
+                        <h3 className="font-heading font-semibold text-text-primary text-xs sm:text-sm leading-tight line-clamp-2">
                             {cleanText(artist.name)}
                         </h3>
                         <p className="text-text-tertiary text-xs capitalize">
@@ -78,38 +78,38 @@ export default function ArtistCard({ artist, onClick, className }) {
                         </p>
                         {artist.followerCount && (
                             <p className="text-text-tertiary text-xs">
-                                {formatFollowers(artist.followerCount)} followers
+                                <span className="hidden sm:inline">{formatFollowers(artist.followerCount)} followers</span>
+                                <span className="sm:hidden">{formatFollowers(artist.followerCount)}</span>
                             </p>
                         )}
                     </div>
 
-                    {/* Action Buttons */}
+                    {/* Action Buttons - Always visible on mobile, hover on desktop */}
                     <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        whileHover={{ opacity: 1, y: 0 }}
-                        className="flex items-center justify-center space-x-2 mt-3 transition-all duration-200"
+                        initial={{ opacity: 1 }}
+                        className="flex items-center justify-center space-x-1 sm:space-x-2 mt-2 sm:mt-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200"
                     >
                         <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            className="w-8 h-8 rounded-xl flex items-center justify-center text-text-tertiary hover:text-accent-danger hover:bg-surface-primary/50 transition-all duration-200"
+                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center text-text-tertiary hover:text-accent-danger hover:bg-surface-primary/50 transition-all duration-200"
                             onClick={(e) => {
                                 e.stopPropagation()
                                 // Handle like artist
                             }}
                         >
-                            <Heart className="w-4 h-4" />
+                            <Heart className="w-3 h-3 sm:w-4 sm:h-4" />
                         </motion.button>
                         <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            className="w-8 h-8 rounded-xl flex items-center justify-center text-text-tertiary hover:text-text-primary hover:bg-surface-primary/50 transition-all duration-200"
+                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center text-text-tertiary hover:text-text-primary hover:bg-surface-primary/50 transition-all duration-200"
                             onClick={(e) => {
                                 e.stopPropagation()
                                 // Handle more options
                             }}
                         >
-                            <MoreHorizontal className="w-4 h-4" />
+                            <MoreHorizontal className="w-3 h-3 sm:w-4 sm:h-4" />
                         </motion.button>
                     </motion.div>
                 </CardContent>

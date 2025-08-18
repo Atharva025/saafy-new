@@ -10,6 +10,9 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        'xs': '475px',
+      },
       fontFamily: {
         sans: ['Inter Variable', 'Inter', ...fontFamily.sans],
         heading: ['Plus Jakarta Sans', 'Inter', ...fontFamily.sans],

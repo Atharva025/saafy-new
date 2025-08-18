@@ -96,14 +96,14 @@ export default function Home() {
       transition={{ delay, duration: 0.5 }}
       className="flex items-center justify-between mb-8"
     >
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-3 sm:space-x-4">
         <motion.div
           whileHover={{ scale: 1.1, rotate: 5 }}
-          className={`w-12 h-12 bg-${gradient} rounded-2xl flex items-center justify-center shadow-glow-md`}
+          className={`w-10 h-10 sm:w-12 sm:h-12 bg-${gradient} rounded-xl sm:rounded-2xl flex items-center justify-center shadow-glow-md`}
         >
-          <Icon className="w-6 h-6 text-white" />
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
         </motion.div>
-        <h2 className="text-3xl font-heading font-bold text-text-primary">{title}</h2>
+        <h2 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary">{title}</h2>
       </div>
       {onViewAll && (
         <motion.button
@@ -127,29 +127,29 @@ export default function Home() {
       whileHover={{ scale: 1.02, y: -4 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="group relative overflow-hidden bg-surface-primary/50 backdrop-blur-md border border-surface-secondary/30 rounded-2xl p-6 cursor-pointer hover:shadow-elevated transition-all duration-300"
+      className="group relative overflow-hidden bg-surface-primary/50 backdrop-blur-md border border-surface-secondary/30 rounded-xl sm:rounded-2xl p-3 sm:p-6 cursor-pointer hover:shadow-elevated transition-all duration-300"
     >
       <div className="absolute inset-0 bg-gradient-glass opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
       <div className="relative z-10">
-        <div className={`w-14 h-14 bg-${gradient} rounded-2xl flex items-center justify-center mb-4 shadow-glow-sm group-hover:shadow-glow-md transition-all duration-300`}>
-          <Icon className="w-7 h-7 text-white" />
+        <div className={`w-10 h-10 sm:w-14 sm:h-14 bg-${gradient} rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-glow-sm group-hover:shadow-glow-md transition-all duration-300`}>
+          <Icon className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
         </div>
-        <h3 className="text-xl font-heading font-semibold text-text-primary mb-2">{title}</h3>
-        <p className="text-text-secondary text-sm leading-relaxed">{description}</p>
+        <h3 className="text-base sm:text-xl font-heading font-semibold text-text-primary mb-1 sm:mb-2">{title}</h3>
+        <p className="text-text-secondary text-xs sm:text-sm leading-relaxed">{description}</p>
       </div>
 
       {/* Floating Elements */}
-      <div className="absolute top-4 right-4 w-8 h-8 bg-gradient-primary rounded-full blur opacity-20"></div>
-      <div className="absolute bottom-4 left-4 w-6 h-6 bg-gradient-secondary rounded-full blur opacity-15"></div>
+      <div className="absolute top-2 right-2 sm:top-4 sm:right-4 w-6 h-6 sm:w-8 sm:h-8 bg-gradient-primary rounded-full blur opacity-20"></div>
+      <div className="absolute bottom-2 left-2 sm:bottom-4 sm:left-4 w-4 h-4 sm:w-6 sm:h-6 bg-gradient-secondary rounded-full blur opacity-15"></div>
     </motion.div>
   )
 
   if (loading) {
     return (
-      <div className="flex-1 overflow-y-auto pt-24 pb-32">
-        <div className="max-w-7xl mx-auto p-6">
-          <div className="space-y-12">
+      <div className="flex-1 overflow-y-auto pt-20 sm:pt-24 pb-24 sm:pb-32">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6">
+          <div className="space-y-8 sm:space-y-12">
             {/* Premium Loading Skeletons */}
             {Array.from({ length: 3 }).map((_, i) => (
               <motion.div
@@ -157,15 +157,15 @@ export default function Home() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: i * 0.1 }}
-                className="space-y-6"
+                className="space-y-4 sm:space-y-6"
               >
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-surface-primary rounded-2xl animate-pulse"></div>
-                  <div className="h-8 bg-surface-primary rounded-xl w-64 animate-pulse"></div>
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-surface-primary rounded-xl sm:rounded-2xl animate-pulse"></div>
+                  <div className="h-6 sm:h-8 bg-surface-primary rounded-xl w-48 sm:w-64 animate-pulse"></div>
                 </div>
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-3 sm:gap-4">
                   {Array.from({ length: 6 }).map((_, j) => (
-                    <div key={j} className="bg-surface-primary/50 rounded-2xl h-20 animate-pulse"></div>
+                    <div key={j} className="bg-surface-primary/50 rounded-xl sm:rounded-2xl h-16 sm:h-20 animate-pulse"></div>
                   ))}
                 </div>
               </motion.div>
@@ -177,8 +177,8 @@ export default function Home() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto pt-24 pb-32 scrollbar-hide">
-      <div className="max-w-7xl mx-auto p-6">
+    <div className="flex-1 overflow-y-auto pt-20 sm:pt-24 pb-24 sm:pb-32 scrollbar-hide">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6">
         {/* Hero Welcome Section */}
         <motion.section
           initial={{ opacity: 0, y: 40 }}
@@ -186,16 +186,16 @@ export default function Home() {
           transition={{ duration: 0.8 }}
           className="mb-16"
         >
-          <div className="relative overflow-hidden bg-gradient-glass backdrop-blur-md border border-surface-primary/30 rounded-3xl p-8">
+          <div className="relative overflow-hidden bg-gradient-glass backdrop-blur-md border border-surface-primary/30 rounded-2xl sm:rounded-3xl p-4 sm:p-8">
             {/* Background Elements */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-primary rounded-full blur-3xl opacity-10 animate-float"></div>
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-secondary rounded-full blur-3xl opacity-10 animate-float" style={{ animationDelay: '1s' }}></div>
+            <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-gradient-primary rounded-full blur-3xl opacity-10 animate-float"></div>
+            <div className="absolute bottom-0 left-0 w-32 h-32 sm:w-48 sm:h-48 bg-gradient-secondary rounded-full blur-3xl opacity-10 animate-float" style={{ animationDelay: '1s' }}></div>
 
             <div className="relative z-10">
-              <h1 className="text-5xl font-heading font-bold text-text-primary mb-4 leading-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-5xl font-heading font-bold text-text-primary mb-3 sm:mb-4 leading-tight">
                 Welcome back to <span className="text-white font-bold">Saafy</span>
               </h1>
-              <p className="text-xl text-text-secondary mb-8 leading-relaxed max-w-2xl">
+              <p className="text-base sm:text-lg lg:text-xl text-text-secondary mb-6 sm:mb-8 leading-relaxed max-w-2xl">
                 Discover new music, revisit old favorites, and enjoy your listening experience.
               </p>
 
@@ -218,7 +218,7 @@ export default function Home() {
             delay={0.3}
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             <QuickActionCard
               icon={Music}
               title="Daily Mix"
