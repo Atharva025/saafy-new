@@ -18,11 +18,13 @@ const Header = () => {
   const searchRef = useRef(null)
   const { playSong, currentSong, isPlaying, togglePlay, queue } = usePlayer()
 
-  // Update search query when URL params change
+  // Update search query when URL params change (only for search page)
   useEffect(() => {
-    const query = searchParams.get('q') || ''
-    setSearchQuery(query)
-  }, [searchParams])
+    if (location.pathname === '/app/search') {
+      const query = searchParams.get('q') || ''
+      setSearchQuery(query)
+    }
+  }, [searchParams, location.pathname])
 
   // Debounced search function
   useEffect(() => {
@@ -83,13 +85,7 @@ const Header = () => {
   const handleSearchChange = (e) => {
     const value = e.target.value
     setSearchQuery(value)
-
-    // Update URL params
-    if (value.trim()) {
-      setSearchParams({ q: value })
-    } else {
-      setSearchParams({})
-    }
+    // Remove URL parameter updates - only update on explicit search
   }
 
   // Handle search form submission
@@ -98,10 +94,8 @@ const Header = () => {
     if (searchQuery.trim()) {
       setIsSearchFocused(false)
       setShowResults(false)
-      // Navigate to search page if not already there
-      if (location.pathname !== '/app/search') {
-        navigate(`/app/search?q=${encodeURIComponent(searchQuery.trim())}`)
-      }
+      // Navigate to search page with query
+      navigate(`/app/search?q=${encodeURIComponent(searchQuery.trim())}`)
     }
   }
 
@@ -129,9 +123,12 @@ const Header = () => {
 
   const clearSearch = () => {
     setSearchQuery('')
-    setSearchParams({})
     setSearchResults({ songs: [], artists: [], playlists: [] })
     setShowResults(false)
+    // Only clear URL params if we're on the search page
+    if (location.pathname === '/app/search') {
+      setSearchParams({})
+    }
   }
 
   const getImageUrl = (imageArray) => {
@@ -192,9 +189,9 @@ const Header = () => {
                 placeholder="Search music..."
                 onFocus={() => setIsSearchFocused(true)}
                 className={`
-                  w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-4 bg-surface-primary/50 border border-surface-secondary/30 
+                  w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-4 bg-black/60 backdrop-blur-md border border-surface-secondary/30 
                   rounded-xl sm:rounded-2xl text-sm sm:text-base text-text-primary placeholder-text-tertiary transition-all duration-250
-                  focus:outline-none focus:bg-surface-primary focus:border-accent-primary/50 focus:shadow-glow-sm
+                  focus:outline-none focus:bg-black/80 focus:backdrop-blur-lg focus:border-accent-primary/50 focus:shadow-glow-sm
                   ${isSearchFocused ? 'shadow-glow-sm' : ''}
                 `}
               />
@@ -226,7 +223,7 @@ const Header = () => {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -10, scale: 0.95 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute top-full mt-2 w-full bg-surface-primary/95 backdrop-blur-md border border-surface-secondary/30 rounded-2xl shadow-elevated max-h-96 overflow-y-auto scrollbar-hide z-50"
+                  className="absolute top-full mt-2 w-full bg-black/90 backdrop-blur-lg border border-surface-secondary/30 rounded-2xl shadow-elevated max-h-96 overflow-y-auto scrollbar-hide z-50"
                 >
                   {loading ? (
                     <div className="p-4 text-center">
@@ -356,7 +353,7 @@ const Header = () => {
                   initial={{ opacity: 0, x: 20, scale: 0.8 }}
                   animate={{ opacity: 1, x: 0, scale: 1 }}
                   exit={{ opacity: 0, x: 20, scale: 0.8 }}
-                  className="hidden sm:flex items-center space-x-2 lg:space-x-3 bg-surface-primary/50 rounded-lg lg:rounded-xl p-1.5 lg:p-2 border border-surface-secondary/30 backdrop-blur-sm"
+                  className="hidden sm:flex items-center space-x-2 lg:space-x-3 bg-black/60 backdrop-blur-md rounded-lg lg:rounded-xl p-1.5 lg:p-2 border border-surface-secondary/30"
                 >
                   {/* Song Image */}
                   <div className="relative flex-shrink-0">
@@ -409,7 +406,7 @@ const Header = () => {
               className="relative cursor-pointer"
               onClick={() => navigate('/app/queue')}
             >
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-surface-primary/50 border border-surface-secondary/30 rounded-lg sm:rounded-xl flex items-center justify-center hover:bg-surface-primary transition-all duration-200">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-black/60 backdrop-blur-md border border-surface-secondary/30 rounded-lg sm:rounded-xl flex items-center justify-center hover:bg-black/80 transition-all duration-200">
                 <ListMusic className="w-4 h-4 sm:w-5 sm:h-5 text-text-primary" />
               </div>
 
