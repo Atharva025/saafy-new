@@ -1,6 +1,21 @@
 import { createContext, useContext, useReducer, useRef, useEffect } from 'react'
 import { getSong } from '@/lib/api'
 
+// ============================================================================
+// PRODUCTION-SAFE LOGGER
+// ============================================================================
+const IS_DEV = import.meta.env.DEV
+
+const log = {
+    info: (...args) => IS_DEV && console.log(...args),
+    warn: (...args) => IS_DEV && console.warn(...args),
+    error: (...args) => IS_DEV && console.error(...args)
+}
+
+// ============================================================================
+// CONTEXT & STATE
+// ============================================================================
+
 const PlayerContext = createContext()
 
 const initialState = {
@@ -13,8 +28,13 @@ const initialState = {
     duration: 0,
     repeatMode: 'none', // 'none', 'one', 'all'
     shuffleMode: false,
-    originalQueue: [], // for shuffle mode
+    originalQueue: [],
+    error: null
 }
+
+// ============================================================================
+// REDUCER
+// ============================================================================
 
 const playerReducer = (state, action) => {
     switch (action.type) {
@@ -23,12 +43,13 @@ const playerReducer = (state, action) => {
                 ...state,
                 currentSong: action.payload,
                 progress: 0,
+                error: null
             }
 
         case 'SET_PLAYING':
             return {
                 ...state,
-                isPlaying: action.payload,
+                isPlaying: action.payload
             }
 
         case 'SET_QUEUE':
@@ -36,67 +57,72 @@ const playerReducer = (state, action) => {
                 ...state,
                 queue: action.payload,
                 originalQueue: state.shuffleMode ? state.originalQueue : action.payload,
-                currentIndex: 0,
+                currentIndex: 0
             }
 
-        case 'ADD_TO_QUEUE':
+        case 'ADD_TO_QUEUE': {
+            // Prevent duplicate entries
+            if (state.queue.find(s => s.id === action.payload.id)) {
+                return state
+            }
             return {
                 ...state,
                 queue: [...state.queue, action.payload],
-                originalQueue: state.shuffleMode ?
-                    [...state.originalQueue, action.payload] :
-                    [...state.queue, action.payload],
+                originalQueue: state.shuffleMode
+                    ? [...state.originalQueue, action.payload]
+                    : [...state.queue, action.payload]
             }
+        }
 
-        case 'REMOVE_FROM_QUEUE':
+        case 'REMOVE_FROM_QUEUE': {
             const newQueue = state.queue.filter((_, index) => index !== action.payload)
-            const newOriginalQueue = state.shuffleMode ?
-                state.originalQueue.filter((_, index) => index !== action.payload) :
-                newQueue
+            const newOriginalQueue = state.shuffleMode
+                ? state.originalQueue.filter((_, index) => index !== action.payload)
+                : newQueue
 
             return {
                 ...state,
                 queue: newQueue,
                 originalQueue: newOriginalQueue,
-                currentIndex: action.payload < state.currentIndex ?
-                    state.currentIndex - 1 :
-                    state.currentIndex,
+                currentIndex: action.payload < state.currentIndex
+                    ? state.currentIndex - 1
+                    : state.currentIndex
             }
+        }
 
         case 'SET_CURRENT_INDEX':
             return {
                 ...state,
                 currentIndex: action.payload,
-                currentSong: state.queue[action.payload] || null,
+                currentSong: state.queue[action.payload] || null
             }
 
         case 'SET_VOLUME':
             return {
                 ...state,
-                volume: action.payload,
+                volume: Math.max(0, Math.min(1, action.payload))
             }
 
         case 'SET_PROGRESS':
             return {
                 ...state,
-                progress: action.payload,
+                progress: action.payload
             }
 
         case 'SET_DURATION':
             return {
                 ...state,
-                duration: action.payload,
+                duration: action.payload
             }
 
         case 'SET_REPEAT_MODE':
             return {
                 ...state,
-                repeatMode: action.payload,
+                repeatMode: action.payload
             }
 
-        case 'TOGGLE_SHUFFLE':
+        case 'TOGGLE_SHUFFLE': {
             if (!state.shuffleMode) {
-                // Enabling shuffle
                 const shuffled = [...state.queue]
                 for (let i = shuffled.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1))
@@ -108,16 +134,29 @@ const playerReducer = (state, action) => {
                     shuffleMode: true,
                     queue: shuffled,
                     originalQueue: state.queue,
-                    currentIndex: shuffled.findIndex(song => song.id === state.currentSong?.id) || 0,
+                    currentIndex: shuffled.findIndex(song => song.id === state.currentSong?.id) || 0
                 }
             } else {
-                // Disabling shuffle
                 return {
                     ...state,
                     shuffleMode: false,
                     queue: state.originalQueue,
-                    currentIndex: state.originalQueue.findIndex(song => song.id === state.currentSong?.id) || 0,
+                    currentIndex: state.originalQueue.findIndex(song => song.id === state.currentSong?.id) || 0
                 }
+            }
+        }
+
+        case 'SET_ERROR':
+            return {
+                ...state,
+                error: action.payload,
+                isPlaying: false
+            }
+
+        case 'CLEAR_ERROR':
+            return {
+                ...state,
+                error: null
             }
 
         default:
@@ -125,17 +164,22 @@ const playerReducer = (state, action) => {
     }
 }
 
+// ============================================================================
+// PROVIDER COMPONENT
+// ============================================================================
+
 export function PlayerProvider({ children }) {
     const [state, dispatch] = useReducer(playerReducer, initialState)
     const audioRef = useRef(null)
 
-    // Ensure song.image is an array of objects with link/url at indexes 0..2
+    /**
+     * Normalize song image to consistent array format
+     */
     function normalizeImageForSong(song) {
         if (!song) return song
         try {
-            // Prefer existing image array
             let imgs = song.image
-            // If single URL available, convert to array
+
             if (!imgs && song.imageUrl) {
                 imgs = [{ link: song.imageUrl }, { link: song.imageUrl }, { link: song.imageUrl, url: song.imageUrl }]
             }
@@ -145,25 +189,44 @@ export function PlayerProvider({ children }) {
             }
 
             if (Array.isArray(imgs)) {
-                // Normalize elements to objects with link/url
                 const normalized = imgs.slice(0, 3).map((it) => {
                     if (!it) return { link: '' }
                     if (typeof it === 'string') return { link: it }
-                    return { link: it.link || it.url || it.url || '', url: it.url || it.link || '' }
+                    return { link: it.link || it.url || '', url: it.url || it.link || '' }
                 })
-                // Ensure length 3
-                while (normalized.length < 3) normalized.push({ link: normalized[normalized.length - 1]?.link || '' })
+                while (normalized.length < 3) {
+                    normalized.push({ link: normalized[normalized.length - 1]?.link || '' })
+                }
                 song.image = normalized
             } else if (!song.image && song.imageUrl) {
                 song.image = [{ link: song.imageUrl }, { link: song.imageUrl }, { link: song.imageUrl, url: song.imageUrl }]
             }
-        } catch (e) {
-            // ignore
+        } catch {
+            // Silent fail - image normalization is non-critical
         }
         return song
     }
 
-    // Audio event handlers
+    /**
+     * Extract best audio URL from song object
+     */
+    function extractAudioUrl(song) {
+        if (!song) return null
+
+        // Try downloadUrl array (highest quality last)
+        if (song.downloadUrl && Array.isArray(song.downloadUrl) && song.downloadUrl.length > 0) {
+            const highQuality = song.downloadUrl[song.downloadUrl.length - 1]
+            return highQuality?.url || highQuality?.link || null
+        }
+
+        // Fallback chain
+        return song.download_url || song.streamUrl || song.url || song.previewUrl || null
+    }
+
+    // ============================================================================
+    // AUDIO EVENT HANDLERS
+    // ============================================================================
+
     useEffect(() => {
         const audio = audioRef.current
         if (!audio) return
@@ -180,140 +243,90 @@ export function PlayerProvider({ children }) {
             handleNext()
         }
 
+        const handleError = (e) => {
+            log.error('Audio error:', e)
+            dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' })
+        }
+
         audio.addEventListener('timeupdate', handleTimeUpdate)
         audio.addEventListener('loadedmetadata', handleLoadedMetadata)
         audio.addEventListener('ended', handleEnded)
+        audio.addEventListener('error', handleError)
 
         return () => {
             audio.removeEventListener('timeupdate', handleTimeUpdate)
             audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
             audio.removeEventListener('ended', handleEnded)
+            audio.removeEventListener('error', handleError)
         }
     }, [state.currentSong])
 
-    // Actions
+    // ============================================================================
+    // PLAYER ACTIONS
+    // ============================================================================
+
     const playSong = async (song, queue = null) => {
-        console.log('🎵 Playing song:', song.name || song.title, 'ID:', song.id)
-        console.log('🎵 Initial song object:', song)
-        console.log('🎵 Song has download_url:', !!song.download_url)
-        console.log('🎵 Song download_url value:', song.download_url)
+        if (!song?.id) {
+            log.warn('Invalid song object')
+            return
+        }
+
+        log.info('Playing:', song.name || song.title)
 
         try {
-            // First, try to get the full song details with download URL
+            dispatch({ type: 'CLEAR_ERROR' })
+
             let songWithUrl = song
-            if (!song.download_url) {
-                console.log('📥 Fetching detailed song info for:', song.id)
-                const songResponse = await getSong(song.id)
-                console.log('📥 Detailed song API response:', songResponse)
-                if (songResponse.success && songResponse.data) {
-                    songWithUrl = songResponse.data
-                    console.log('✅ Got detailed song data:', songWithUrl)
-                    console.log('✅ Detailed song download_url:', songWithUrl.download_url)
-                    console.log('✅ Detailed song downloadUrl:', songWithUrl.downloadUrl)
-                } else {
-                    console.log('⚠️ Failed to get detailed song data, using original')
-                    console.log('⚠️ API response was:', songResponse)
+
+            // Fetch full song details if no download URL
+            if (!extractAudioUrl(song)) {
+                log.info('Fetching song details for:', song.id)
+                const response = await getSong(song.id)
+                if (response.success && response.data) {
+                    songWithUrl = response.data
                 }
-            } else {
-                console.log('✅ Song already has download_url, skipping API call')
             }
 
-            // Enhanced audio URL selection with quality priority
-            let audioUrl = null
-
-            // First, try to find high-quality downloadUrl array (highest quality last)
-            if (songWithUrl.downloadUrl && Array.isArray(songWithUrl.downloadUrl) && songWithUrl.downloadUrl.length > 0) {
-                // Get the highest quality URL (usually the last in array)
-                const highQualityUrl = songWithUrl.downloadUrl[songWithUrl.downloadUrl.length - 1]
-                audioUrl = highQualityUrl.url || highQualityUrl.link || highQualityUrl
-                console.log('🎵 Using high-quality URL from downloadUrl array:', audioUrl)
-            } else {
-                // Fallback to other sources, prioritizing direct download URLs
-                audioUrl = songWithUrl.download_url ||
-                    songWithUrl.downloadUrl ||
-                    songWithUrl.streamUrl ||
-                    songWithUrl.url ||
-                    songWithUrl.previewUrl
-
-                console.log('🎵 Using fallback audio URL:', audioUrl)
-            }
+            const audioUrl = extractAudioUrl(songWithUrl)
 
             if (!audioUrl) {
-                console.error(`❌ Cannot play "${songWithUrl.name}" - No download_url available`)
-                console.log('📋 Song object:', songWithUrl)
-                console.log('Available song properties:', Object.keys(songWithUrl))
-                console.log('download_url:', songWithUrl.download_url)
-                console.log('downloadUrl:', songWithUrl.downloadUrl)
-                console.log('streamUrl:', songWithUrl.streamUrl)
-                console.log('url:', songWithUrl.url)
+                dispatch({ type: 'SET_ERROR', payload: `Cannot play "${songWithUrl.name}" - no audio available` })
                 return
             }
 
-            console.log('🎶 Using audio URL:', audioUrl)
-
+            // Update queue if provided
             if (queue) {
-                // normalize images for all queue items
-                const normalizedQueue = queue.map(q => normalizeImageForSong(q))
+                const normalizedQueue = queue.map(normalizeImageForSong)
                 dispatch({ type: 'SET_QUEUE', payload: normalizedQueue })
                 const index = normalizedQueue.findIndex(s => s.id === song.id)
                 dispatch({ type: 'SET_CURRENT_INDEX', payload: index >= 0 ? index : 0 })
             } else {
                 const normalized = normalizeImageForSong(songWithUrl)
                 dispatch({ type: 'SET_CURRENT_SONG', payload: normalized })
-                if (!state.queue.find(s => s.id === normalized.id)) {
-                    dispatch({ type: 'ADD_TO_QUEUE', payload: normalized })
-                }
+                dispatch({ type: 'ADD_TO_QUEUE', payload: normalized })
             }
 
-            if (audioRef.current && audioUrl) {
-                // Enhanced audio setup for high-quality playback
-                console.log('🔍 Setting up high-quality audio playback...')
-
-                // Configure audio element for best quality
+            // Setup and play audio
+            if (audioRef.current) {
                 const audio = audioRef.current
-                audio.crossOrigin = 'anonymous' // Enable CORS for external audio
-                audio.preload = 'auto' // Preload audio for better performance
-
-                // Add cache-busting parameter to avoid caching issues
-                const cacheBuster = `?cb=${Date.now()}`
-                const finalUrl = audioUrl.includes('?')
-                    ? `${audioUrl}&cb=${Date.now()}`
-                    : `${audioUrl}${cacheBuster}`
-
-                audio.src = finalUrl
-                audio.load() // Explicitly load the new source
+                audio.crossOrigin = 'anonymous'
+                audio.preload = 'auto'
+                audio.src = audioUrl
+                audio.load()
 
                 dispatch({ type: 'SET_PLAYING', payload: true })
 
-                const playPromise = audio.play()
-                if (playPromise !== undefined) {
-                    playPromise
-                        .then(() => {
-                            console.log('▶️ High-quality audio playing successfully')
-                        })
-                        .catch(error => {
-                            console.error('❌ Error playing audio:', error.message)
-                            console.log('🔗 Failed URL:', finalUrl)
-
-                            // Try without cache buster
-                            if (finalUrl.includes('cb=')) {
-                                console.log('🔄 Retrying without cache buster...')
-                                audio.src = audioUrl
-                                audio.load()
-
-                                audio.play().catch(retryError => {
-                                    console.error('🔄 Retry also failed:', retryError.message)
-                                    dispatch({ type: 'SET_PLAYING', payload: false })
-                                })
-                            } else {
-                                dispatch({ type: 'SET_PLAYING', payload: false })
-                            }
-                        })
+                try {
+                    await audio.play()
+                    log.info('Playback started')
+                } catch (playError) {
+                    log.warn('Playback failed:', playError.message)
+                    dispatch({ type: 'SET_PLAYING', payload: false })
                 }
             }
         } catch (error) {
-            console.error('💥 Error in playSong:', error)
-            dispatch({ type: 'SET_PLAYING', payload: false })
+            log.error('playSong error:', error)
+            dispatch({ type: 'SET_ERROR', payload: 'Failed to play song' })
         }
     }
 
@@ -323,7 +336,9 @@ export function PlayerProvider({ children }) {
         if (state.isPlaying) {
             audioRef.current.pause()
         } else {
-            audioRef.current.play()
+            audioRef.current.play().catch(() => {
+                dispatch({ type: 'SET_PLAYING', payload: false })
+            })
         }
 
         dispatch({ type: 'SET_PLAYING', payload: !state.isPlaying })
@@ -356,7 +371,7 @@ export function PlayerProvider({ children }) {
     const handlePrevious = () => {
         if (state.queue.length === 0) return
 
-        // If more than 3 seconds have passed, restart current song
+        // Restart if more than 3 seconds played
         if (state.progress > 3) {
             seekTo(0)
             return
@@ -382,15 +397,16 @@ export function PlayerProvider({ children }) {
     }
 
     const setVolume = (volume) => {
-        dispatch({ type: 'SET_VOLUME', payload: volume })
+        const safeVolume = Math.max(0, Math.min(1, Number(volume) || 0))
+        dispatch({ type: 'SET_VOLUME', payload: safeVolume })
         if (audioRef.current) {
-            audioRef.current.volume = volume
+            audioRef.current.volume = safeVolume
         }
     }
 
     const seekTo = (time) => {
-        if (audioRef.current) {
-            audioRef.current.currentTime = time
+        if (audioRef.current && !isNaN(time)) {
+            audioRef.current.currentTime = Math.max(0, Math.min(time, state.duration))
             dispatch({ type: 'SET_PROGRESS', payload: time })
         }
     }
@@ -407,11 +423,13 @@ export function PlayerProvider({ children }) {
     }
 
     const addToQueue = (song) => {
+        if (!song?.id) return
         const normalized = normalizeImageForSong(song)
         dispatch({ type: 'ADD_TO_QUEUE', payload: normalized })
     }
 
     const removeFromQueue = (index) => {
+        if (typeof index !== 'number' || index < 0) return
         dispatch({ type: 'REMOVE_FROM_QUEUE', payload: index })
     }
 
@@ -420,6 +438,14 @@ export function PlayerProvider({ children }) {
         dispatch({ type: 'SET_CURRENT_SONG', payload: null })
         dispatch({ type: 'SET_PLAYING', payload: false })
     }
+
+    const clearError = () => {
+        dispatch({ type: 'CLEAR_ERROR' })
+    }
+
+    // ============================================================================
+    // CONTEXT VALUE
+    // ============================================================================
 
     const value = {
         ...state,
@@ -437,6 +463,7 @@ export function PlayerProvider({ children }) {
         addToQueue,
         removeFromQueue,
         clearQueue,
+        clearError
     }
 
     return (
@@ -451,6 +478,10 @@ export function PlayerProvider({ children }) {
         </PlayerContext.Provider>
     )
 }
+
+// ============================================================================
+// HOOK
+// ============================================================================
 
 export const usePlayer = () => {
     const context = useContext(PlayerContext)

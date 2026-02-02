@@ -6,14 +6,45 @@
   <link rel="icon" type="image/svg+xml" href="/logo.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Saafy - Music Experience</title>
+  
+  <!-- Content Security Policy - Strict security headers -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline';
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src 'self' https://fonts.gstatic.com;
+    img-src 'self' data: https: blob:;
+    media-src 'self' https://*.saavncdn.com https://*.jiocdn.com https://*.jiosaavn.com https://*.saavn.com https://aac.saavncdn.com https://ac.cf.saavncdn.com blob:;
+    connect-src 'self' https://saafy-api.vercel.app https://saavn.dev https://*.jiosaavn.com https://*.saavncdn.com;
+    frame-ancestors 'none';
+    base-uri 'self';
+    form-action 'self';
+  ">
+  
+  <!-- Additional Security Headers -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  
+  <!-- Preconnect for performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://saafy-api.vercel.app">
+  <link rel="preconnect" href="https://c.saavncdn.com">
+  
+  <!-- Fonts -->
   <link
-    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet">
 </head>
 
 <body class="bg-background-primary text-text-primary antialiased">
+  <noscript>
+    <div style="padding: 20px; text-align: center; background: #1a1a1a; color: #fff;">
+      You need to enable JavaScript to run this app.
+    </div>
+  </noscript>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>
