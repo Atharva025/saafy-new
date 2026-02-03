@@ -18,6 +18,7 @@ export default function BasicPlayer() {
     } = usePlayer()
 
     const [isHovered, setIsHovered] = useState(false)
+    const [volumeHovered, setVolumeHovered] = useState(false)
 
     const formatTime = (seconds) => {
         if (!seconds || isNaN(seconds)) return '0:00'
@@ -270,12 +271,77 @@ export default function BasicPlayer() {
 
                     <div style={{ width: '1px', height: '28px', background: colors.rule }} />
 
-                    {/* Volume */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {/* Volume - slider expands to the left on hover */}
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0',
+                            position: 'relative',
+                        }}
+                        onMouseEnter={() => setVolumeHovered(true)}
+                        onMouseLeave={() => setVolumeHovered(false)}
+                    >
+                        {/* Slider container - positioned to expand left */}
+                        <div
+                            onClick={handleVolumeClick}
+                            style={{
+                                width: volumeHovered ? '80px' : '0px',
+                                height: '24px',
+                                cursor: 'pointer',
+                                overflow: 'hidden',
+                                transition: 'width 0.2s ease',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'flex-end',
+                                paddingRight: volumeHovered ? '8px' : '0',
+                            }}
+                        >
+                            <div style={{
+                                position: 'relative',
+                                width: '70px',
+                                height: '4px',
+                            }}>
+                                {/* Track background */}
+                                <div style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    background: colors.paperDarker,
+                                    borderRadius: '2px',
+                                }} />
+                                {/* Track fill */}
+                                <div style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: `${volume * 100}%`,
+                                    height: '100%',
+                                    background: colors.accent,
+                                    borderRadius: '2px',
+                                }} />
+                                {/* Thumb */}
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: `${volume * 100}%`,
+                                    transform: 'translate(-50%, -50%)',
+                                    width: '12px',
+                                    height: '12px',
+                                    borderRadius: '50%',
+                                    background: colors.accent,
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                                }} />
+                            </div>
+                        </div>
+
+                        {/* Volume icon button */}
                         <button
                             onClick={() => setVolume(volume > 0 ? 0 : 1)}
                             style={{
-                                padding: '4px',
+                                padding: '6px',
                                 background: 'none',
                                 border: 'none',
                                 cursor: 'pointer',
@@ -286,58 +352,18 @@ export default function BasicPlayer() {
                             }}
                         >
                             {volume === 0 ? (
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
                                     <line x1="23" y1="9" x2="17" y2="15" />
                                     <line x1="17" y1="9" x2="23" y2="15" />
                                 </svg>
                             ) : (
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
                                     <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
                                 </svg>
                             )}
                         </button>
-
-                        <div
-                            onClick={handleVolumeClick}
-                            style={{
-                                position: 'relative',
-                                width: '70px',
-                                height: '4px',
-                                cursor: 'pointer',
-                            }}
-                        >
-                            <div style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                height: '4px',
-                                background: colors.inkLight,
-                                borderRadius: '2px',
-                            }} />
-                            <div style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                width: `${volume * 100}%`,
-                                height: '4px',
-                                background: colors.accent,
-                                borderRadius: '2px',
-                            }} />
-                            <div style={{
-                                position: 'absolute',
-                                top: '50%',
-                                left: `${volume * 100}%`,
-                                transform: 'translate(-50%, -50%)',
-                                width: '10px',
-                                height: '10px',
-                                borderRadius: '50%',
-                                background: colors.accent,
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                            }} />
-                        </div>
                     </div>
                 </div>
 

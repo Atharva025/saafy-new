@@ -185,7 +185,7 @@ function HomePage() {
                 fontWeight: 600,
                 color: colors.ink,
               }}>
-                {getGreeting()} ✨
+                {getGreeting()}
               </div>
               <div style={{
                 fontFamily: fonts.mono,
