@@ -385,7 +385,7 @@ export function PlayerProvider({ children }) {
 
     useEffect(() => {
         const defaultTitle = 'Saafy - Music Experience'
-        
+
         if (state.currentSong && state.isPlaying) {
             const songName = state.currentSong.name || state.currentSong.title || 'Unknown Song'
             const artist = state.currentSong.primaryArtists || 'Unknown Artist'

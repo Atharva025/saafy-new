@@ -20,6 +20,7 @@ export default function BasicPlayer() {
 
     const [isHovered, setIsHovered] = useState(false)
     const [volumeHovered, setVolumeHovered] = useState(false)
+    const [volumeExpanded, setVolumeExpanded] = useState(false)
     const [dominantColor, setDominantColor] = useState(null)
     const [gradientBg, setGradientBg] = useState(null)
 
@@ -56,13 +57,21 @@ export default function BasicPlayer() {
 
     const handleVolumeClick = (e) => {
         const rect = e.currentTarget.getBoundingClientRect()
-        const percent = (e.clientX - rect.left) / rect.width
-        setVolume(Math.max(0, Math.min(1, percent)))
+        if (isMobile) {
+            // Vertical slider for mobile - calculate from bottom
+            const percent = 1 - ((e.clientY - rect.top) / rect.height)
+            setVolume(Math.max(0, Math.min(1, percent)))
+        } else {
+            // Horizontal slider for desktop
+            const percent = (e.clientX - rect.left) / rect.width
+            setVolume(Math.max(0, Math.min(1, percent)))
+        }
     }
 
     const progressPercent = duration ? (progress / duration) * 100 : 0
     const imageUrl = currentSong?.image?.[0]?.link || currentSong?.image?.[1]?.link || currentSong?.image?.[2]?.link || ''
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
+    const isTinyScreen = typeof window !== 'undefined' && window.innerWidth < 380
 
     return (
         <div
@@ -115,13 +124,14 @@ export default function BasicPlayer() {
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 'clamp(10px, 2.5vw, 14px)',
-                    padding: 'clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 18px)',
+                    gap: isTinyScreen ? '6px' : 'clamp(8px, 2vw, 14px)',
+                    padding: isTinyScreen ? '8px 10px' : 'clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 18px)',
+                    flexWrap: 'nowrap',
                 }}>
                     {/* Album Art */}
                     <div style={{
-                        width: 'clamp(42px, 10vw, 48px)',
-                        height: 'clamp(42px, 10vw, 48px)',
+                        width: isTinyScreen ? '36px' : 'clamp(40px, 9vw, 48px)',
+                        height: isTinyScreen ? '36px' : 'clamp(40px, 9vw, 48px)',
                         borderRadius: 'clamp(6px, 2vw, 8px)',
                         overflow: 'hidden',
                         flexShrink: 0,
@@ -149,16 +159,17 @@ export default function BasicPlayer() {
 
                     {/* Song Info */}
                     <div style={{
-                        minWidth: isMobile ? '80px' : '100px',
-                        maxWidth: isMobile ? '120px' : '160px',
-                        flex: isMobile ? 1 : 'initial'
+                        minWidth: isTinyScreen ? '60px' : isMobile ? '70px' : '100px',
+                        maxWidth: isTinyScreen ? '100px' : isMobile ? '110px' : '160px',
+                        flex: 1,
+                        overflow: 'hidden',
                     }}>
                         {currentSong ? (
                             <>
                                 <div style={{
                                     fontFamily: fonts.primary,
                                     fontWeight: 600,
-                                    fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
+                                    fontSize: isTinyScreen ? '0.7rem' : 'clamp(0.72rem, 2vw, 0.85rem)',
                                     color: colors.ink,
                                     whiteSpace: 'nowrap',
                                     overflow: 'hidden',
@@ -169,7 +180,7 @@ export default function BasicPlayer() {
                                 </div>
                                 <div style={{
                                     fontFamily: fonts.mono,
-                                    fontSize: 'clamp(0.65rem, 1.8vw, 0.7rem)',
+                                    fontSize: isTinyScreen ? '0.6rem' : 'clamp(0.62rem, 1.8vw, 0.7rem)',
                                     color: colors.inkMuted,
                                     whiteSpace: 'nowrap',
                                     overflow: 'hidden',
@@ -193,7 +204,7 @@ export default function BasicPlayer() {
                     <div style={{ flex: isMobile ? 0 : 1 }} />
 
                     {/* Controls */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(2px, 1vw, 4px)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isTinyScreen ? '2px' : 'clamp(2px, 1vw, 4px)' }}>
                         {/* Shuffle - Hidden on very small screens */}
                         {!isMobile && (
                             <button
@@ -226,8 +237,8 @@ export default function BasicPlayer() {
                             onClick={handlePrevious}
                             disabled={!currentSong}
                             style={{
-                                width: 'clamp(30px, 7vw, 32px)',
-                                height: 'clamp(30px, 7vw, 32px)',
+                                width: isTinyScreen ? '28px' : 'clamp(30px, 7vw, 32px)',
+                                height: isTinyScreen ? '28px' : 'clamp(30px, 7vw, 32px)',
                                 borderRadius: '50%',
                                 background: colors.paperDark,
                                 border: 'none',
@@ -239,7 +250,7 @@ export default function BasicPlayer() {
                                 color: colors.ink,
                             }}
                         >
-                            <svg width="clamp(12px, 3vw, 14px)" height="clamp(12px, 3vw, 14px)" viewBox="0 0 24 24" fill="currentColor">
+                            <svg width={isTinyScreen ? '11px' : 'clamp(12px, 3vw, 14px)'} height={isTinyScreen ? '11px' : 'clamp(12px, 3vw, 14px)'} viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6l-8.5 6z" />
                             </svg>
                         </button>
@@ -249,8 +260,8 @@ export default function BasicPlayer() {
                             onClick={togglePlay}
                             disabled={!currentSong}
                             style={{
-                                width: 'clamp(40px, 10vw, 44px)',
-                                height: 'clamp(40px, 10vw, 44px)',
+                                width: isTinyScreen ? '36px' : 'clamp(40px, 10vw, 44px)',
+                                height: isTinyScreen ? '36px' : 'clamp(40px, 10vw, 44px)',
                                 borderRadius: '50%',
                                 background: currentSong
                                     ? (dominantColor ? dominantColor.rgb : colors.accent)
@@ -279,11 +290,11 @@ export default function BasicPlayer() {
                                 }} />
                             )}
                             {isPlaying ? (
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill={isDark ? colors.paper : '#fff'}>
+                                <svg width={isTinyScreen ? '13px' : '16px'} height={isTinyScreen ? '13px' : '16px'} viewBox="0 0 24 24" fill={isDark ? colors.paper : '#fff'}>
                                     <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
                                 </svg>
                             ) : (
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill={currentSong ? (isDark ? colors.paper : '#fff') : colors.inkLight} style={{ marginLeft: '2px' }}>
+                                <svg width={isTinyScreen ? '13px' : '16px'} height={isTinyScreen ? '13px' : '16px'} viewBox="0 0 24 24" fill={currentSong ? (isDark ? colors.paper : '#fff') : colors.inkLight} style={{ marginLeft: '2px' }}>
                                     <path d="M8 5v14l11-7L8 5z" />
                                 </svg>
                             )}
@@ -294,8 +305,8 @@ export default function BasicPlayer() {
                             onClick={handleNext}
                             disabled={!currentSong}
                             style={{
-                                width: '32px',
-                                height: '32px',
+                                width: isTinyScreen ? '28px' : '32px',
+                                height: isTinyScreen ? '28px' : '32px',
                                 borderRadius: '50%',
                                 background: colors.paperDark,
                                 border: 'none',
@@ -307,39 +318,44 @@ export default function BasicPlayer() {
                                 color: colors.ink,
                             }}
                         >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <svg width={isTinyScreen ? '11px' : '14px'} height={isTinyScreen ? '11px' : '14px'} viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M6 18l8.5-6L6 6v12zm10-12v12h2V6h-2z" />
                             </svg>
                         </button>
 
-                        {/* Repeat */}
-                        <button
-                            style={{
-                                width: '30px',
-                                height: '30px',
-                                borderRadius: '50%',
-                                background: 'transparent',
-                                border: 'none',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: colors.inkLight,
-                            }}
-                            title="Repeat"
-                        >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <polyline points="17 1 21 5 17 9" />
-                                <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-                                <polyline points="7 23 3 19 7 15" />
-                                <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-                            </svg>
-                        </button>
+                        {/* Repeat - Hide on tiny screens */}
+                        {!isTinyScreen && (
+                            <button
+                                style={{
+                                    width: '30px',
+                                    height: '30px',
+                                    borderRadius: '50%',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: colors.inkLight,
+                                }}
+                                title="Repeat"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <polyline points="17 1 21 5 17 9" />
+                                    <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                                    <polyline points="7 23 3 19 7 15" />
+                                    <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                                </svg>
+                            </button>
+                        )}
                     </div>
 
-                    <div style={{ width: '1px', height: '28px', background: colors.rule }} />
+                    {/* Divider - Hide on mobile */}
+                    {!isMobile && (
+                        <div style={{ width: '1px', height: '28px', background: colors.rule }} />
+                    )}
 
-                    {/* Volume - slider expands to the left on hover */}
+                    {/* Volume - slider expands left on desktop, upward on mobile */}
                     <div
                         style={{
                             display: 'flex',
@@ -347,76 +363,150 @@ export default function BasicPlayer() {
                             gap: '0',
                             position: 'relative',
                         }}
-                        onMouseEnter={() => setVolumeHovered(true)}
-                        onMouseLeave={() => setVolumeHovered(false)}
+                        onMouseEnter={() => !isMobile && setVolumeHovered(true)}
+                        onMouseLeave={() => !isMobile && setVolumeHovered(false)}
                     >
-                        {/* Slider container - positioned to expand left */}
-                        <div
-                            onClick={handleVolumeClick}
-                            style={{
-                                width: volumeHovered ? '80px' : '0px',
-                                height: '24px',
-                                cursor: 'pointer',
-                                overflow: 'hidden',
-                                transition: 'width 0.2s ease',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'flex-end',
-                                paddingRight: volumeHovered ? '8px' : '0',
-                            }}
-                        >
-                            <div style={{
-                                position: 'relative',
-                                width: '70px',
-                                height: '4px',
-                            }}>
-                                {/* Track background */}
-                                <div style={{
+                        {/* Vertical slider for mobile - appears upward */}
+                        {isMobile && volumeExpanded && (
+                            <div
+                                style={{
                                     position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    height: '100%',
-                                    background: colors.paperDarker,
-                                    borderRadius: '2px',
-                                }} />
-                                {/* Track fill */}
-                                <div style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: `${volume * 100}%`,
-                                    height: '100%',
-                                    background: colors.accent,
-                                    borderRadius: '2px',
-                                }} />
-                                {/* Thumb */}
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '50%',
-                                    left: `${volume * 100}%`,
-                                    transform: 'translate(-50%, -50%)',
-                                    width: '12px',
-                                    height: '12px',
-                                    borderRadius: '50%',
-                                    background: colors.accent,
-                                    boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                                }} />
+                                    bottom: '100%',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    marginBottom: '8px',
+                                    padding: '12px',
+                                    background: isDark ? 'rgba(30,30,30,0.95)' : 'rgba(250,250,250,0.95)',
+                                    backdropFilter: 'blur(12px)',
+                                    borderRadius: '12px',
+                                    boxShadow: isDark
+                                        ? '0 4px 16px rgba(0,0,0,0.4)'
+                                        : '0 4px 16px rgba(0,0,0,0.15)',
+                                    zIndex: 1000,
+                                }}
+                            >
+                                <div
+                                    onClick={handleVolumeClick}
+                                    style={{
+                                        position: 'relative',
+                                        width: '32px',
+                                        height: '100px',
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    {/* Track background */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        left: '50%',
+                                        transform: 'translateX(-50%)',
+                                        width: '4px',
+                                        height: '100%',
+                                        background: colors.paperDarker,
+                                        borderRadius: '2px',
+                                    }} />
+                                    {/* Track fill */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        left: '50%',
+                                        bottom: 0,
+                                        transform: 'translateX(-50%)',
+                                        width: '4px',
+                                        height: `${volume * 100}%`,
+                                        background: colors.accent,
+                                        borderRadius: '2px',
+                                    }} />
+                                    {/* Thumb */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        left: '50%',
+                                        bottom: `${volume * 100}%`,
+                                        transform: 'translate(-50%, 50%)',
+                                        width: '14px',
+                                        height: '14px',
+                                        borderRadius: '50%',
+                                        background: colors.accent,
+                                        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                                    }} />
+                                </div>
                             </div>
-                        </div>
+                        )}
+
+                        {/* Horizontal slider for desktop - expands left */}
+                        {!isMobile && (
+                            <div
+                                onClick={handleVolumeClick}
+                                style={{
+                                    width: volumeHovered ? '80px' : '0px',
+                                    height: '24px',
+                                    cursor: 'pointer',
+                                    overflow: 'hidden',
+                                    transition: 'width 0.2s ease',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'flex-end',
+                                    paddingRight: volumeHovered ? '8px' : '0',
+                                }}
+                            >
+                                <div style={{
+                                    position: 'relative',
+                                    width: '70px',
+                                    height: '4px',
+                                }}>
+                                    {/* Track background */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: '100%',
+                                        height: '100%',
+                                        background: colors.paperDarker,
+                                        borderRadius: '2px',
+                                    }} />
+                                    {/* Track fill */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: `${volume * 100}%`,
+                                        height: '100%',
+                                        background: colors.accent,
+                                        borderRadius: '2px',
+                                    }} />
+                                    {/* Thumb */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '50%',
+                                        left: `${volume * 100}%`,
+                                        transform: 'translate(-50%, -50%)',
+                                        width: '12px',
+                                        height: '12px',
+                                        borderRadius: '50%',
+                                        background: colors.accent,
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                                    }} />
+                                </div>
+                            </div>
+                        )}
 
                         {/* Volume icon button */}
                         <button
-                            onClick={() => setVolume(volume > 0 ? 0 : 1)}
+                            onClick={() => {
+                                if (isMobile) {
+                                    setVolumeExpanded(!volumeExpanded)
+                                } else {
+                                    setVolume(volume > 0 ? 0 : 1)
+                                }
+                            }}
                             style={{
                                 padding: '6px',
                                 background: 'none',
                                 border: 'none',
                                 cursor: 'pointer',
-                                color: colors.inkMuted,
+                                color: isMobile && volumeExpanded ? colors.accent : colors.inkMuted,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
+                                transition: 'color 0.2s ease',
                             }}
                         >
                             {volume === 0 ? (
@@ -437,13 +527,13 @@ export default function BasicPlayer() {
 
                 {/* Progress Bar */}
                 {currentSong && (
-                    <div style={{ padding: '0 18px 10px 18px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ padding: isTinyScreen ? '0 10px 8px 10px' : '0 18px 10px 18px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: isTinyScreen ? '6px' : '10px' }}>
                             <span style={{
                                 fontFamily: fonts.mono,
-                                fontSize: '0.65rem',
+                                fontSize: isTinyScreen ? '0.55rem' : '0.65rem',
                                 color: colors.inkMuted,
-                                width: '32px',
+                                width: isTinyScreen ? '28px' : '32px',
                                 textAlign: 'right',
                             }}>
                                 {formatTime(progress)}
@@ -452,7 +542,7 @@ export default function BasicPlayer() {
                                 onClick={handleProgressClick}
                                 style={{
                                     flex: 1,
-                                    height: '4px',
+                                    height: isTinyScreen ? '3px' : '4px',
                                     background: colors.paperDarker,
                                     borderRadius: '2px',
                                     cursor: 'pointer',
@@ -472,7 +562,7 @@ export default function BasicPlayer() {
                                     left: `${progressPercent}%`,
                                     transform: 'translate(-50%, -50%)',
                                     width: '10px',
-                                    height: '10px',
+                                    height: isTinyScreen ? '8px' : '10px',
                                     borderRadius: '50%',
                                     background: colors.paper,
                                     border: `2px solid ${colors.accent}`,
@@ -481,9 +571,9 @@ export default function BasicPlayer() {
                             </div>
                             <span style={{
                                 fontFamily: fonts.mono,
-                                fontSize: '0.65rem',
+                                fontSize: isTinyScreen ? '0.55rem' : '0.65rem',
                                 color: colors.inkLight,
-                                width: '32px',
+                                width: isTinyScreen ? '28px' : '32px',
                             }}>
                                 {formatTime(duration)}
                             </span>
