@@ -1,9 +1,14 @@
+import { useState } from 'react'
 import { usePlayer } from '@/context/PlayerContext'
 import { useTheme } from '@/context/ThemeContext'
+import { useToast } from '@/context/ToastContext'
 
-export default function SongList({ songs, onPlaySong }) {
+export default function SongList({ songs, onPlaySong, onAddToQueue }) {
     const { colors, fonts } = useTheme()
-    const { playSong, currentSong, isPlaying } = usePlayer()
+    const { playSong, addToQueue, currentSong, isPlaying } = usePlayer()
+    const { success } = useToast()
+    const [hoveredIndex, setHoveredIndex] = useState(null)
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
 
     if (!songs || songs.length === 0) {
         return (
@@ -43,25 +48,28 @@ export default function SongList({ songs, onPlaySong }) {
                     <div
                         key={song.id}
                         onClick={() => handlePlay(song)}
+                        onMouseEnter={() => setHoveredIndex(index)}
+                        onMouseLeave={() => setHoveredIndex(null)}
                         style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '16px',
-                            padding: '16px',
+                            gap: 'clamp(12px, 3vw, 16px)',
+                            padding: 'clamp(12px, 3vw, 16px)',
                             cursor: 'pointer',
-                            background: isCurrentSong ? colors.paperDark : 'transparent',
-                            borderRadius: '8px',
+                            background: isCurrentSong ? colors.paperDark : (hoveredIndex === index ? colors.paperDark : 'transparent'),
+                            borderRadius: 'clamp(6px, 2vw, 8px)',
                             borderLeft: isCurrentSong ? `3px solid ${colors.accent}` : '3px solid transparent',
                             transition: 'all 0.15s',
                             marginBottom: '2px',
+                            position: 'relative',
                         }}
                     >
                         {/* Track Number */}
                         <div style={{
-                            width: '32px',
+                            width: 'clamp(28px, 7vw, 32px)',
                             textAlign: 'center',
                             fontFamily: fonts.mono,
-                            fontSize: '0.85rem',
+                            fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
                             color: colors.inkLight,
                         }}>
                             {isCurrentSong && isPlaying ? (
@@ -92,11 +100,17 @@ export default function SongList({ songs, onPlaySong }) {
 
                         {/* Album Art */}
                         {imageUrl ? (
-                            <img src={imageUrl} alt="" style={{ width: '48px', height: '48px', objectFit: 'cover', flexShrink: 0, borderRadius: '6px' }} />
+                            <img src={imageUrl} alt="" style={{
+                                width: 'clamp(42px, 10vw, 48px)',
+                                height: 'clamp(42px, 10vw, 48px)',
+                                objectFit: 'cover',
+                                flexShrink: 0,
+                                borderRadius: 'clamp(4px, 1.5vw, 6px)'
+                            }} />
                         ) : (
                             <div style={{
-                                width: '48px',
-                                height: '48px',
+                                width: 'clamp(42px, 10vw, 48px)',
+                                height: 'clamp(42px, 10vw, 48px)',
                                 background: colors.paperDark,
                                 display: 'flex',
                                 alignItems: 'center',
@@ -115,6 +129,7 @@ export default function SongList({ songs, onPlaySong }) {
                             <div style={{
                                 fontFamily: fonts.primary,
                                 fontWeight: 500,
+                                fontSize: 'clamp(0.85rem, 2.2vw, 1rem)',
                                 color: isCurrentSong ? colors.accent : colors.ink,
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
@@ -124,7 +139,7 @@ export default function SongList({ songs, onPlaySong }) {
                             </div>
                             <div style={{
                                 fontFamily: fonts.mono,
-                                fontSize: '0.75rem',
+                                fontSize: 'clamp(0.7rem, 2vw, 0.75rem)',
                                 color: colors.inkMuted,
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
@@ -137,13 +152,55 @@ export default function SongList({ songs, onPlaySong }) {
                         {/* Duration */}
                         <div style={{
                             fontFamily: fonts.mono,
-                            fontSize: '0.75rem',
+                            fontSize: 'clamp(0.7rem, 2vw, 0.75rem)',
                             color: colors.inkLight,
-                            width: '48px',
+                            width: isMobile ? 'auto' : '48px',
                             textAlign: 'right',
+                            display: isMobile ? 'none' : 'block',
                         }}>
                             {formatDuration(song.duration)}
                         </div>
+
+                        {/* Add to Queue Button */}
+                        {hoveredIndex === index && (onAddToQueue || addToQueue) && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (onAddToQueue) {
+                                        onAddToQueue(song)
+                                    } else {
+                                        addToQueue(song)
+                                    }
+                                    success(`Added "${song.name}" to queue`, { duration: 2000 })
+                                }}
+                                style={{
+                                    width: 'clamp(32px, 8vw, 36px)',
+                                    height: 'clamp(32px, 8vw, 36px)',
+                                    borderRadius: 'clamp(6px, 2vw, 8px)',
+                                    background: colors.paperDarker,
+                                    border: `1px solid ${colors.rule}`,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.2s',
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = colors.accent
+                                    e.currentTarget.style.borderColor = colors.accent
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = colors.paperDarker
+                                    e.currentTarget.style.borderColor = colors.rule
+                                }}
+                                title="Add to Queue"
+                            >
+                                <svg width="clamp(14px, 3.5vw, 16px)" height="clamp(14px, 3.5vw, 16px)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <line x1="12" y1="5" x2="12" y2="19" />
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                </svg>
+                            </button>
+                        )}
                     </div>
                 )
             })}
