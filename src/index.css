@@ -96,3 +96,43 @@ input[type="range"]::-moz-range-thumb {
   background: #C45C3E;
   border: none;
 }
+
+/* Responsive Utilities */
+@media (max-width: 640px) {
+  .header-divider {
+    display: none !important;
+  }
+
+  .header-greeting {
+    display: none !important;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  body {
+    font-size: 15px;
+  }
+}
+
+/* Touch-friendly minimum sizes */
+@media (hover: none) and (pointer: coarse) {
+
+  button,
+  a,
+  input[type="range"] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Prevent text size adjustments on mobile */
+html {
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Better mobile scrolling */
+* {
+  -webkit-overflow-scrolling: touch;
+}

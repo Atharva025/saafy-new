@@ -1,148 +1,40 @@
 import { useState } from 'react'
 import { usePlayer } from '@/context/PlayerContext'
 import { useTheme } from '@/context/ThemeContext'
+import { useToast } from '@/context/ToastContext'
+import SkeletonLoader from './SkeletonLoader'
 
-export default function DiscoverSection({ songs, loading, featured = false, onPlaySong }) {
-    const { colors, fonts, isDark } = useTheme()
+export default function DiscoverSection({ songs, loading, featured = false, onPlaySong, onAddToQueue }) {
+    const { colors, fonts } = useTheme()
     const { currentSong, isPlaying } = usePlayer()
+    const { success } = useToast()
+    const [mainHovered, setMainHovered] = useState(false)
+    const [hoveredCard, setHoveredCard] = useState(null)
 
     // Loading state - Featured Bento Grid Skeleton
     if (loading && featured) {
         return (
-            <>
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(4, 1fr)',
-                    gridTemplateRows: 'repeat(2, 200px)',
-                    gap: '16px',
-                }}>
-                    {/* Main skeleton card */}
-                    <div style={{
-                        gridColumn: 'span 2',
-                        gridRow: 'span 2',
-                        background: colors.paperDark,
-                        borderRadius: '8px',
-                        animation: 'shimmer 1.5s infinite',
-                        position: 'relative',
-                        overflow: 'hidden',
-                    }}>
-                        <div style={{
-                            position: 'absolute',
-                            bottom: '24px',
-                            left: '24px',
-                            right: '24px',
-                        }}>
-                            <div style={{
-                                height: '24px',
-                                width: '60%',
-                                background: colors.paperDarker,
-                                borderRadius: '4px',
-                                marginBottom: '8px',
-                            }} />
-                            <div style={{
-                                height: '14px',
-                                width: '40%',
-                                background: colors.paperDarker,
-                                borderRadius: '4px',
-                            }} />
-                        </div>
-                    </div>
-
-                    {/* 4 smaller skeleton cards */}
-                    {[...Array(4)].map((_, i) => (
-                        <div key={i} style={{
-                            background: colors.paperDark,
-                            borderRadius: '8px',
-                            animation: 'shimmer 1.5s infinite',
-                            animationDelay: `${i * 0.1}s`,
-                            position: 'relative',
-                            overflow: 'hidden',
-                        }}>
-                            <div style={{
-                                position: 'absolute',
-                                bottom: '12px',
-                                left: '12px',
-                                right: '12px',
-                            }}>
-                                <div style={{
-                                    height: '14px',
-                                    width: '70%',
-                                    background: colors.paperDarker,
-                                    borderRadius: '4px',
-                                    marginBottom: '6px',
-                                }} />
-                                <div style={{
-                                    height: '10px',
-                                    width: '50%',
-                                    background: colors.paperDarker,
-                                    borderRadius: '4px',
-                                }} />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                <style>{`
-                    @keyframes shimmer {
-                        0% { opacity: 0.5; }
-                        50% { opacity: 1; }
-                        100% { opacity: 0.5; }
-                    }
-                `}</style>
-            </>
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(140px, 35vw, 160px), 1fr))',
+                gap: 'clamp(12px, 3vw, 16px)',
+            }}>
+                <SkeletonLoader type="card" count={6} />
+            </div>
         )
     }
 
     // Loading state - Horizontal Scroll Skeleton
     if (loading) {
         return (
-            <>
-                <div style={{
-                    display: 'flex',
-                    gap: '20px',
-                    overflowX: 'auto',
-                    paddingBottom: '8px',
-                }} className="hide-scrollbar">
-                    {[...Array(6)].map((_, i) => (
-                        <div key={i} style={{ flexShrink: 0, width: '150px' }}>
-                            <div style={{
-                                width: '150px',
-                                height: '150px',
-                                background: colors.paperDark,
-                                marginBottom: '12px',
-                                borderRadius: '6px',
-                                animation: 'shimmer 1.5s infinite',
-                                animationDelay: `${i * 0.1}s`,
-                            }} />
-                            <div style={{
-                                height: '14px',
-                                background: colors.paperDark,
-                                width: '80%',
-                                marginBottom: '8px',
-                                borderRadius: '4px',
-                                animation: 'shimmer 1.5s infinite',
-                                animationDelay: `${i * 0.1 + 0.05}s`,
-                            }} />
-                            <div style={{
-                                height: '10px',
-                                background: colors.paperDark,
-                                width: '55%',
-                                borderRadius: '4px',
-                                animation: 'shimmer 1.5s infinite',
-                                animationDelay: `${i * 0.1 + 0.1}s`,
-                            }} />
-                        </div>
-                    ))}
-                </div>
-
-                <style>{`
-                    @keyframes shimmer {
-                        0% { opacity: 0.5; }
-                        50% { opacity: 1; }
-                        100% { opacity: 0.5; }
-                    }
-                `}</style>
-            </>
+            <div style={{
+                display: 'flex',
+                gap: 'clamp(12px, 3vw, 16px)',
+                overflowX: 'auto',
+                padding: '2px',
+            }}>
+                <SkeletonLoader type="card" count={6} />
+            </div>
         )
     }
 
@@ -157,25 +49,34 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
     // Featured Bento Grid
     if (featured && songs.length >= 5) {
         const [main, ...rest] = songs.slice(0, 5)
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
+        const isTablet = typeof window !== 'undefined' && window.innerWidth >= 640 && window.innerWidth < 1024
 
         return (
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gridTemplateRows: 'repeat(2, 200px)',
-                gap: '16px',
+                gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+                gridTemplateRows: isMobile ? 'auto' : isTablet ? 'repeat(3, 180px)' : 'repeat(2, 200px)',
+                gap: 'clamp(12px, 3vw, 16px)',
             }}>
                 {/* Large Main Card */}
                 <div
                     onClick={() => handlePlay(main)}
+                    onMouseEnter={() => setMainHovered(true)}
+                    onMouseLeave={() => setMainHovered(false)}
                     style={{
-                        gridColumn: 'span 2',
-                        gridRow: 'span 2',
+                        gridColumn: isMobile ? 'span 1' : isTablet ? 'span 2' : 'span 2',
+                        gridRow: isMobile ? 'span 1' : isTablet ? 'span 2' : 'span 2',
+                        minHeight: isMobile ? '200px' : '180px',
                         position: 'relative',
                         cursor: 'pointer',
                         overflow: 'hidden',
-                        borderRadius: '8px',
-                        border: currentSong?.id === main.id ? `2px solid ${colors.accent}` : 'none',
+                        borderRadius: '18px',
+                        border: currentSong?.id === main.id ? `2px solid ${colors.accent}` : `1px solid ${colors.rule}`,
+                        boxShadow: currentSong?.id === main.id
+                            ? `0 12px 36px ${colors.accent}40`
+                            : '0 12px 32px rgba(0,0,0,0.12)',
+                        transition: 'all 0.3s ease',
                     }}
                 >
                     <img
@@ -187,13 +88,14 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
                             width: '100%',
                             height: '100%',
                             objectFit: 'cover',
-                            transition: 'transform 0.5s',
+                            transform: mainHovered ? 'scale(1.03)' : 'scale(1)',
+                            transition: 'transform 0.4s ease',
                         }}
                     />
                     <div style={{
                         position: 'absolute',
                         inset: 0,
-                        background: 'linear-gradient(to top, rgba(26,22,20,0.8) 0%, rgba(26,22,20,0.2) 50%, transparent 100%)',
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.25) 55%, transparent 100%)',
                     }} />
                     <div style={{
                         position: 'absolute',
@@ -227,6 +129,7 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
                         key={song.id}
                         song={song}
                         onPlay={handlePlay}
+                        onAddToQueue={onAddToQueue}
                         currentSong={currentSong}
                         isPlaying={isPlaying}
                         colors={colors}
@@ -242,17 +145,20 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
     return (
         <div style={{
             display: 'flex',
-            gap: '20px',
+            gap: 'clamp(16px, 4vw, 20px)',
             overflowX: 'auto',
             paddingBottom: '8px',
             marginLeft: '-8px',
             paddingLeft: '8px',
+            WebkitOverflowScrolling: 'touch',
+            scrollBehavior: 'smooth',
         }} className="hide-scrollbar">
             {songs.map((song) => (
                 <SongCard
                     key={song.id}
                     song={song}
                     onPlay={handlePlay}
+                    onAddToQueue={onAddToQueue}
                     currentSong={currentSong}
                     isPlaying={isPlaying}
                     colors={colors}
@@ -263,10 +169,21 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
     )
 }
 
-function SongCard({ song, onPlay, currentSong, isPlaying, colors, fonts, compact = false }) {
+function SongCard({ song, onPlay, onAddToQueue, currentSong, isPlaying, colors, fonts, compact = false }) {
     const isCurrentSong = currentSong?.id === song.id
     const imageUrl = song.image?.[0]?.link || song.image?.[1]?.link || song.image?.[2]?.link || ''
     const [hovered, setHovered] = useState(false)
+    const { success } = useToast()
+
+    const handleAddToQueue = (e) => {
+        e.stopPropagation()
+        if (onAddToQueue) {
+            onAddToQueue(song)
+            success(`Added "${song.name}" to queue`, {
+                duration: 2000,
+            })
+        }
+    }
 
     if (compact) {
         return (
@@ -278,8 +195,13 @@ function SongCard({ song, onPlay, currentSong, isPlaying, colors, fonts, compact
                     position: 'relative',
                     cursor: 'pointer',
                     overflow: 'hidden',
-                    borderRadius: '8px',
-                    border: isCurrentSong ? `2px solid ${colors.accent}` : 'none',
+                    borderRadius: '12px',
+                    border: isCurrentSong ? `2px solid ${colors.accent}` : `1px solid ${colors.rule}`,
+                    boxShadow: hovered
+                        ? '0 12px 24px rgba(0,0,0,0.18)'
+                        : '0 6px 18px rgba(0,0,0,0.12)',
+                    transition: 'box-shadow 0.25s ease, transform 0.25s ease',
+                    transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
                 }}
             >
                 <img
@@ -295,22 +217,53 @@ function SongCard({ song, onPlay, currentSong, isPlaying, colors, fonts, compact
                         transition: 'transform 0.5s',
                     }}
                 />
+
                 <div style={{
                     position: 'absolute',
                     inset: 0,
-                    background: 'linear-gradient(to top, rgba(26,22,20,0.7) 0%, transparent 60%)',
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 65%)',
                 }} />
+                {hovered && onAddToQueue && (
+                    <button
+                        onClick={handleAddToQueue}
+                        style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '8px',
+                            background: 'rgba(250,247,242,0.95)',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                            transition: 'transform 0.2s',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                        title="Add to Queue"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1614" strokeWidth="2.5">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                    </button>
+                )}
+
                 <div style={{
                     position: 'absolute',
                     bottom: 0,
                     left: 0,
                     right: 0,
-                    padding: '12px',
+                    padding: '14px',
                 }}>
                     <div style={{
                         fontFamily: fonts.primary,
-                        fontWeight: 600,
-                        fontSize: '0.85rem',
+                        fontWeight: 700,
+                        fontSize: '0.9rem',
                         color: '#FAF7F2',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
@@ -340,18 +293,27 @@ function SongCard({ song, onPlay, currentSong, isPlaying, colors, fonts, compact
             onMouseLeave={() => setHovered(false)}
             style={{
                 flexShrink: 0,
-                width: '150px',
+                width: 'clamp(140px, 35vw, 160px)',
                 cursor: 'pointer',
+                transition: 'transform 0.25s ease',
+                transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
             }}
         >
             <div style={{
                 position: 'relative',
-                width: '150px',
-                height: '150px',
-                marginBottom: '12px',
+                width: '100%',
+                paddingBottom: '100%',
+                marginBottom: 'clamp(8px, 2vw, 12px)',
                 overflow: 'hidden',
-                borderRadius: '6px',
-                boxShadow: isCurrentSong ? `0 0 0 2px ${colors.accent}` : 'none',
+                borderRadius: 'clamp(12px, 3vw, 14px)',
+                border: isCurrentSong ? `2px solid ${colors.accent}` : `1px solid ${colors.rule}`,
+                boxShadow: isCurrentSong && isPlaying
+                    ? `0 12px 28px ${colors.accent}60, 0 0 20px ${colors.accent}40`
+                    : hovered
+                        ? '0 12px 28px rgba(0,0,0,0.18)'
+                        : '0 6px 18px rgba(0,0,0,0.1)',
+                transition: 'all 0.25s ease',
+                animation: isCurrentSong && isPlaying ? 'cardBreathe 3s ease-in-out infinite' : 'none',
             }}>
                 {imageUrl ? (
                     <img
@@ -359,15 +321,21 @@ function SongCard({ song, onPlay, currentSong, isPlaying, colors, fonts, compact
                         alt={song.name}
                         loading="lazy"
                         style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
                             width: '100%',
                             height: '100%',
                             objectFit: 'cover',
-                            transform: hovered ? 'scale(1.05)' : 'scale(1)',
-                            transition: 'transform 0.3s',
+                            transform: hovered ? 'scale(1.04)' : 'scale(1)',
+                            transition: 'transform 0.25s ease',
                         }}
                     />
                 ) : (
                     <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
                         width: '100%',
                         height: '100%',
                         background: colors.paperDark,
@@ -412,12 +380,42 @@ function SongCard({ song, onPlay, currentSong, isPlaying, colors, fonts, compact
                         )}
                     </div>
                 </div>
+
+                {hovered && onAddToQueue && (
+                    <button
+                        onClick={handleAddToQueue}
+                        style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '8px',
+                            background: 'rgba(250,247,242,0.95)',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                            transition: 'transform 0.2s',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                        title="Add to Queue"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1614" strokeWidth="2.5">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                    </button>
+                )}
             </div>
 
             <div style={{
                 fontFamily: fonts.primary,
                 fontWeight: 600,
-                fontSize: '0.9rem',
+                fontSize: 'clamp(0.8rem, 2.2vw, 0.9rem)',
                 color: isCurrentSong ? colors.accent : colors.ink,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -428,7 +426,7 @@ function SongCard({ song, onPlay, currentSong, isPlaying, colors, fonts, compact
             </div>
             <div style={{
                 fontFamily: fonts.mono,
-                fontSize: '0.75rem',
+                fontSize: 'clamp(0.7rem, 2vw, 0.75rem)',
                 color: colors.inkMuted,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -436,6 +434,18 @@ function SongCard({ song, onPlay, currentSong, isPlaying, colors, fonts, compact
             }}>
                 {song.primaryArtists || 'Unknown Artist'}
             </div>
+
+            <style>{`
+                @keyframes cardBreathe {
+                    0%, 100% {
+                        transform: scale(1);
+                    }
+                    50% {
+                        transform: scale(1.02);
+                    }
+                }
+            `}</style>
         </div>
     )
 }
+

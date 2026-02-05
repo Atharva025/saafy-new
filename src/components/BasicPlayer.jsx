@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePlayer } from '@/context/PlayerContext'
 import { useTheme } from '@/context/ThemeContext'
+import { extractDominantColor, generateGradient } from '@/utils/colorExtractor'
 
 export default function BasicPlayer() {
     const { colors, fonts, isDark } = useTheme()
@@ -19,6 +20,26 @@ export default function BasicPlayer() {
 
     const [isHovered, setIsHovered] = useState(false)
     const [volumeHovered, setVolumeHovered] = useState(false)
+    const [dominantColor, setDominantColor] = useState(null)
+    const [gradientBg, setGradientBg] = useState(null)
+
+    // Extract color from album art
+    useEffect(() => {
+        const imageUrl = currentSong?.image?.[1]?.link || currentSong?.image?.[0]?.link
+        if (!imageUrl) {
+            setDominantColor(null)
+            setGradientBg(null)
+            return
+        }
+
+        extractDominantColor(imageUrl).then(color => {
+            if (color) {
+                setDominantColor(color)
+                const gradient = generateGradient(color, isDark)
+                setGradientBg(gradient)
+            }
+        })
+    }, [currentSong, isDark])
 
     const formatTime = (seconds) => {
         if (!seconds || isNaN(seconds)) return '0:00'
@@ -41,23 +62,43 @@ export default function BasicPlayer() {
 
     const progressPercent = duration ? (progress / duration) * 100 : 0
     const imageUrl = currentSong?.image?.[0]?.link || currentSong?.image?.[1]?.link || currentSong?.image?.[2]?.link || ''
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
 
     return (
         <div
             style={{
                 position: 'fixed',
-                bottom: '20px',
+                bottom: 'clamp(12px, 3vw, 20px)',
                 left: '50%',
                 transform: 'translateX(-50%)',
                 zIndex: 100,
-                width: 'min(92vw, 620px)',
+                width: 'min(96vw, 620px)',
+                maxWidth: '620px',
             }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
+            {/* Dynamic gradient background */}
+            {gradientBg && (
+                <div style={{
+                    position: 'absolute',
+                    inset: '-40px',
+                    background: gradientBg.mesh,
+                    opacity: isPlaying ? 0.8 : 0.5,
+                    filter: 'blur(60px)',
+                    transition: 'opacity 0.5s ease',
+                    pointerEvents: 'none',
+                    zIndex: -1,
+                }} />
+            )}
+
             <div style={{
-                background: colors.paper,
-                borderRadius: '16px',
+                background: isDark
+                    ? 'rgba(13, 13, 13, 0.85)'
+                    : 'rgba(250, 250, 250, 0.85)',
+                backdropFilter: 'blur(20px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                borderRadius: 'clamp(12px, 3vw, 16px)',
                 boxShadow: isHovered
                     ? isDark
                         ? '0 16px 48px rgba(0,0,0,0.5), 0 6px 20px rgba(0,0,0,0.4)'
@@ -65,28 +106,32 @@ export default function BasicPlayer() {
                     : isDark
                         ? '0 8px 32px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.3)'
                         : '0 8px 32px rgba(26,22,20,0.14), 0 4px 12px rgba(26,22,20,0.08)',
-                border: `1px solid ${colors.rule}`,
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
                 overflow: 'hidden',
                 transition: 'box-shadow 0.25s ease, background 0.3s ease',
+                position: 'relative',
             }}>
                 {/* Main Content Row */}
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '14px',
-                    padding: '12px 18px',
+                    gap: 'clamp(10px, 2.5vw, 14px)',
+                    padding: 'clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 18px)',
                 }}>
                     {/* Album Art */}
                     <div style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '8px',
+                        width: 'clamp(42px, 10vw, 48px)',
+                        height: 'clamp(42px, 10vw, 48px)',
+                        borderRadius: 'clamp(6px, 2vw, 8px)',
                         overflow: 'hidden',
                         flexShrink: 0,
                         background: colors.paperDark,
+                        position: 'relative',
                     }}>
                         {currentSong && imageUrl ? (
-                            <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <>
+                                <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </>
                         ) : (
                             <div style={{
                                 width: '100%',
@@ -103,13 +148,17 @@ export default function BasicPlayer() {
                     </div>
 
                     {/* Song Info */}
-                    <div style={{ minWidth: '100px', maxWidth: '160px' }}>
+                    <div style={{
+                        minWidth: isMobile ? '80px' : '100px',
+                        maxWidth: isMobile ? '120px' : '160px',
+                        flex: isMobile ? 1 : 'initial'
+                    }}>
                         {currentSong ? (
                             <>
                                 <div style={{
                                     fontFamily: fonts.primary,
                                     fontWeight: 600,
-                                    fontSize: '0.85rem',
+                                    fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
                                     color: colors.ink,
                                     whiteSpace: 'nowrap',
                                     overflow: 'hidden',
@@ -120,7 +169,7 @@ export default function BasicPlayer() {
                                 </div>
                                 <div style={{
                                     fontFamily: fonts.mono,
-                                    fontSize: '0.7rem',
+                                    fontSize: 'clamp(0.65rem, 1.8vw, 0.7rem)',
                                     color: colors.inkMuted,
                                     whiteSpace: 'nowrap',
                                     overflow: 'hidden',
@@ -133,7 +182,7 @@ export default function BasicPlayer() {
                         ) : (
                             <div style={{
                                 fontFamily: fonts.primary,
-                                fontSize: '0.8rem',
+                                fontSize: 'clamp(0.7rem, 1.8vw, 0.8rem)',
                                 color: colors.inkLight,
                             }}>
                                 No track selected
@@ -141,42 +190,44 @@ export default function BasicPlayer() {
                         )}
                     </div>
 
-                    <div style={{ flex: 1 }} />
+                    <div style={{ flex: isMobile ? 0 : 1 }} />
 
                     {/* Controls */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        {/* Shuffle */}
-                        <button
-                            style={{
-                                width: '30px',
-                                height: '30px',
-                                borderRadius: '50%',
-                                background: 'transparent',
-                                border: 'none',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: colors.inkLight,
-                            }}
-                            title="Shuffle"
-                        >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <polyline points="16 3 21 3 21 8" />
-                                <line x1="4" y1="20" x2="21" y2="3" />
-                                <polyline points="21 16 21 21 16 21" />
-                                <line x1="15" y1="15" x2="21" y2="21" />
-                                <line x1="4" y1="4" x2="9" y2="9" />
-                            </svg>
-                        </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(2px, 1vw, 4px)' }}>
+                        {/* Shuffle - Hidden on very small screens */}
+                        {!isMobile && (
+                            <button
+                                style={{
+                                    width: 'clamp(28px, 7vw, 30px)',
+                                    height: 'clamp(28px, 7vw, 30px)',
+                                    borderRadius: '50%',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: colors.inkLight,
+                                }}
+                                title="Shuffle"
+                            >
+                                <svg width="clamp(12px, 3vw, 14px)" height="clamp(12px, 3vw, 14px)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <polyline points="16 3 21 3 21 8" />
+                                    <line x1="4" y1="20" x2="21" y2="3" />
+                                    <polyline points="21 16 21 21 16 21" />
+                                    <line x1="15" y1="15" x2="21" y2="21" />
+                                    <line x1="4" y1="4" x2="9" y2="9" />
+                                </svg>
+                            </button>
+                        )}
 
                         {/* Previous */}
                         <button
                             onClick={handlePrevious}
                             disabled={!currentSong}
                             style={{
-                                width: '32px',
-                                height: '32px',
+                                width: 'clamp(30px, 7vw, 32px)',
+                                height: 'clamp(30px, 7vw, 32px)',
                                 borderRadius: '50%',
                                 background: colors.paperDark,
                                 border: 'none',
@@ -188,7 +239,7 @@ export default function BasicPlayer() {
                                 color: colors.ink,
                             }}
                         >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <svg width="clamp(12px, 3vw, 14px)" height="clamp(12px, 3vw, 14px)" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6l-8.5 6z" />
                             </svg>
                         </button>
@@ -198,18 +249,35 @@ export default function BasicPlayer() {
                             onClick={togglePlay}
                             disabled={!currentSong}
                             style={{
-                                width: '44px',
-                                height: '44px',
+                                width: 'clamp(40px, 10vw, 44px)',
+                                height: 'clamp(40px, 10vw, 44px)',
                                 borderRadius: '50%',
-                                background: currentSong ? colors.accent : colors.paperDark,
+                                background: currentSong
+                                    ? (dominantColor ? dominantColor.rgb : colors.accent)
+                                    : colors.paperDark,
                                 border: 'none',
                                 cursor: currentSong ? 'pointer' : 'default',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                boxShadow: currentSong ? '0 2px 8px rgba(196,92,62,0.3)' : 'none',
+                                boxShadow: currentSong
+                                    ? (dominantColor
+                                        ? `0 2px 12px ${dominantColor.rgba(0.4)}, inset 0 0 0 1px ${dominantColor.rgba(0.2)}`
+                                        : '0 2px 8px rgba(196,92,62,0.3)')
+                                    : 'none',
+                                position: 'relative',
+                                transition: 'all 0.3s ease',
                             }}
                         >
+                            {isPlaying && (
+                                <div style={{
+                                    position: 'absolute',
+                                    inset: '-4px',
+                                    borderRadius: '50%',
+                                    border: `2px solid ${dominantColor ? dominantColor.rgba(0.5) : colors.accent}`,
+                                    animation: 'progressRing 2s ease-in-out infinite',
+                                }} />
+                            )}
                             {isPlaying ? (
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill={isDark ? colors.paper : '#fff'}>
                                     <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
@@ -423,6 +491,27 @@ export default function BasicPlayer() {
                     </div>
                 )}
             </div>
+
+            <style>{`
+                @keyframes breathe {
+                    0%, 100% {
+                        opacity: 0.6;
+                    }
+                    50% {
+                        opacity: 0.9;
+                    }
+                }
+                @keyframes progressRing {
+                    0% {
+                        transform: rotate(0deg) scale(1);
+                        opacity: 1;
+                    }
+                    100% {
+                        transform: rotate(360deg) scale(1.2);
+                        opacity: 0;
+                    }
+                }
+            `}</style>
         </div>
     )
 }

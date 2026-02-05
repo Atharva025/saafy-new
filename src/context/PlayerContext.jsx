@@ -1,5 +1,6 @@
 import { createContext, useContext, useReducer, useRef, useEffect } from 'react'
 import { getSong } from '@/lib/api'
+import { getForYouMix } from '@/lib/discovery'
 
 // ============================================================================
 // PRODUCTION-SAFE LOGGER
@@ -21,14 +22,15 @@ const PlayerContext = createContext()
 const initialState = {
     currentSong: null,
     isPlaying: false,
-    queue: [],
-    currentIndex: 0,
+    queue: [], // Upcoming songs
+    history: [], // Previously played songs
+    originalQueue: [], // For shuffle/unshuffle
     volume: 0.7,
     progress: 0,
     duration: 0,
     repeatMode: 'none', // 'none', 'one', 'all'
     shuffleMode: false,
-    originalQueue: [],
+    contextQueue: [], // The source playlist/album that was played
     error: null
 }
 
@@ -52,49 +54,132 @@ const playerReducer = (state, action) => {
                 isPlaying: action.payload
             }
 
-        case 'SET_QUEUE':
+        case 'PLAY_NOW': {
+            // Play a song immediately, add it to history
+            const { song, context } = action.payload
             return {
                 ...state,
-                queue: action.payload,
-                originalQueue: state.shuffleMode ? state.originalQueue : action.payload,
-                currentIndex: 0
+                currentSong: song,
+                history: state.currentSong ? [...state.history, state.currentSong] : state.history,
+                queue: context || state.queue,
+                contextQueue: context || state.contextQueue,
+                progress: 0,
+                error: null
             }
+        }
+
+        case 'PLAY_CONTEXT': {
+            // Play from a playlist/album context
+            const { songs, startIndex = 0 } = action.payload
+            const currentSong = songs[startIndex]
+            const upcomingSongs = songs.slice(startIndex + 1)
+
+            return {
+                ...state,
+                currentSong,
+                queue: upcomingSongs,
+                contextQueue: songs,
+                originalQueue: state.shuffleMode ? state.originalQueue : upcomingSongs,
+                history: [],
+                progress: 0,
+                error: null
+            }
+        }
 
         case 'ADD_TO_QUEUE': {
-            // Prevent duplicate entries
-            if (state.queue.find(s => s.id === action.payload.id)) {
+            // Add song after current song (Spotify behavior)
+            const song = action.payload
+            if (state.queue.find(s => s.id === song.id)) {
+                return state // Already in queue
+            }
+            return {
+                ...state,
+                queue: [song, ...state.queue],
+                originalQueue: state.shuffleMode ? [...state.originalQueue, song] : [song, ...state.queue]
+            }
+        }
+
+        case 'ADD_TO_END': {
+            // Add song to end of queue
+            const song = action.payload
+            if (state.queue.find(s => s.id === song.id)) {
                 return state
             }
             return {
                 ...state,
-                queue: [...state.queue, action.payload],
-                originalQueue: state.shuffleMode
-                    ? [...state.originalQueue, action.payload]
-                    : [...state.queue, action.payload]
+                queue: [...state.queue, song],
+                originalQueue: state.shuffleMode ? [...state.originalQueue, song] : [...state.queue, song]
             }
         }
 
         case 'REMOVE_FROM_QUEUE': {
-            const newQueue = state.queue.filter((_, index) => index !== action.payload)
-            const newOriginalQueue = state.shuffleMode
-                ? state.originalQueue.filter((_, index) => index !== action.payload)
-                : newQueue
-
+            const index = action.payload
             return {
                 ...state,
-                queue: newQueue,
-                originalQueue: newOriginalQueue,
-                currentIndex: action.payload < state.currentIndex
-                    ? state.currentIndex - 1
-                    : state.currentIndex
+                queue: state.queue.filter((_, i) => i !== index),
+                originalQueue: state.shuffleMode
+                    ? state.originalQueue.filter((_, i) => i !== index)
+                    : state.queue.filter((_, i) => i !== index)
             }
         }
 
-        case 'SET_CURRENT_INDEX':
+        case 'PLAY_NEXT': {
+            // Move to next song in queue
+            if (state.queue.length === 0) {
+                return state
+            }
+
+            const [nextSong, ...remainingQueue] = state.queue
+
             return {
                 ...state,
-                currentIndex: action.payload,
-                currentSong: state.queue[action.payload] || null
+                currentSong: nextSong,
+                queue: remainingQueue,
+                history: state.currentSong ? [...state.history, state.currentSong] : state.history,
+                progress: 0
+            }
+        }
+
+        case 'PLAY_PREVIOUS': {
+            // Go back in history
+            if (state.history.length === 0) {
+                return state
+            }
+
+            const previousSong = state.history[state.history.length - 1]
+            const newHistory = state.history.slice(0, -1)
+
+            return {
+                ...state,
+                currentSong: previousSong,
+                queue: state.currentSong ? [state.currentSong, ...state.queue] : state.queue,
+                history: newHistory,
+                progress: 0
+            }
+        }
+
+        case 'EXTEND_QUEUE': {
+            // Add songs to queue (for auto-continue)
+            const newSongs = action.payload
+            const existingIds = new Set(state.queue.map(s => s?.id))
+            const uniqueSongs = newSongs.filter(s => s?.id && !existingIds.has(s.id))
+
+            if (uniqueSongs.length === 0) return state
+
+            return {
+                ...state,
+                queue: [...state.queue, ...uniqueSongs],
+                originalQueue: state.shuffleMode
+                    ? [...state.originalQueue, ...uniqueSongs]
+                    : [...state.queue, ...uniqueSongs]
+            }
+        }
+
+        case 'CLEAR_QUEUE':
+            return {
+                ...state,
+                queue: [],
+                originalQueue: []
             }
 
         case 'SET_VOLUME':
@@ -123,25 +208,26 @@ const playerReducer = (state, action) => {
 
         case 'TOGGLE_SHUFFLE': {
             if (!state.shuffleMode) {
+                // Enable shuffle
                 const shuffled = [...state.queue]
                 for (let i = shuffled.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1))
-                        ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
                 }
 
                 return {
                     ...state,
                     shuffleMode: true,
-                    queue: shuffled,
                     originalQueue: state.queue,
-                    currentIndex: shuffled.findIndex(song => song.id === state.currentSong?.id) || 0
+                    queue: shuffled
                 }
             } else {
+                // Disable shuffle
                 return {
                     ...state,
                     shuffleMode: false,
                     queue: state.originalQueue,
-                    currentIndex: state.originalQueue.findIndex(song => song.id === state.currentSong?.id) || 0
+                    originalQueue: []
                 }
             }
         }
@@ -171,6 +257,7 @@ const playerReducer = (state, action) => {
 export function PlayerProvider({ children }) {
     const [state, dispatch] = useReducer(playerReducer, initialState)
     const audioRef = useRef(null)
+    const autoQueueingRef = useRef(false)
 
     /**
      * Normalize song image to consistent array format
@@ -223,6 +310,37 @@ export function PlayerProvider({ children }) {
         return song.download_url || song.streamUrl || song.url || song.previewUrl || null
     }
 
+    const promoteSongToFront = (queue, song) => {
+        if (!song?.id) return queue
+        const rest = queue.filter((item) => item?.id !== song.id)
+        return [song, ...rest]
+    }
+
+    const appendUnique = (queue, songs) => {
+        const ids = new Set(queue.map((s) => s?.id))
+        const uniqueAdds = songs.filter((s) => s?.id && !ids.has(s.id))
+        return [...queue, ...uniqueAdds]
+    }
+
+    const extendQueueIfNeeded = async () => {
+        if (autoQueueingRef.current) return
+        if (state.queue.length > 3) return // Don't extend if we still have songs
+
+        autoQueueingRef.current = true
+
+        try {
+            const mix = await getForYouMix(12)
+            if (mix?.songs?.length) {
+                const normalized = mix.songs.map(normalizeImageForSong)
+                dispatch({ type: 'EXTEND_QUEUE', payload: normalized })
+            }
+        } catch (error) {
+            log.warn('Auto-queue fetch failed:', error?.message || error)
+        } finally {
+            autoQueueingRef.current = false
+        }
+    }
+
     // ============================================================================
     // AUDIO EVENT HANDLERS
     // ============================================================================
@@ -265,7 +383,7 @@ export function PlayerProvider({ children }) {
     // PLAYER ACTIONS
     // ============================================================================
 
-    const playSong = async (song, queue = null) => {
+    const playSong = async (song, context = null) => {
         if (!song?.id) {
             log.warn('Invalid song object')
             return
@@ -294,16 +412,26 @@ export function PlayerProvider({ children }) {
                 return
             }
 
-            // Update queue if provided
-            if (queue) {
-                const normalizedQueue = queue.map(normalizeImageForSong)
-                dispatch({ type: 'SET_QUEUE', payload: normalizedQueue })
-                const index = normalizedQueue.findIndex(s => s.id === song.id)
-                dispatch({ type: 'SET_CURRENT_INDEX', payload: index >= 0 ? index : 0 })
+            const normalizedSong = normalizeImageForSong(songWithUrl)
+
+            // If context provided (playlist/album), set up the queue properly
+            if (context && Array.isArray(context)) {
+                const normalizedContext = context.map(normalizeImageForSong)
+                const songIndex = normalizedContext.findIndex(s => s.id === normalizedSong.id)
+
+                dispatch({
+                    type: 'PLAY_CONTEXT',
+                    payload: {
+                        songs: normalizedContext,
+                        startIndex: songIndex >= 0 ? songIndex : 0
+                    }
+                })
             } else {
-                const normalized = normalizeImageForSong(songWithUrl)
-                dispatch({ type: 'SET_CURRENT_SONG', payload: normalized })
-                dispatch({ type: 'ADD_TO_QUEUE', payload: normalized })
+                // Single song play - just add current song
+                dispatch({
+                    type: 'PLAY_NOW',
+                    payload: { song: normalizedSong, context: null }
+                })
             }
 
             // Setup and play audio
@@ -344,55 +472,82 @@ export function PlayerProvider({ children }) {
         dispatch({ type: 'SET_PLAYING', payload: !state.isPlaying })
     }
 
-    const handleNext = () => {
-        if (state.queue.length === 0) return
-
-        let nextIndex
-
-        if (state.repeatMode === 'one') {
-            nextIndex = state.currentIndex
-        } else if (state.currentIndex < state.queue.length - 1) {
-            nextIndex = state.currentIndex + 1
-        } else if (state.repeatMode === 'all') {
-            nextIndex = 0
-        } else {
-            dispatch({ type: 'SET_PLAYING', payload: false })
+    const handleNext = async () => {
+        if (state.repeatMode === 'one' && state.currentSong) {
+            // Repeat current song
+            if (audioRef.current) {
+                audioRef.current.currentTime = 0
+                audioRef.current.play()
+            }
             return
         }
 
-        dispatch({ type: 'SET_CURRENT_INDEX', payload: nextIndex })
-        const nextSong = state.queue[nextIndex]
+        // Check if we need to extend queue
+        await extendQueueIfNeeded()
 
-        if (nextSong) {
-            playSong(nextSong)
+        if (state.queue.length === 0) {
+            // No more songs in queue
+            if (state.repeatMode === 'all' && state.contextQueue.length > 0) {
+                // Loop back to start of context
+                playSong(state.contextQueue[0], state.contextQueue)
+            } else {
+                // Stop playing
+                dispatch({ type: 'SET_PLAYING', payload: false })
+                if (audioRef.current) {
+                    audioRef.current.pause()
+                }
+            }
+            return
+        }
+
+        // Play next song and update queue
+        const nextSong = state.queue[0]
+        dispatch({ type: 'PLAY_NEXT' })
+
+        // Setup audio for next song
+        const audioUrl = extractAudioUrl(nextSong)
+        if (audioUrl && audioRef.current) {
+            const audio = audioRef.current
+            audio.src = audioUrl
+            audio.load()
+
+            try {
+                await audio.play()
+                dispatch({ type: 'SET_PLAYING', payload: true })
+            } catch (error) {
+                log.warn('Failed to play next song:', error)
+                dispatch({ type: 'SET_PLAYING', payload: false })
+            }
         }
     }
 
     const handlePrevious = () => {
-        if (state.queue.length === 0) return
-
         // Restart if more than 3 seconds played
         if (state.progress > 3) {
             seekTo(0)
             return
         }
 
-        let prevIndex
-
-        if (state.currentIndex > 0) {
-            prevIndex = state.currentIndex - 1
-        } else if (state.repeatMode === 'all') {
-            prevIndex = state.queue.length - 1
-        } else {
+        // Go back in history
+        if (state.history.length === 0) {
             seekTo(0)
             return
         }
 
-        dispatch({ type: 'SET_CURRENT_INDEX', payload: prevIndex })
-        const prevSong = state.queue[prevIndex]
+        const previousSong = state.history[state.history.length - 1]
+        dispatch({ type: 'PLAY_PREVIOUS' })
 
-        if (prevSong) {
-            playSong(prevSong)
+        // Setup audio for previous song
+        const audioUrl = extractAudioUrl(previousSong)
+        if (audioUrl && audioRef.current) {
+            const audio = audioRef.current
+            audio.src = audioUrl
+            audio.load()
+
+            audio.play().catch(error => {
+                log.warn('Failed to play previous song:', error)
+                dispatch({ type: 'SET_PLAYING', payload: false })
+            })
         }
     }
 
@@ -434,9 +589,7 @@ export function PlayerProvider({ children }) {
     }
 
     const clearQueue = () => {
-        dispatch({ type: 'SET_QUEUE', payload: [] })
-        dispatch({ type: 'SET_CURRENT_SONG', payload: null })
-        dispatch({ type: 'SET_PLAYING', payload: false })
+        dispatch({ type: 'CLEAR_QUEUE' })
     }
 
     const clearError = () => {

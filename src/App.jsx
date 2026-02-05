@@ -2,12 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { PlayerProvider, usePlayer } from '@/context/PlayerContext'
 import { ThemeProvider, useTheme } from '@/context/ThemeContext'
+import { ToastProvider } from '@/context/ToastContext'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import BasicSearch from '@/components/BasicSearch'
 import SongList from '@/components/SongList'
 import BasicPlayer from '@/components/BasicPlayer'
 import ArtistPage from '@/components/ArtistPage'
 import DiscoverSection from '@/components/DiscoverSection'
+import QueuePanel from '@/components/QueuePanel'
+import SkeletonLoader from '@/components/SkeletonLoader'
 import { getAllDiscoveryContent, getForYouMix, refreshDiscovery } from '@/lib/discovery'
 
 // Local Storage Keys
@@ -32,7 +35,7 @@ const addToListeningHistory = (song) => {
 
 function HomePage() {
   const { isDark, colors, fonts, toggleTheme } = useTheme()
-  const { playSong } = usePlayer()
+  const { playSong, addToQueue, queue } = usePlayer()
 
   const [searchResults, setSearchResults] = useState([])
   const [isSearching, setIsSearching] = useState(false)
@@ -43,6 +46,7 @@ function HomePage() {
 
   const [showHistory, setShowHistory] = useState(false)
   const [listeningHistory, setListeningHistory] = useState([])
+  const [showQueue, setShowQueue] = useState(false)
   const historyRef = useRef(null)
 
   useEffect(() => {
@@ -156,19 +160,20 @@ function HomePage() {
         borderBottom: `1px solid ${colors.rule}`,
         transition: 'background 0.3s ease, border-color 0.3s ease',
       }}>
-        <div style={{
+        <div className="header-container" style={{
           maxWidth: '1400px',
           margin: '0 auto',
-          padding: '16px 32px',
+          padding: 'clamp(12px, 3vw, 16px) clamp(16px, 4vw, 32px)',
           display: 'flex',
           alignItems: 'center',
-          gap: '24px',
+          gap: 'clamp(12px, 3vw, 24px)',
+          flexWrap: 'wrap',
         }}>
           {/* Left - Logo + Greeting */}
-          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div className="header-left" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 'clamp(12px, 3vw, 20px)' }}>
             <div style={{
               fontFamily: fonts.display,
-              fontSize: '1.4rem',
+              fontSize: 'clamp(1.1rem, 4vw, 1.4rem)',
               fontWeight: 800,
               color: colors.ink,
               letterSpacing: '-0.02em',
@@ -176,12 +181,12 @@ function HomePage() {
               SAAFY
             </div>
 
-            <div style={{ width: '1px', height: '28px', background: colors.rule }} />
+            <div className="header-divider" style={{ width: '1px', height: '28px', background: colors.rule }} />
 
-            <div>
+            <div className="header-greeting">
               <div style={{
                 fontFamily: fonts.primary,
-                fontSize: '0.9rem',
+                fontSize: 'clamp(0.75rem, 2vw, 0.9rem)',
                 fontWeight: 600,
                 color: colors.ink,
               }}>
@@ -189,7 +194,7 @@ function HomePage() {
               </div>
               <div style={{
                 fontFamily: fonts.mono,
-                fontSize: '0.65rem',
+                fontSize: 'clamp(0.6rem, 1.5vw, 0.65rem)',
                 color: colors.inkLight,
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
@@ -201,16 +206,62 @@ function HomePage() {
           </div>
 
           {/* Center - Search */}
-          <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+          <div className="header-search" style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: 0 }}>
             <BasicSearch onSelectSong={handlePlaySong} />
           </div>
 
           {/* Right - Actions */}
-          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="header-actions" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 'clamp(6px, 2vw, 8px)' }}>
+            {/* Queue Button */}
+            <button
+              onClick={() => setShowQueue(!showQueue)}
+              style={{
+                ...iconBtnStyle(showQueue),
+                position: 'relative',
+                width: 'clamp(36px, 8vw, 40px)',
+                height: 'clamp(36px, 8vw, 40px)',
+              }}
+              title="Queue"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" />
+                <line x1="3" y1="18" x2="3.01" y2="18" />
+              </svg>
+              {queue.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-4px',
+                  minWidth: '18px',
+                  height: '18px',
+                  borderRadius: '10px',
+                  background: colors.accent,
+                  color: colors.paper,
+                  fontSize: '0.65rem',
+                  fontFamily: fonts.mono,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 4px',
+                }}>
+                  {queue.length}
+                </div>
+              )}
+            </button>
+
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              style={iconBtnStyle(isDark)}
+              style={{
+                ...iconBtnStyle(isDark),
+                width: 'clamp(36px, 8vw, 40px)',
+                height: 'clamp(36px, 8vw, 40px)',
+              }}
               title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
               {isDark ? (
@@ -239,7 +290,11 @@ function HomePage() {
                   setListeningHistory(getListeningHistory())
                   setShowHistory(!showHistory)
                 }}
-                style={iconBtnStyle(showHistory)}
+                style={{
+                  ...iconBtnStyle(showHistory),
+                  width: 'clamp(36px, 8vw, 40px)',
+                  height: 'clamp(36px, 8vw, 40px)',
+                }}
                 title="Recently Played"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -415,10 +470,11 @@ function HomePage() {
       </header>
 
       {/* Main Content */}
-      <main style={{
+      <main className="main-content" style={{
         maxWidth: '1400px',
         margin: '0 auto',
-        padding: '32px 32px 160px 32px',
+        padding: 'clamp(16px, 4vw, 32px)',
+        paddingBottom: 'clamp(120px, 25vw, 160px)',
       }}>
         {isSearching ? (
           <section>
@@ -461,85 +517,130 @@ function HomePage() {
                 ← Back
               </button>
             </div>
-            <SongList songs={searchResults} onPlaySong={handlePlaySong} />
+            <SongList songs={searchResults} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
           </section>
         ) : (
           <div>
             {/* For You */}
-            <section style={{ marginBottom: '48px' }}>
+            <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
               <div style={{
                 display: 'flex',
-                alignItems: 'baseline',
+                alignItems: 'center',
                 justifyContent: 'space-between',
-                marginBottom: '24px',
+                gap: 'clamp(12px, 3vw, 16px)',
+                marginBottom: 'clamp(16px, 4vw, 20px)',
+                flexWrap: 'wrap',
               }}>
-                <h1 style={{
-                  fontFamily: fonts.display,
-                  fontSize: '2.5rem',
-                  fontWeight: 800,
-                  color: colors.ink,
-                }}>
-                  For You
-                </h1>
-                <span style={{
-                  fontFamily: fonts.mono,
-                  fontSize: '0.7rem',
-                  color: colors.inkLight,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
-                }}>
-                  Curated Daily
-                </span>
+                <div>
+                  <h1 style={{
+                    fontFamily: fonts.display,
+                    fontSize: 'clamp(1.6rem, 6vw, 2.4rem)',
+                    fontWeight: 800,
+                    color: colors.ink,
+                    margin: 0,
+                  }}>
+                    For You
+                  </h1>
+                  <div style={{
+                    fontFamily: fonts.mono,
+                    fontSize: 'clamp(0.7rem, 2vw, 0.8rem)',
+                    color: colors.inkLight,
+                    marginTop: '6px',
+                  }}>
+                    Curated mix • Fresh discoveries
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleShuffleAll}
+                  style={{
+                    padding: 'clamp(10px, 2.5vw, 12px) clamp(16px, 4vw, 20px)',
+                    borderRadius: 'clamp(10px, 2.5vw, 12px)',
+                    background: colors.accent,
+                    border: 'none',
+                    color: colors.paper,
+                    cursor: 'pointer',
+                    fontFamily: fonts.mono,
+                    fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                    boxShadow: `0 4px 12px ${colors.accent}30`,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = `0 6px 20px ${colors.accent}50`
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = `0 4px 12px ${colors.accent}30`
+                  }}
+                >
+                  Play All
+                </button>
               </div>
-              <DiscoverSection songs={forYou.songs} loading={forYou.loading} featured onPlaySong={handlePlaySong} />
+
+              <div style={{
+                borderRadius: '20px',
+                padding: '16px',
+                background: isDark ? colors.paperDark : colors.paper,
+                border: `1px solid ${colors.rule}`,
+                boxShadow: isDark
+                  ? '0 10px 30px rgba(0,0,0,0.3)'
+                  : '0 10px 30px rgba(26,22,20,0.08)',
+              }}>
+                <DiscoverSection songs={forYou.songs} loading={forYou.loading} featured onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
+              </div>
             </section>
 
             {/* Hindi */}
-            <section style={{ marginBottom: '48px' }}>
+            <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
               <h2 style={{
                 fontFamily: fonts.display,
-                fontSize: '1.5rem',
+                fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
                 fontWeight: 700,
                 color: colors.ink,
-                marginBottom: '20px',
+                marginBottom: 'clamp(16px, 4vw, 20px)',
               }}>
                 Hindi
               </h2>
-              <DiscoverSection songs={discovery.hindi?.songs} loading={loading} onPlaySong={handlePlaySong} />
+              <DiscoverSection songs={discovery.hindi?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
             </section>
 
             {/* English */}
-            <section style={{ marginBottom: '48px' }}>
+            <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
               <h2 style={{
                 fontFamily: fonts.display,
-                fontSize: '1.5rem',
+                fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
                 fontWeight: 700,
                 color: colors.ink,
-                marginBottom: '20px',
+                marginBottom: 'clamp(16px, 4vw, 20px)',
               }}>
                 English
               </h2>
-              <DiscoverSection songs={discovery.english?.songs} loading={loading} onPlaySong={handlePlaySong} />
+              <DiscoverSection songs={discovery.english?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
             </section>
 
             {/* Punjabi */}
-            <section style={{ marginBottom: '48px' }}>
+            <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
               <h2 style={{
                 fontFamily: fonts.display,
-                fontSize: '1.5rem',
+                fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
                 fontWeight: 700,
                 color: colors.ink,
-                marginBottom: '20px',
+                marginBottom: 'clamp(16px, 4vw, 20px)',
               }}>
                 Punjabi
               </h2>
-              <DiscoverSection songs={discovery.punjabi?.songs} loading={loading} onPlaySong={handlePlaySong} />
+              <DiscoverSection songs={discovery.punjabi?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
             </section>
           </div>
         )}
       </main>
 
       <BasicPlayer />
+      <QueuePanel isOpen={showQueue} onClose={() => setShowQueue(false)} />
     </div>
   )
 }
@@ -548,14 +649,16 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
-        <PlayerProvider>
-          <Router>
-            <Routes>
-              <Route path="/" element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
-              <Route path="/artist/:id" element={<ErrorBoundary><ArtistPage /></ErrorBoundary>} />
-            </Routes>
-          </Router>
-        </PlayerProvider>
+        <ToastProvider>
+          <PlayerProvider>
+            <Router>
+              <Routes>
+                <Route path="/" element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
+                <Route path="/artist/:id" element={<ErrorBoundary><ArtistPage /></ErrorBoundary>} />
+              </Routes>
+            </Router>
+          </PlayerProvider>
+        </ToastProvider>
       </ThemeProvider>
     </ErrorBoundary>
   )

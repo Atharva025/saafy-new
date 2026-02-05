@@ -200,29 +200,53 @@ export async function getAllDiscoveryContent(songsPerLanguage = 8) {
 }
 
 /**
- * Get a "For You" mix - random songs from all languages
+ * Get a "For You" mix - random songs from all languages with variety
+ * Enhanced to create more engaging, diverse discovery experience
  */
 export async function getForYouMix(limit = 12) {
     const seed = getSessionSeed()
     const languages = Object.keys(DISCOVERY_POOLS)
-    const selectedLanguages = seededPick(languages, 3, seed)
+
+    // Pick 3-4 languages for variety (more than before for richer mix)
+    const languageCount = 3 + (seed % 2) // 3 or 4 languages
+    const selectedLanguages = seededPick(languages, languageCount, seed)
 
     const allSongs = []
+    const songsPerLanguage = Math.ceil(limit / languageCount) + 2 // Extra songs for filtering
 
-    for (const lang of selectedLanguages) {
-        const data = await getDiscoverySongs(lang, 6)
-        if (data.success) {
-            allSongs.push(...data.songs)
+    // Fetch songs from each language in parallel
+    const promises = selectedLanguages.map(lang => getDiscoverySongs(lang, songsPerLanguage))
+    const results = await Promise.allSettled(promises)
+
+    results.forEach(result => {
+        if (result.status === 'fulfilled' && result.value.success) {
+            allSongs.push(...result.value.songs)
+        }
+    })
+
+    // Shuffle the combined results with extra randomness
+    const shuffled = seededShuffle(allSongs, seed + 999)
+
+    // Ensure unique songs (no duplicates by ID)
+    const unique = []
+    const seenIds = new Set()
+
+    for (const song of shuffled) {
+        if (!seenIds.has(song.id) && unique.length < limit) {
+            seenIds.add(song.id)
+            unique.push(song)
         }
     }
 
-    // Shuffle the combined results
-    const shuffled = seededShuffle(allSongs, seed + 999)
-
     return {
         success: true,
-        songs: shuffled.slice(0, limit),
-        title: 'For You'
+        songs: unique,
+        title: 'For You',
+        metadata: {
+            languages: selectedLanguages,
+            totalFetched: allSongs.length,
+            seed: seed
+        }
     }
 }
 
