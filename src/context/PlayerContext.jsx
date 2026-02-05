@@ -380,6 +380,29 @@ export function PlayerProvider({ children }) {
     }, [state.currentSong])
 
     // ============================================================================
+    // UPDATE PAGE TITLE WITH CURRENT SONG
+    // ============================================================================
+
+    useEffect(() => {
+        const defaultTitle = 'Saafy - Music Experience'
+        
+        if (state.currentSong && state.isPlaying) {
+            const songName = state.currentSong.name || state.currentSong.title || 'Unknown Song'
+            const artist = state.currentSong.primaryArtists || 'Unknown Artist'
+            document.title = `${songName} - ${artist}`
+        } else if (state.currentSong) {
+            const songName = state.currentSong.name || state.currentSong.title || 'Unknown Song'
+            document.title = `${songName} (Paused) - Saafy`
+        } else {
+            document.title = defaultTitle
+        }
+
+        return () => {
+            document.title = defaultTitle
+        }
+    }, [state.currentSong, state.isPlaying])
+
+    // ============================================================================
     // PLAYER ACTIONS
     // ============================================================================
 
