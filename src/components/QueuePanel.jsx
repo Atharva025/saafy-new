@@ -134,7 +134,11 @@ export default function QueuePanel({ isOpen, onClose }) {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 2vw, 8px)' }}>
                         {queue.map((song, index) => {
                             const isPlaying = currentSong?.id === song.id
-                            const imageUrl = song.image?.[0]?.link || song.image?.[1]?.link || song.image?.[2]?.link || ''
+                            // Use highest quality image available - check both .link and .url
+                            const imageUrl = song.image?.[0]?.link || song.image?.[0]?.url ||
+                                song.image?.[1]?.link || song.image?.[1]?.url ||
+                                song.image?.[2]?.link || song.image?.[2]?.url ||
+                                song.imageUrl || ''
 
                             return (
                                 <div

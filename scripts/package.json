@@ -1,0 +1,27 @@
+{
+    "name": "saafy-song-scraper",
+    "version": "1.0.0",
+    "description": "Web scraper to populate Saafy music database with songs from 2000-2026",
+    "main": "scrape-songs.js",
+    "scripts": {
+        "test": "node test-scraper.js",
+        "scrape": "node scrape-songs.js",
+        "fetch-jiosaavn": "node jiosaavn-fetcher.js",
+        "import": "node import-jiosaavn.js",
+        "populate": "npm run fetch-jiosaavn && npm run import"
+    },
+    "keywords": [
+        "scraper",
+        "music",
+        "myswar",
+        "songs",
+        "database"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "axios": "^1.6.2",
+        "cheerio": "^1.0.0-rc.12"
+    },
+    "devDependencies": {}
+}

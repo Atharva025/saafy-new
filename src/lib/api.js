@@ -550,6 +550,110 @@ export const getSongSuggestions = async (songId, limit = 10) => {
 }
 
 // ============================================================================
+// RECOMMENDATION SYSTEM API
+// ============================================================================
+
+const RECOMMENDER_BASE_URL = 'https://atharva025-saafy-music-recommender.hf.space/api'
+
+/**
+ * Add song to vector database for recommendations
+ */
+export const addSongToRecommender = async (songName, artist) => {
+    try {
+        if (!songName || !artist) {
+            console.warn('⚠️ addSongToRecommender: Missing required parameters', { songName, artist })
+            return { success: false, error: 'Song name and artist are required' }
+        }
+
+        // Use POST request with query parameters (as per HuggingFace deployment)
+        const params = new URLSearchParams({
+            song_name: songName,
+            artist: artist
+        })
+
+        const url = `${RECOMMENDER_BASE_URL}/add-song?${params}`
+        console.log('📤 API Call: Adding song to recommender (POST):', url)
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+            },
+        })
+
+        console.log('📥 Response status:', response.status, response.statusText)
+
+        if (!response.ok) {
+            const errorText = await response.text()
+            console.error('❌ API Error response:', errorText)
+            return {
+                success: false,
+                error: `Failed to add song: ${response.statusText}`,
+                status: response.status
+            }
+        }
+
+        const data = await response.json()
+        console.log('✅ Song added successfully:', data)
+        return { success: true, data, status: response.status }
+    } catch (error) {
+        console.error('❌ Error in addSongToRecommender:', error)
+        return { success: false, error: error.message, status: 0 }
+    }
+}
+
+/**
+ * Get song recommendations based on song ID
+ */
+export const getRecommendations = async (songId, limit = 10) => {
+    try {
+        if (!songId) {
+            console.warn('⚠️ getRecommendations: Missing song ID')
+            return { success: false, recommendations: [], error: 'Song ID is required' }
+        }
+
+        const sanitizedId = String(songId).replace(/[^a-zA-Z0-9_-]/g, '')
+        const validLimit = Math.min(50, Math.max(1, Number(limit) || 10))
+
+        const url = `${RECOMMENDER_BASE_URL}/recommend/${sanitizedId}?limit=${validLimit}`
+        console.log('🔍 API Call: Fetching recommendations:', url)
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            },
+        })
+
+        console.log('📥 Response status:', response.status, response.statusText)
+
+        if (!response.ok) {
+            const errorText = await response.text()
+            console.error('❌ API Error response:', errorText)
+            throw new Error(`Failed to get recommendations: ${response.statusText}`)
+        }
+
+        const data = await response.json()
+        console.log('✅ Recommendations received:', data.count, 'songs')
+
+        if (data.success && data.recommendations) {
+            return {
+                success: true,
+                query_song: data.query_song,
+                recommendations: data.recommendations,
+                count: data.count
+            }
+        }
+
+        console.warn('⚠️ Invalid response format:', data)
+        return { success: false, recommendations: [], error: 'Invalid response format' }
+    } catch (error) {
+        console.error('❌ Error in getRecommendations:', error)
+        return { success: false, recommendations: [], error: error.message }
+    }
+}
+
+// ============================================================================
 // UTILITY EXPORTS
 // ============================================================================
 

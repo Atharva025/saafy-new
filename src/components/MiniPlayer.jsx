@@ -17,7 +17,11 @@ export default function MiniPlayer({ onExpand }) {
 
     if (!currentSong) return null
 
-    const imageUrl = currentSong?.image?.[0]?.link || currentSong?.image?.[1]?.link || ''
+    // Use highest quality image available - check both .link and .url
+    const imageUrl = currentSong?.image?.[0]?.link || currentSong?.image?.[0]?.url ||
+        currentSong?.image?.[1]?.link || currentSong?.image?.[1]?.url ||
+        currentSong?.image?.[2]?.link || currentSong?.image?.[2]?.url ||
+        currentSong?.imageUrl || ''
     const progressPercent = duration ? (progress / duration) * 100 : 0
 
     return (
