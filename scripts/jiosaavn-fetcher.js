@@ -21,33 +21,33 @@ const SEARCH_QUERIES = [
     // Legendary singers (classics)
     'Kishore Kumar', 'Lata Mangeshkar', 'Mohammed Rafi', 'Asha Bhosle',
     'Kumar Sanu', 'Alka Yagnik', 'Udit Narayan', 'Kavita Krishnamurthy',
-    
+
     // Modern artists (not in previous search)
     'Jubin Nautiyal', 'Darshan Raval', 'Guru Randhawa', 'Tony Kakkar',
     'Badshah', 'Yo Yo Honey Singh', 'B Praak', 'Harrdy Sandhu',
     'Tulsi Kumar', 'Dhvani Bhanushali', 'Asees Kaur', 'Millind Gaba',
-    
+
     // Music directors (different from Round 1)
     'Anu Malik', 'Jatin Lalit', 'Nadeem Shravan', 'Sajid Wajid',
     'Himesh Reshammiya', 'Mithoon', 'Tanishk Bagchi', 'Sachin Jigar',
-    
+
     // Regional cinema
     'Tamil songs', 'Telugu hits', 'Punjabi songs', 'Marathi songs',
     'Malayalam hits', 'Bengali songs', 'Gujarati songs',
-    
+
     // Popular movies (different from Round 1)
     'Pathaan', 'Tiger 3', 'Animal', 'Jawan', 'Dhoom',
     'Chennai Express', 'Bajirao Mastani', 'Padmaavat', 'Sanju',
     'War', 'Student of the Year', 'Barfi', 'PK', 'Dangal',
-    
+
     // Decades & eras
     '90s bollywood', '80s hits', '2000s songs', 'retro hits',
     'classic hindi', 'golden era', 'old hindi songs',
-    
+
     // Specific genres & moods
     'item songs', 'ghazals', 'qawwali', 'folk songs', 'wedding songs',
     'breakup songs', 'motivational', 'friendship songs', 'rain songs',
-    
+
     // Recent hits (2025-2026)
     'latest hindi songs 2025', 'new songs 2026', 'trending now',
     'viral songs', 'chartbusters 2024'
@@ -117,12 +117,12 @@ async function fetchSongs() {
     // Load existing song IDs to avoid duplicates
     const seenSongIds = new Set();
     let existingSongs = 0;
-    
+
     if (fs.existsSync(OUTPUT_FILE)) {
         console.log('📖 Loading existing songs to avoid duplicates...');
         const existingContent = fs.readFileSync(OUTPUT_FILE, 'utf-8');
         const lines = existingContent.split('\n').slice(1); // Skip header
-        
+
         for (const line of lines) {
             if (!line.trim()) continue;
             const match = line.match(/^"([^"]+)"/);
