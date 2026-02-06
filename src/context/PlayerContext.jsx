@@ -1,6 +1,7 @@
-import { createContext, useContext, useReducer, useRef, useEffect } from 'react'
-import { getSong } from '@/lib/api'
+import { createContext, useContext, useReducer, useRef, useEffect, useState } from 'react'
+import { getSong, addSongToRecommender, getRecommendations } from '@/lib/api'
 import { getForYouMix } from '@/lib/discovery'
+import { addToSessionPlayedSongs, hasBeenPlayedInSession } from '@/utils/sessionStorage'
 
 // ============================================================================
 // PRODUCTION-SAFE LOGGER
@@ -259,6 +260,11 @@ export function PlayerProvider({ children }) {
     const audioRef = useRef(null)
     const autoQueueingRef = useRef(false)
 
+    // Recommendations state
+    const [recommendations, setRecommendations] = useState([])
+    const [recommendationsLoading, setRecommendationsLoading] = useState(false)
+    const [currentRecommendedSongId, setCurrentRecommendedSongId] = useState(null)
+
     /**
      * Normalize song image to consistent array format
      */
@@ -403,6 +409,122 @@ export function PlayerProvider({ children }) {
     }, [state.currentSong, state.isPlaying])
 
     // ============================================================================
+    // RECOMMENDATION SYSTEM
+    // ============================================================================
+
+    /**
+     * Fetch recommendations for a given song
+     */
+    const fetchRecommendations = async (songId) => {
+        if (!songId) return
+
+        setRecommendationsLoading(true)
+        setCurrentRecommendedSongId(songId)
+
+        try {
+            log.info('Fetching recommendations for song:', songId)
+            const response = await getRecommendations(songId, 10)
+
+            if (response.success && response.recommendations) {
+                log.info(`Fetching full details for ${response.recommendations.length} recommendations`)
+
+                // Fetch full song details for each recommendation
+                const fullSongs = await Promise.all(
+                    response.recommendations.map(async (rec) => {
+                        try {
+                            const songResponse = await getSong(rec.song_id)
+                            if (songResponse.success && songResponse.data) {
+                                // Normalize image format and add recommendation score
+                                const normalizedSong = normalizeImageForSong(songResponse.data)
+                                return {
+                                    ...normalizedSong,
+                                    recommendationScore: rec.score
+                                }
+                            }
+                            return null
+                        } catch (error) {
+                            log.warn('Failed to fetch song:', rec.song_id, error)
+                            return null
+                        }
+                    })
+                )
+
+                // Filter out any failed fetches and ensure all have proper image format
+                const validSongs = fullSongs.filter(song => song !== null)
+
+                // Double-check image quality - log any issues
+                validSongs.forEach(song => {
+                    if (!song.image?.[0]?.link) {
+                        log.warn('Recommendation missing high-quality image:', song.name, song.id)
+                    }
+                })
+
+                setRecommendations(validSongs)
+                log.info(`Loaded ${validSongs.length} full recommendations with images`)
+            } else {
+                log.warn('No recommendations available:', response.error)
+                setRecommendations([])
+            }
+        } catch (error) {
+            log.error('Failed to fetch recommendations:', error)
+            setRecommendations([])
+        } finally {
+            setRecommendationsLoading(false)
+        }
+    }
+
+    /**
+     * Handle song playback - add to recommender & fetch recommendations
+     * This runs EVERY time a song is played, regardless of session history
+     */
+    const handleSongPlayback = async (song) => {
+        if (!song?.id) return
+
+        log.info('🎵 Processing song playback:', song.name || song.title, `(${song.id})`)
+
+        // Add to session storage tracking array
+        const sessionSongs = addToSessionPlayedSongs(song.id)
+        log.info('📝 Session songs count:', sessionSongs.length)
+        log.info('📝 All session song IDs:', sessionSongs)
+
+        // ALWAYS add song to recommender backend (every play, not just first time)
+        // Note: This is non-blocking - if it fails, recommendations will still work
+        try {
+            const songName = song.name || song.title || ''
+            // Get first artist if multiple artists are listed
+            let artist = song.primaryArtists || ''
+            if (!artist && song.artists?.[0]?.name) {
+                artist = song.artists[0].name
+            }
+            // If multiple artists, take the first one
+            if (artist.includes(',')) {
+                artist = artist.split(',')[0].trim()
+            }
+
+            if (songName && artist) {
+                log.info('📤 Adding to recommender DB:', songName, 'by', artist)
+                const result = await addSongToRecommender(songName, artist)
+                if (result.success) {
+                    log.info('✅ Successfully added to recommender DB:', result.data)
+                } else {
+                    log.warn('⚠️ Failed to add to recommender (non-critical):', result.error)
+                    if (result.status === 404) {
+                        log.warn('💡 Tip: The /add-song endpoint may not be deployed yet. Check your HuggingFace space.')
+                    }
+                }
+            } else {
+                log.warn('⚠️ Missing song name or artist:', { songName, artist, song })
+            }
+        } catch (error) {
+            log.error('❌ Error adding song to recommender (non-critical):', error)
+        }
+
+        // Fetch recommendations for this song
+        log.info('🔍 Fetching recommendations for:', song.id)
+        await fetchRecommendations(song.id)
+    }
+
+    // ============================================================================
     // PLAYER ACTIONS
     // ============================================================================
 
@@ -470,6 +592,9 @@ export function PlayerProvider({ children }) {
                 try {
                     await audio.play()
                     log.info('Playback started')
+
+                    // Track song in session and fetch recommendations (await to ensure completion)
+                    await handleSongPlayback(normalizedSong)
                 } catch (playError) {
                     log.warn('Playback failed:', playError.message)
                     dispatch({ type: 'SET_PLAYING', payload: false })
@@ -537,6 +662,9 @@ export function PlayerProvider({ children }) {
             try {
                 await audio.play()
                 dispatch({ type: 'SET_PLAYING', payload: true })
+
+                // Track song in session and fetch recommendations
+                await handleSongPlayback(nextSong)
             } catch (error) {
                 log.warn('Failed to play next song:', error)
                 dispatch({ type: 'SET_PLAYING', payload: false })
@@ -567,7 +695,10 @@ export function PlayerProvider({ children }) {
             audio.src = audioUrl
             audio.load()
 
-            audio.play().catch(error => {
+            audio.play().then(() => {
+                // Track song in session and fetch recommendations
+                handleSongPlayback(previousSong)
+            }).catch(error => {
                 log.warn('Failed to play previous song:', error)
                 dispatch({ type: 'SET_PLAYING', payload: false })
             })
@@ -639,7 +770,12 @@ export function PlayerProvider({ children }) {
         addToQueue,
         removeFromQueue,
         clearQueue,
-        clearError
+        clearError,
+        // Recommendations
+        recommendations,
+        recommendationsLoading,
+        currentRecommendedSongId,
+        fetchRecommendations
     }
 
     return (

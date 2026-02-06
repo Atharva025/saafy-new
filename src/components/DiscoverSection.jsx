@@ -171,7 +171,11 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
 
 function SongCard({ song, onPlay, onAddToQueue, currentSong, isPlaying, colors, fonts, compact = false }) {
     const isCurrentSong = currentSong?.id === song.id
-    const imageUrl = song.image?.[0]?.link || song.image?.[1]?.link || song.image?.[2]?.link || ''
+    // Try to get highest quality image - check both .link and .url properties
+    const imageUrl = song.image?.[0]?.link || song.image?.[0]?.url ||
+        song.image?.[1]?.link || song.image?.[1]?.url ||
+        song.image?.[2]?.link || song.image?.[2]?.url ||
+        song.imageUrl || ''
     const [hovered, setHovered] = useState(false)
     const { success } = useToast()
 

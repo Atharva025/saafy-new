@@ -108,7 +108,10 @@ export default function ArtistPage() {
         )
     }
 
-    const artistImage = artist?.image?.[2]?.link || artist?.image?.[1]?.link || ''
+    // Use highest quality artist image available
+    const artistImage = artist?.image?.[0]?.link || artist?.image?.[0]?.url ||
+        artist?.image?.[1]?.link || artist?.image?.[1]?.url ||
+        artist?.image?.[2]?.link || artist?.image?.[2]?.url || ''
 
     return (
         <div style={{
@@ -278,7 +281,11 @@ export default function ArtistPage() {
                     <div>
                         {songs.map((song, index) => {
                             const isCurrentSong = currentSong?.id === song.id
-                            const imageUrl = song.image?.[1]?.link || song.image?.[0]?.link || ''
+                            // Use highest quality image available - check both .link and .url
+                            const imageUrl = song.image?.[0]?.link || song.image?.[0]?.url ||
+                                song.image?.[1]?.link || song.image?.[1]?.url ||
+                                song.image?.[2]?.link || song.image?.[2]?.url ||
+                                song.imageUrl || ''
 
                             return (
                                 <div

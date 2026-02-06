@@ -26,7 +26,9 @@ export default function BasicPlayer() {
 
     // Extract color from album art
     useEffect(() => {
-        const imageUrl = currentSong?.image?.[1]?.link || currentSong?.image?.[0]?.link
+        // Use highest quality image for color extraction
+        const imageUrl = currentSong?.image?.[0]?.link || currentSong?.image?.[0]?.url || 
+                         currentSong?.image?.[1]?.link || currentSong?.image?.[1]?.url
         if (!imageUrl) {
             setDominantColor(null)
             setGradientBg(null)
@@ -69,7 +71,11 @@ export default function BasicPlayer() {
     }
 
     const progressPercent = duration ? (progress / duration) * 100 : 0
-    const imageUrl = currentSong?.image?.[0]?.link || currentSong?.image?.[1]?.link || currentSong?.image?.[2]?.link || ''
+    // Use highest quality image available - check both .link and .url
+    const imageUrl = currentSong?.image?.[0]?.link || currentSong?.image?.[0]?.url || 
+                     currentSong?.image?.[1]?.link || currentSong?.image?.[1]?.url || 
+                     currentSong?.image?.[2]?.link || currentSong?.image?.[2]?.url || 
+                     currentSong?.imageUrl || ''
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
     const isTinyScreen = typeof window !== 'undefined' && window.innerWidth < 380
 

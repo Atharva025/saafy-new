@@ -264,7 +264,11 @@ export default function BasicSearch({ onSelectSong }) {
                 }}>
                     <div style={{ maxHeight: '320px', overflowY: 'auto', padding: '6px' }}>
                         {suggestions.map((song, index) => {
-                            const imageUrl = song.image?.[0]?.link || song.image?.[1]?.link || ''
+                            // Use highest quality image available - check both .link and .url
+                            const imageUrl = song.image?.[0]?.link || song.image?.[0]?.url ||
+                                song.image?.[1]?.link || song.image?.[1]?.url ||
+                                song.image?.[2]?.link || song.image?.[2]?.url ||
+                                song.imageUrl || ''
                             const isSelected = index === selectedIndex
 
                             return (

@@ -35,7 +35,7 @@ const addToListeningHistory = (song) => {
 
 function HomePage() {
   const { isDark, colors, fonts, toggleTheme } = useTheme()
-  const { playSong, addToQueue, queue } = usePlayer()
+  const { playSong, addToQueue, queue, recommendations, recommendationsLoading, currentSong } = usePlayer()
 
   const [searchResults, setSearchResults] = useState([])
   const [isSearching, setIsSearching] = useState(false)
@@ -539,7 +539,7 @@ function HomePage() {
                     color: colors.ink,
                     margin: 0,
                   }}>
-                    For You
+                    {currentSong && recommendations.length > 0 ? 'Recommended for You' : 'For You'}
                   </h1>
                   <div style={{
                     fontFamily: fonts.mono,
@@ -547,7 +547,9 @@ function HomePage() {
                     color: colors.inkLight,
                     marginTop: '6px',
                   }}>
-                    Curated mix • Fresh discoveries
+                    {currentSong && recommendations.length > 0
+                      ? `Based on "${currentSong.name || currentSong.title}"`
+                      : 'Curated mix • Fresh discoveries'}
                   </div>
                 </div>
 
@@ -590,51 +592,126 @@ function HomePage() {
                   ? '0 10px 30px rgba(0,0,0,0.3)'
                   : '0 10px 30px rgba(26,22,20,0.08)',
               }}>
-                <DiscoverSection songs={forYou.songs} loading={forYou.loading} featured onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
+                <DiscoverSection
+                  songs={currentSong && recommendations.length > 0 ? recommendations : forYou.songs}
+                  loading={currentSong && recommendations.length > 0 ? recommendationsLoading : forYou.loading}
+                  featured
+                  onPlaySong={handlePlaySong}
+                  onAddToQueue={addToQueue}
+                />
               </div>
             </section>
 
-            {/* Hindi */}
-            <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
-              <h2 style={{
-                fontFamily: fonts.display,
-                fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
-                fontWeight: 700,
-                color: colors.ink,
-                marginBottom: 'clamp(16px, 4vw, 20px)',
-              }}>
-                Hindi
-              </h2>
-              <DiscoverSection songs={discovery.hindi?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
-            </section>
+            {/* Discovery Sections - Show Recommendations OR Default Categories */}
+            {currentSong && recommendations.length > 0 ? (
+              // RECOMMENDATIONS MODE - Replace all sections with recommendations
+              <>
+                {/* Section 1: First batch of recommendations */}
+                <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
+                  <h2 style={{
+                    fontFamily: fonts.display,
+                    fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
+                    fontWeight: 700,
+                    color: colors.ink,
+                    marginBottom: 'clamp(8px, 2vw, 12px)',
+                  }}>
+                    Similar to "{currentSong.name || currentSong.title}"
+                  </h2>
+                  <p style={{
+                    fontFamily: fonts.mono,
+                    fontSize: 'clamp(0.65rem, 1.5vw, 0.7rem)',
+                    color: colors.inkLight,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: 'clamp(16px, 4vw, 20px)',
+                  }}>
+                    Top Recommendations
+                  </p>
+                  <DiscoverSection
+                    songs={recommendations.slice(0, 6)}
+                    loading={recommendationsLoading}
+                    onPlaySong={handlePlaySong}
+                    onAddToQueue={addToQueue}
+                  />
+                </section>
 
-            {/* English */}
-            <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
-              <h2 style={{
-                fontFamily: fonts.display,
-                fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
-                fontWeight: 700,
-                color: colors.ink,
-                marginBottom: 'clamp(16px, 4vw, 20px)',
-              }}>
-                English
-              </h2>
-              <DiscoverSection songs={discovery.english?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
-            </section>
+                {/* Section 2: More recommendations if available */}
+                {recommendations.length > 6 && (
+                  <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
+                    <h2 style={{
+                      fontFamily: fonts.display,
+                      fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
+                      fontWeight: 700,
+                      color: colors.ink,
+                      marginBottom: 'clamp(8px, 2vw, 12px)',
+                    }}>
+                      More Like This
+                    </h2>
+                    <p style={{
+                      fontFamily: fonts.mono,
+                      fontSize: 'clamp(0.65rem, 1.5vw, 0.7rem)',
+                      color: colors.inkLight,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      marginBottom: 'clamp(16px, 4vw, 20px)',
+                    }}>
+                      You might also like
+                    </p>
+                    <DiscoverSection
+                      songs={recommendations.slice(6)}
+                      loading={recommendationsLoading}
+                      onPlaySong={handlePlaySong}
+                      onAddToQueue={addToQueue}
+                    />
+                  </section>
+                )}
+              </>
+            ) : (
+              // DEFAULT MODE - Show language-based categories
+              <>
+                {/* Hindi */}
+                <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
+                  <h2 style={{
+                    fontFamily: fonts.display,
+                    fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
+                    fontWeight: 700,
+                    color: colors.ink,
+                    marginBottom: 'clamp(16px, 4vw, 20px)',
+                  }}>
+                    Hindi
+                  </h2>
+                  <DiscoverSection songs={discovery.hindi?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
+                </section>
 
-            {/* Punjabi */}
-            <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
-              <h2 style={{
-                fontFamily: fonts.display,
-                fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
-                fontWeight: 700,
-                color: colors.ink,
-                marginBottom: 'clamp(16px, 4vw, 20px)',
-              }}>
-                Punjabi
-              </h2>
-              <DiscoverSection songs={discovery.punjabi?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
-            </section>
+                {/* English */}
+                <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
+                  <h2 style={{
+                    fontFamily: fonts.display,
+                    fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
+                    fontWeight: 700,
+                    color: colors.ink,
+                    marginBottom: 'clamp(16px, 4vw, 20px)',
+                  }}>
+                    English
+                  </h2>
+                  <DiscoverSection songs={discovery.english?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
+                </section>
+
+                {/* Punjabi */}
+                <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
+                  <h2 style={{
+                    fontFamily: fonts.display,
+                    fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
+                    fontWeight: 700,
+                    color: colors.ink,
+                    marginBottom: 'clamp(16px, 4vw, 20px)',
+                  }}>
+                    Punjabi
+                  </h2>
+                  <DiscoverSection songs={discovery.punjabi?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
+                </section>
+              </>
+            )}
           </div>
         )}
       </main>
