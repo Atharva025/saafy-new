@@ -25,9 +25,9 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
 
     const handlePlay = (song) => {
         if (onPlaySong) {
-            onPlaySong(song, songs)
+            onPlaySong(song)
         } else {
-            playSong(song, songs)
+            playSong(song)
         }
     }
 

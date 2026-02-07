@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { usePlayer } from '@/context/PlayerContext'
 import { useTheme } from '@/context/ThemeContext'
 import { extractDominantColor, generateGradient } from '@/utils/colorExtractor'
+import { adjustColorForTheme } from '@/lib/utils'
 
 export default function BasicPlayer() {
     const { colors, fonts, isDark } = useTheme()
@@ -27,8 +28,8 @@ export default function BasicPlayer() {
     // Extract color from album art
     useEffect(() => {
         // Use highest quality image for color extraction
-        const imageUrl = currentSong?.image?.[0]?.link || currentSong?.image?.[0]?.url || 
-                         currentSong?.image?.[1]?.link || currentSong?.image?.[1]?.url
+        const imageUrl = currentSong?.image?.[0]?.link || currentSong?.image?.[0]?.url ||
+            currentSong?.image?.[1]?.link || currentSong?.image?.[1]?.url
         if (!imageUrl) {
             setDominantColor(null)
             setGradientBg(null)
@@ -72,10 +73,10 @@ export default function BasicPlayer() {
 
     const progressPercent = duration ? (progress / duration) * 100 : 0
     // Use highest quality image available - check both .link and .url
-    const imageUrl = currentSong?.image?.[0]?.link || currentSong?.image?.[0]?.url || 
-                     currentSong?.image?.[1]?.link || currentSong?.image?.[1]?.url || 
-                     currentSong?.image?.[2]?.link || currentSong?.image?.[2]?.url || 
-                     currentSong?.imageUrl || ''
+    const imageUrl = currentSong?.image?.[0]?.link || currentSong?.image?.[0]?.url ||
+        currentSong?.image?.[1]?.link || currentSong?.image?.[1]?.url ||
+        currentSong?.image?.[2]?.link || currentSong?.image?.[2]?.url ||
+        currentSong?.imageUrl || ''
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
     const isTinyScreen = typeof window !== 'undefined' && window.innerWidth < 380
 
@@ -270,7 +271,9 @@ export default function BasicPlayer() {
                                 height: isTinyScreen ? '36px' : 'clamp(40px, 10vw, 44px)',
                                 borderRadius: '50%',
                                 background: currentSong
-                                    ? (dominantColor ? dominantColor.rgb : colors.accent)
+                                    ? (dominantColor
+                                        ? adjustColorForTheme(dominantColor, isDark)?.rgb || colors.accent
+                                        : colors.accent)
                                     : colors.paperDark,
                                 border: 'none',
                                 cursor: currentSong ? 'pointer' : 'default',
@@ -279,7 +282,7 @@ export default function BasicPlayer() {
                                 justifyContent: 'center',
                                 boxShadow: currentSong
                                     ? (dominantColor
-                                        ? `0 2px 12px ${dominantColor.rgba(0.4)}, inset 0 0 0 1px ${dominantColor.rgba(0.2)}`
+                                        ? `0 2px 12px ${adjustColorForTheme(dominantColor, isDark)?.rgba(0.4) || dominantColor.rgba(0.4)}, inset 0 0 0 1px ${adjustColorForTheme(dominantColor, isDark)?.rgba(0.2) || dominantColor.rgba(0.2)}`
                                         : '0 2px 8px rgba(196,92,62,0.3)')
                                     : 'none',
                                 position: 'relative',
@@ -291,7 +294,7 @@ export default function BasicPlayer() {
                                     position: 'absolute',
                                     inset: '-4px',
                                     borderRadius: '50%',
-                                    border: `2px solid ${dominantColor ? dominantColor.rgba(0.5) : colors.accent}`,
+                                    border: `2px solid ${dominantColor ? (adjustColorForTheme(dominantColor, isDark)?.rgba(0.5) || dominantColor.rgba(0.5)) : colors.accent}`,
                                     animation: 'progressRing 2s ease-in-out infinite',
                                 }} />
                             )}

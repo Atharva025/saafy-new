@@ -559,25 +559,12 @@ export function PlayerProvider({ children }) {
 
             const normalizedSong = normalizeImageForSong(songWithUrl)
 
-            // If context provided (playlist/album), set up the queue properly
-            if (context && Array.isArray(context)) {
-                const normalizedContext = context.map(normalizeImageForSong)
-                const songIndex = normalizedContext.findIndex(s => s.id === normalizedSong.id)
-
-                dispatch({
-                    type: 'PLAY_CONTEXT',
-                    payload: {
-                        songs: normalizedContext,
-                        startIndex: songIndex >= 0 ? songIndex : 0
-                    }
-                })
-            } else {
-                // Single song play - just add current song
-                dispatch({
-                    type: 'PLAY_NOW',
-                    payload: { song: normalizedSong, context: null }
-                })
-            }
+            // CHANGE: Always play single song only - context is ignored
+            // Users must manually add songs to queue using "Add to Queue" option
+            dispatch({
+                type: 'PLAY_NOW',
+                payload: { song: normalizedSong, context: null }
+            })
 
             // Setup and play audio
             if (audioRef.current) {
@@ -634,12 +621,35 @@ export function PlayerProvider({ children }) {
         await extendQueueIfNeeded()
 
         if (state.queue.length === 0) {
-            // No more songs in queue
-            if (state.repeatMode === 'all' && state.contextQueue.length > 0) {
-                // Loop back to start of context
-                playSong(state.contextQueue[0], state.contextQueue)
-            } else {
-                // Stop playing
+            // No more songs in queue - play a random song for continuous playback
+            log.info('Queue empty - fetching random song for continuous playback')
+
+            try {
+                // Try to get a random song from recommendations first
+                if (recommendations.length > 0) {
+                    const randomRec = recommendations[Math.floor(Math.random() * recommendations.length)]
+                    log.info('Playing random recommendation:', randomRec.name)
+                    await playSong(randomRec)
+                    return
+                }
+
+                // Fallback: Fetch a For You mix and play a random song
+                const mix = await getForYouMix(10)
+                if (mix?.songs?.length > 0) {
+                    const randomSong = mix.songs[Math.floor(Math.random() * mix.songs.length)]
+                    log.info('Playing random song from For You mix:', randomSong.name)
+                    await playSong(randomSong)
+                    return
+                }
+
+                // Last resort: stop playing
+                log.warn('No songs available for continuous playback')
+                dispatch({ type: 'SET_PLAYING', payload: false })
+                if (audioRef.current) {
+                    audioRef.current.pause()
+                }
+            } catch (error) {
+                log.error('Failed to fetch random song:', error)
                 dispatch({ type: 'SET_PLAYING', payload: false })
                 if (audioRef.current) {
                     audioRef.current.pause()

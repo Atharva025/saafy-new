@@ -51,7 +51,7 @@ export default function ArtistPage() {
         fetchArtist()
     }, [id])
 
-    const handlePlay = (song) => playSong(song, songs)
+    const handlePlay = (song) => playSong(song)
 
     const formatDuration = (seconds) => {
         if (!seconds) return '--:--'

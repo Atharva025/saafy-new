@@ -76,6 +76,7 @@ function ToastContainer({ toasts, removeToast }) {
 
 function Toast({ toast, onClose }) {
     const [isExiting, setIsExiting] = useState(false)
+    const [progress, setProgress] = useState(100)
     const isDark = localStorage.getItem('theme') === 'dark'
 
     const colors = isDark ? {
@@ -97,6 +98,15 @@ function Toast({ toast, onClose }) {
         info: colors.accent,
     }
 
+    // Progress bar animation
+    useEffect(() => {
+        if (toast.duration === Infinity) return
+        const interval = setInterval(() => {
+            setProgress(prev => Math.max(0, prev - (100 / (toast.duration / 50))))
+        }, 50)
+        return () => clearInterval(interval)
+    }, [toast.duration])
+
     const handleClose = () => {
         setIsExiting(true)
         setTimeout(onClose, 200)
@@ -112,27 +122,46 @@ function Toast({ toast, onClose }) {
     return (
         <div style={{
             background: colors.paper,
-            borderRadius: '12px',
+            borderRadius: '14px',
             border: `1px solid ${colors.rule}`,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-            padding: '12px 16px',
+            boxShadow: isDark
+                ? '0 12px 32px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.3)'
+                : '0 12px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.08)',
+            padding: '14px 16px',
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
             pointerEvents: 'auto',
-            animation: isExiting ? 'slideOut 0.2s ease-out forwards' : 'slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            minWidth: '280px',
+            animation: isExiting ? 'slideOut 0.25s ease-out forwards' : 'slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            minWidth: '300px',
+            position: 'relative',
+            overflow: 'hidden',
+            backdropFilter: 'blur(12px)',
         }}>
+            {/* Progress Bar */}
+            {toast.duration !== Infinity && (
+                <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    height: '3px',
+                    width: `${progress}%`,
+                    background: `linear-gradient(90deg, ${typeColors[toast.type]}, ${typeColors[toast.type]}80)`,
+                    transition: 'width 0.05s linear',
+                    borderRadius: '0 2px 0 0',
+                }} />
+            )}
             {/* Icon */}
             <div style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
                 background: `${typeColors[toast.type]}20`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
+                animation: 'iconPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
             }}>
                 {toast.type === 'success' && (
                     <svg width="16" height="16" viewBox="0 0 24 24" fill={typeColors[toast.type]}>
@@ -219,11 +248,11 @@ function Toast({ toast, onClose }) {
         @keyframes slideIn {
           from {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateY(30px) scale(0.9);
           }
           to {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
           }
         }
         @keyframes slideOut {
@@ -233,7 +262,20 @@ function Toast({ toast, onClose }) {
           }
           to {
             opacity: 0;
-            transform: translateY(10px) scale(0.95);
+            transform: translateY(20px) scale(0.92);
+          }
+        }
+        @keyframes iconPop {
+          0% {
+            transform: scale(0);
+            opacity: 0;
+          }
+          50% {
+            transform: scale(1.1);
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
           }
         }
       `}</style>

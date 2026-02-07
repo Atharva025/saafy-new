@@ -42,7 +42,7 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
 
     const handlePlay = (song) => {
         if (onPlaySong) {
-            onPlaySong(song, songs)
+            onPlaySong(song)
         }
     }
 
@@ -153,7 +153,7 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
             WebkitOverflowScrolling: 'touch',
             scrollBehavior: 'smooth',
         }} className="hide-scrollbar">
-            {songs.map((song) => (
+            {songs.map((song, index) => (
                 <SongCard
                     key={song.id}
                     song={song}
@@ -163,13 +163,14 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
                     isPlaying={isPlaying}
                     colors={colors}
                     fonts={fonts}
+                    index={index}
                 />
             ))}
         </div>
     )
 }
 
-function SongCard({ song, onPlay, onAddToQueue, currentSong, isPlaying, colors, fonts, compact = false }) {
+function SongCard({ song, onPlay, onAddToQueue, currentSong, isPlaying, colors, fonts, compact = false, index = 0 }) {
     const isCurrentSong = currentSong?.id === song.id
     // Try to get highest quality image - check both .link and .url properties
     const imageUrl = song.image?.[0]?.link || song.image?.[0]?.url ||
@@ -206,6 +207,9 @@ function SongCard({ song, onPlay, onAddToQueue, currentSong, isPlaying, colors, 
                         : '0 6px 18px rgba(0,0,0,0.12)',
                     transition: 'box-shadow 0.25s ease, transform 0.25s ease',
                     transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
+                    animation: 'cardFadeIn 0.5s ease-out',
+                    animationDelay: `${index * 0.05}s`,
+                    animationFillMode: 'backwards',
                 }}
             >
                 <img
@@ -301,6 +305,9 @@ function SongCard({ song, onPlay, onAddToQueue, currentSong, isPlaying, colors, 
                 cursor: 'pointer',
                 transition: 'transform 0.25s ease',
                 transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
+                animation: 'cardFadeIn 0.5s ease-out',
+                animationDelay: `${index * 0.08}s`,
+                animationFillMode: 'backwards',
             }}
         >
             <div style={{
@@ -446,6 +453,16 @@ function SongCard({ song, onPlay, onAddToQueue, currentSong, isPlaying, colors, 
                     }
                     50% {
                         transform: scale(1.02);
+                    }
+                }
+                @keyframes cardFadeIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
                     }
                 }
             `}</style>

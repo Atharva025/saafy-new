@@ -67,10 +67,32 @@ class ErrorBoundary extends Component {
                     <div style={{
                         position: 'absolute',
                         inset: 0,
-                        opacity: 0.03,
+                        opacity: 0.04,
                         background: `radial-gradient(circle at 20% 50%, ${colors.accent} 0%, transparent 50%),
                                    radial-gradient(circle at 80% 50%, ${colors.accent} 0%, transparent 50%)`,
-                        animation: 'pulse 4s ease-in-out infinite',
+                        animation: 'pulse 6s ease-in-out infinite',
+                    }} />
+
+                    {/* Floating orbs */}
+                    <div style={{
+                        position: 'absolute',
+                        top: '20%',
+                        left: '10%',
+                        width: '120px',
+                        height: '120px',
+                        borderRadius: '50%',
+                        background: `radial-gradient(circle, ${colors.accent}15, transparent)`,
+                        animation: 'float 8s ease-in-out infinite',
+                    }} />
+                    <div style={{
+                        position: 'absolute',
+                        bottom: '20%',
+                        right: '10%',
+                        width: '160px',
+                        height: '160px',
+                        borderRadius: '50%',
+                        background: `radial-gradient(circle, ${colors.accent}10, transparent)`,
+                        animation: 'float 10s ease-in-out infinite 2s',
                     }} />
 
                     {/* Error Card */}
@@ -94,19 +116,19 @@ class ErrorBoundary extends Component {
                             width: 'clamp(64px, 15vw, 80px)',
                             height: 'clamp(64px, 15vw, 80px)',
                             margin: '0 auto 24px',
-                            background: `linear-gradient(135deg, ${colors.accent}20, ${colors.accent}10)`,
+                            background: `linear-gradient(135deg, ${colors.accent}25, ${colors.accent}10)`,
                             borderRadius: '50%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             position: 'relative',
-                            animation: 'float 3s ease-in-out infinite',
+                            animation: 'iconBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
                         }}>
                             <div style={{
                                 position: 'absolute',
-                                inset: -8,
-                                border: `2px solid ${colors.accent}30`,
+                                inset: '-8px',
                                 borderRadius: '50%',
+                                border: `2px solid ${colors.accent}20`,
                                 animation: 'ripple 2s ease-out infinite',
                             }} />
                             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2">
@@ -294,6 +316,20 @@ class ErrorBoundary extends Component {
                             }
                             50% {
                                 opacity: 0.06;
+                            }
+                        }
+
+                        @keyframes iconBounce {
+                            0% {
+                                transform: scale(0) rotate(-180deg);
+                                opacity: 0;
+                            }
+                            50% {
+                                transform: scale(1.1) rotate(0deg);
+                            }
+                            100% {
+                                transform: scale(1) rotate(0deg);
+                                opacity: 1;
                             }
                         }
                     `}</style>
