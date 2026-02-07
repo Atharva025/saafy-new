@@ -459,14 +459,20 @@ export function PlayerProvider({ children }) {
                     }
                 })
 
-                setRecommendations(validSongs)
-                log.info(`Loaded ${validSongs.length} full recommendations with images`)
+                if (validSongs.length > 0) {
+                    setRecommendations(validSongs)
+                    log.info(`Loaded ${validSongs.length} full recommendations with images`)
+                } else {
+                    log.info('No valid recommendations found, keeping discovery mode')
+                    setRecommendations([])
+                }
             } else {
-                log.warn('No recommendations available:', response.error)
+                // Silently handle - song not in recommendations DB is normal
+                log.info('Song not in recommendations database, keeping discovery content')
                 setRecommendations([])
             }
         } catch (error) {
-            log.error('Failed to fetch recommendations:', error)
+            log.info('Recommendations unavailable, showing discovery content')
             setRecommendations([])
         } finally {
             setRecommendationsLoading(false)

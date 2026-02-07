@@ -628,9 +628,17 @@ export const getRecommendations = async (songId, limit = 10) => {
         console.log('📥 Response status:', response.status, response.statusText)
 
         if (!response.ok) {
-            const errorText = await response.text()
-            console.error('❌ API Error response:', errorText)
-            throw new Error(`Failed to get recommendations: ${response.statusText}`)
+            let errorDetail = response.statusText
+            try {
+                const errorText = await response.text()
+                const errorJson = JSON.parse(errorText)
+                errorDetail = errorJson.detail || errorJson.message || errorText
+            } catch (e) {
+                // If parsing fails, use statusText
+            }
+            console.warn('⚠️ Song not in recommendations database:', sanitizedId)
+            // Return graceful failure instead of throwing
+            return { success: false, recommendations: [], error: errorDetail }
         }
 
         const data = await response.json()
