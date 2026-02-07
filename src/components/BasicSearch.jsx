@@ -138,9 +138,9 @@ export default function BasicSearch({ onSelectSong }) {
                 />
             )}
 
-            <div 
-                ref={containerRef} 
-                style={{ 
+            <div
+                ref={containerRef}
+                style={{
                     position: isExpanded ? 'fixed' : 'relative',
                     top: isExpanded ? '22vh' : 'auto',
                     left: isExpanded ? '50%' : 'auto',
@@ -152,280 +152,280 @@ export default function BasicSearch({ onSelectSong }) {
                     transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), max-width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
                 }}
             >
-            <form onSubmit={handleSearch}>
-                <div
-                    style={{
-                        position: 'relative',
-                        background: colors.paperDark,
-                        borderRadius: '12px',
-                        border: `2px solid ${isFocused ? colors.accent : 'transparent'}`,
-                        boxShadow: isExpanded 
-                            ? (isDark 
-                                ? '0 16px 48px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.3)' 
-                                : '0 16px 48px rgba(26,22,20,0.15), 0 8px 20px rgba(26,22,20,0.08)')
-                            : (isFocused ? `0 0 0 4px ${isDark ? 'rgba(224,115,86,0.15)' : 'rgba(196,92,62,0.1)'}` : 'none'),
-                        transition: 'all 0.5s ease',
-                    }}
-                >
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '0 16px',
-                        height: isExpanded ? '56px' : '44px',
-                        gap: '12px',
-                        transition: 'height 0.3s ease',
-                    }}>
-                        <svg
-                            width={isExpanded ? "20" : "18"}
-                            height={isExpanded ? "20" : "18"}
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke={isFocused ? colors.ink : colors.inkMuted}
-                            strokeWidth="2.5"
-                            style={{ flexShrink: 0, transition: 'all 0.3s' }}
-                        >
-                            <circle cx="11" cy="11" r="8" />
-                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                        </svg>
+                <form onSubmit={handleSearch}>
+                    <div
+                        style={{
+                            position: 'relative',
+                            background: colors.paperDark,
+                            borderRadius: '12px',
+                            border: `2px solid ${isFocused ? colors.accent : 'transparent'}`,
+                            boxShadow: isExpanded
+                                ? (isDark
+                                    ? '0 16px 48px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.3)'
+                                    : '0 16px 48px rgba(26,22,20,0.15), 0 8px 20px rgba(26,22,20,0.08)')
+                                : (isFocused ? `0 0 0 4px ${isDark ? 'rgba(224,115,86,0.15)' : 'rgba(196,92,62,0.1)'}` : 'none'),
+                            transition: 'all 0.5s ease',
+                        }}
+                    >
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '0 16px',
+                            height: isExpanded ? '56px' : '44px',
+                            gap: '12px',
+                            transition: 'height 0.3s ease',
+                        }}>
+                            <svg
+                                width={isExpanded ? "20" : "18"}
+                                height={isExpanded ? "20" : "18"}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke={isFocused ? colors.ink : colors.inkMuted}
+                                strokeWidth="2.5"
+                                style={{ flexShrink: 0, transition: 'all 0.3s' }}
+                            >
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
 
-                        <div style={{ flex: 1, position: 'relative', height: '24px' }}>
-                            {!query && (
-                                <div
-                                    key={placeholderIndex}
+                            <div style={{ flex: 1, position: 'relative', height: '24px' }}>
+                                {!query && (
+                                    <div
+                                        key={placeholderIndex}
+                                        style={{
+                                            position: 'absolute',
+                                            left: 0,
+                                            right: 0,
+                                            top: 0,
+                                            bottom: 0,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            fontFamily: fonts.primary,
+                                            fontSize: isExpanded ? '0.95rem' : '0.875rem',
+                                            color: colors.inkMuted,
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            pointerEvents: 'none',
+                                            opacity: isAnimating ? 0 : 1,
+                                            transform: isAnimating ? 'translateY(-8px)' : 'translateY(0)',
+                                            transition: 'opacity 0.3s ease, transform 0.3s ease, font-size 0.3s ease',
+                                        }}
+                                    >
+                                        {placeholders[placeholderIndex]}
+                                    </div>
+                                )}
+
+                                <input
+                                    ref={inputRef}
+                                    type="text"
+                                    value={query}
+                                    onChange={handleInputChange}
+                                    onKeyDown={handleKeyDown}
+                                    onFocus={() => {
+                                        setIsFocused(true)
+                                        setIsExpanded(true)
+                                        if (suggestions.length > 0) setShowSuggestions(true)
+                                    }}
+                                    onBlur={() => setIsFocused(false)}
+                                    autoComplete="off"
                                     style={{
                                         position: 'absolute',
                                         left: 0,
                                         right: 0,
                                         top: 0,
                                         bottom: 0,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        fontFamily: fonts.primary,
+                                        width: '100%',
+                                        height: '100%',
+                                        padding: 0,
                                         fontSize: isExpanded ? '0.95rem' : '0.875rem',
-                                        color: colors.inkMuted,
-                                        whiteSpace: 'nowrap',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        pointerEvents: 'none',
-                                        opacity: isAnimating ? 0 : 1,
-                                        transform: isAnimating ? 'translateY(-8px)' : 'translateY(0)',
-                                        transition: 'opacity 0.3s ease, transform 0.3s ease, font-size 0.3s ease',
+                                        fontFamily: fonts.primary,
+                                        background: 'transparent',
+                                        color: colors.ink,
+                                        border: 'none',
+                                        outline: 'none',
+                                        transition: 'font-size 0.3s ease',
                                     }}
-                                >
-                                    {placeholders[placeholderIndex]}
-                                </div>
-                            )}
+                                />
+                            </div>
 
-                            <input
-                                ref={inputRef}
-                                type="text"
-                                value={query}
-                                onChange={handleInputChange}
-                                onKeyDown={handleKeyDown}
-                                onFocus={() => {
-                                    setIsFocused(true)
-                                    setIsExpanded(true)
-                                    if (suggestions.length > 0) setShowSuggestions(true)
-                                }}
-                                onBlur={() => setIsFocused(false)}
-                                autoComplete="off"
-                                style={{
-                                    position: 'absolute',
-                                    left: 0,
-                                    right: 0,
-                                    top: 0,
-                                    bottom: 0,
-                                    width: '100%',
-                                    height: '100%',
-                                    padding: 0,
-                                    fontSize: isExpanded ? '0.95rem' : '0.875rem',
-                                    fontFamily: fonts.primary,
-                                    background: 'transparent',
-                                    color: colors.ink,
-                                    border: 'none',
-                                    outline: 'none',
-                                    transition: 'font-size 0.3s ease',
-                                }}
-                            />
-                        </div>
-
-                        {loading ? (
-                            <div style={{
-                                width: '16px',
-                                height: '16px',
-                                border: `2px solid ${colors.paperDarker}`,
-                                borderTopColor: colors.accent,
-                                borderRadius: '50%',
-                                animation: 'spin 0.6s linear infinite',
-                                flexShrink: 0,
-                            }} />
-                        ) : query ? (
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setQuery('')
-                                    setSuggestions([])
-                                    inputRef.current?.focus()
-                                }}
-                                style={{
-                                    width: '20px',
-                                    height: '20px',
-                                    background: colors.paperDarker,
-                                    border: 'none',
+                            {loading ? (
+                                <div style={{
+                                    width: '16px',
+                                    height: '16px',
+                                    border: `2px solid ${colors.paperDarker}`,
+                                    borderTopColor: colors.accent,
                                     borderRadius: '50%',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: colors.inkMuted,
+                                    animation: 'spin 0.6s linear infinite',
                                     flexShrink: 0,
-                                }}
-                            >
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                    <line x1="18" y1="6" x2="6" y2="18" />
-                                    <line x1="6" y1="6" x2="18" y2="18" />
-                                </svg>
-                            </button>
-                        ) : isExpanded ? (
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setIsExpanded(false)
-                                    setShowSuggestions(false)
-                                    setIsFocused(false)
-                                }}
-                                style={{
-                                    width: '20px',
-                                    height: '20px',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    borderRadius: '50%',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: colors.inkMuted,
-                                    flexShrink: 0,
-                                }}
-                            >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                    <line x1="18" y1="6" x2="6" y2="18" />
-                                    <line x1="6" y1="6" x2="18" y2="18" />
-                                </svg>
-                            </button>
-                        ) : null}
-                    </div>
-                </div>
-            </form>
-
-            {showSuggestions && suggestions.length > 0 && (
-                <div style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 8px)',
-                    left: 0,
-                    right: 0,
-                    background: colors.paper,
-                    borderRadius: '12px',
-                    border: `1px solid ${colors.rule}`,
-                    boxShadow: isDark
-                        ? '0 16px 48px rgba(0,0,0,0.4), 0 8px 20px rgba(0,0,0,0.3)'
-                        : '0 16px 48px rgba(26,22,20,0.12), 0 8px 20px rgba(26,22,20,0.06)',
-                    overflow: 'hidden',
-                    zIndex: 100,
-                    animation: 'dropIn 0.15s ease',
-                }}>
-                    <div style={{ 
-                        maxHeight: '280px', 
-                        overflowY: 'auto', 
-                        padding: '6px',
-                    }}>
-                        {suggestions.map((song, index) => {
-                            // Use highest quality image available - check both .link and .url
-                            const imageUrl = song.image?.[0]?.link || song.image?.[0]?.url ||
-                                song.image?.[1]?.link || song.image?.[1]?.url ||
-                                song.image?.[2]?.link || song.image?.[2]?.url ||
-                                song.imageUrl || ''
-                            const isSelected = index === selectedIndex
-
-                            return (
-                                <div
-                                    key={song.id}
-                                    onClick={() => handleSelectSong(song)}
-                                    onMouseEnter={() => setSelectedIndex(index)}
+                                }} />
+                            ) : query ? (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setQuery('')
+                                        setSuggestions([])
+                                        inputRef.current?.focus()
+                                    }}
                                     style={{
+                                        width: '20px',
+                                        height: '20px',
+                                        background: colors.paperDarker,
+                                        border: 'none',
+                                        borderRadius: '50%',
+                                        cursor: 'pointer',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '12px',
-                                        padding: isExpanded ? '10px 12px' : '8px 10px',
-                                        borderRadius: '8px',
-                                        cursor: 'pointer',
-                                        background: isSelected ? colors.paperDark : 'transparent',
-                                        transition: 'background 0.1s',
+                                        justifyContent: 'center',
+                                        color: colors.inkMuted,
+                                        flexShrink: 0,
                                     }}
                                 >
-                                    <div style={{
-                                        width: isExpanded ? '44px' : '36px',
-                                        height: isExpanded ? '44px' : '36px',
-                                        borderRadius: '6px',
-                                        overflow: 'hidden',
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                        <line x1="18" y1="6" x2="6" y2="18" />
+                                        <line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                </button>
+                            ) : isExpanded ? (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsExpanded(false)
+                                        setShowSuggestions(false)
+                                        setIsFocused(false)
+                                    }}
+                                    style={{
+                                        width: '20px',
+                                        height: '20px',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        borderRadius: '50%',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: colors.inkMuted,
                                         flexShrink: 0,
-                                        background: colors.paperDark,
-                                    }}>
-                                        {imageUrl ? (
-                                            <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        ) : (
+                                    }}
+                                >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                        <line x1="18" y1="6" x2="6" y2="18" />
+                                        <line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                </button>
+                            ) : null}
+                        </div>
+                    </div>
+                </form>
+
+                {showSuggestions && suggestions.length > 0 && (
+                    <div style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 8px)',
+                        left: 0,
+                        right: 0,
+                        background: colors.paper,
+                        borderRadius: '12px',
+                        border: `1px solid ${colors.rule}`,
+                        boxShadow: isDark
+                            ? '0 16px 48px rgba(0,0,0,0.4), 0 8px 20px rgba(0,0,0,0.3)'
+                            : '0 16px 48px rgba(26,22,20,0.12), 0 8px 20px rgba(26,22,20,0.06)',
+                        overflow: 'hidden',
+                        zIndex: 100,
+                        animation: 'dropIn 0.15s ease',
+                    }}>
+                        <div style={{
+                            maxHeight: '280px',
+                            overflowY: 'auto',
+                            padding: '6px',
+                        }}>
+                            {suggestions.map((song, index) => {
+                                // Use highest quality image available - check both .link and .url
+                                const imageUrl = song.image?.[0]?.link || song.image?.[0]?.url ||
+                                    song.image?.[1]?.link || song.image?.[1]?.url ||
+                                    song.image?.[2]?.link || song.image?.[2]?.url ||
+                                    song.imageUrl || ''
+                                const isSelected = index === selectedIndex
+
+                                return (
+                                    <div
+                                        key={song.id}
+                                        onClick={() => handleSelectSong(song)}
+                                        onMouseEnter={() => setSelectedIndex(index)}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '12px',
+                                            padding: isExpanded ? '10px 12px' : '8px 10px',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            background: isSelected ? colors.paperDark : 'transparent',
+                                            transition: 'background 0.1s',
+                                        }}
+                                    >
+                                        <div style={{
+                                            width: isExpanded ? '44px' : '36px',
+                                            height: isExpanded ? '44px' : '36px',
+                                            borderRadius: '6px',
+                                            overflow: 'hidden',
+                                            flexShrink: 0,
+                                            background: colors.paperDark,
+                                        }}>
+                                            {imageUrl ? (
+                                                <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            ) : (
+                                                <div style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                }}>
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill={colors.inkLight}>
+                                                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                                                    </svg>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div style={{ flex: 1, minWidth: 0 }}>
                                             <div style={{
-                                                width: '100%',
-                                                height: '100%',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
+                                                fontFamily: fonts.primary,
+                                                fontWeight: 500,
+                                                fontSize: isExpanded ? '0.875rem' : '0.8rem',
+                                                color: colors.ink,
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
                                             }}>
-                                                <svg width="14" height="14" viewBox="0 0 24 24" fill={colors.inkLight}>
-                                                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-                                                </svg>
+                                                {song.name}
                                             </div>
+                                            <div style={{
+                                                fontFamily: fonts.mono,
+                                                fontSize: isExpanded ? '0.75rem' : '0.65rem',
+                                                color: colors.inkMuted,
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                marginTop: '1px',
+                                            }}>
+                                                {song.primaryArtists}
+                                            </div>
+                                        </div>
+
+                                        {isSelected && (
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill={colors.accent}>
+                                                <path d="M8 5v14l11-7L8 5z" />
+                                            </svg>
                                         )}
                                     </div>
-
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div style={{
-                                            fontFamily: fonts.primary,
-                                            fontWeight: 500,
-                                            fontSize: isExpanded ? '0.875rem' : '0.8rem',
-                                            color: colors.ink,
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                        }}>
-                                            {song.name}
-                                        </div>
-                                        <div style={{
-                                            fontFamily: fonts.mono,
-                                            fontSize: isExpanded ? '0.75rem' : '0.65rem',
-                                            color: colors.inkMuted,
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            marginTop: '1px',
-                                        }}>
-                                            {song.primaryArtists}
-                                        </div>
-                                    </div>
-
-                                    {isSelected && (
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill={colors.accent}>
-                                            <path d="M8 5v14l11-7L8 5z" />
-                                        </svg>
-                                    )}
-                                </div>
-                            )
-                        })}
+                                )
+                            })}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            <style>{`
+                <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
