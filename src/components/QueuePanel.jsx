@@ -10,8 +10,9 @@ export default function QueuePanel({ isOpen, onClose }) {
     const panelRef = useRef(null)
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
 
-    // Calculate total duration of all songs in queue
-    const totalDuration = queue.reduce((total, song) => total + (Number(song.duration) || 0), 0)
+    // Calculate total duration of all songs in queue (including current song)
+    const totalDuration = queue.reduce((total, song) => total + (Number(song.duration) || 0), 0) +
+        (currentSong ? (Number(currentSong.duration) || 0) : 0)
 
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -96,8 +97,8 @@ export default function QueuePanel({ isOpen, onClose }) {
                             gap: '8px',
                             flexWrap: 'wrap',
                         }}>
-                            <span>{queue.length} track{queue.length !== 1 ? 's' : ''}</span>
-                            {queue.length > 0 && (
+                            <span>{(queue.length + (currentSong ? 1 : 0))} track{(queue.length + (currentSong ? 1 : 0)) !== 1 ? 's' : ''}</span>
+                            {(queue.length > 0 || currentSong) && (
                                 <>
                                     <span style={{ opacity: 0.5 }}>•</span>
                                     <span style={{

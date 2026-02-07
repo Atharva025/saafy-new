@@ -69,6 +69,50 @@ const DISCOVERY_POOLS = {
     }
 }
 
+// Themed discovery pools for varied content
+const THEMED_POOLS = {
+    trending: {
+        queries: [
+            'trending songs 2024', 'viral hits', 'top 100 songs',
+            'chart toppers', 'most played songs', 'trending now',
+            'popular this week', 'hot songs', 'latest hits'
+        ],
+        displayName: 'Trending Now'
+    },
+    party: {
+        queries: [
+            'party songs', 'dance hits', 'club music', 'party anthems',
+            'upbeat songs', 'dance party', 'party mix', 'energetic music',
+            'party playlist', 'club bangers', 'dj hits'
+        ],
+        displayName: 'Party Hits'
+    },
+    chill: {
+        queries: [
+            'chill vibes', 'relaxing music', 'lofi beats', 'calm songs',
+            'study music', 'peaceful songs', 'ambient music', 'chill music',
+            'relax playlist', 'mellow songs', 'easy listening'
+        ],
+        displayName: 'Chill Vibes'
+    },
+    romantic: {
+        queries: [
+            'romantic songs', 'love songs', 'romantic hits', 'love ballads',
+            'romantic music', 'couples playlist', 'romantic melodies',
+            'love music', 'romantic collection', 'love hits'
+        ],
+        displayName: 'Romantic'
+    },
+    workout: {
+        queries: [
+            'workout music', 'gym songs', 'fitness music', 'workout playlist',
+            'exercise music', 'running songs', 'motivation music',
+            'workout hits', 'gym motivation', 'high energy music'
+        ],
+        displayName: 'Workout Energy'
+    }
+}
+
 // ============================================================================
 // SESSION SEED MANAGEMENT
 // ============================================================================
@@ -248,6 +292,60 @@ export async function getForYouMix(limit = 12) {
             seed: seed
         }
     }
+}
+
+/**
+ * Fetch themed discovery content (Trending, Party, Chill, etc.)
+ */
+export async function getThemedContent(theme, limit = 10) {
+    const pool = THEMED_POOLS[theme]
+    if (!pool) {
+        return { success: false, songs: [], error: 'Unknown theme' }
+    }
+
+    const seed = getSessionSeed()
+    const themeHash = theme.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
+    const querySeed = seed + themeHash
+    const shuffled = seededShuffle(pool.queries, querySeed)
+    const query = shuffled[0]
+
+    try {
+        const response = await searchSongs(query, 0, limit)
+        if (response.success && response.data?.results) {
+            return {
+                success: true,
+                songs: response.data.results,
+                title: pool.displayName,
+                query: query
+            }
+        }
+        return { success: false, songs: [], error: 'No results' }
+    } catch (error) {
+        return { success: false, songs: [], error: error.message }
+    }
+}
+
+/**
+ * Get all themed content in parallel
+ */
+export async function getAllThemedContent(songsPerTheme = 10) {
+    const themes = Object.keys(THEMED_POOLS)
+    const results = {}
+
+    const promises = themes.map(async (theme) => {
+        const data = await getThemedContent(theme, songsPerTheme)
+        return { theme, data }
+    })
+
+    const resolved = await Promise.allSettled(promises)
+    resolved.forEach((result) => {
+        if (result.status === 'fulfilled') {
+            const { theme, data } = result.value
+            results[theme] = data
+        }
+    })
+
+    return results
 }
 
 /**

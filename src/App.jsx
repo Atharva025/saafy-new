@@ -12,7 +12,7 @@ import DiscoverSection from '@/components/DiscoverSection'
 import QueuePanel from '@/components/QueuePanel'
 import SkeletonLoader from '@/components/SkeletonLoader'
 import KeyboardShortcuts from '@/components/KeyboardShortcuts'
-import { getAllDiscoveryContent, getForYouMix, refreshDiscovery } from '@/lib/discovery'
+import { getAllDiscoveryContent, getForYouMix, getAllThemedContent, refreshDiscovery } from '@/lib/discovery'
 
 // Local Storage Keys
 const HISTORY_KEY = 'saafy_listening_history'
@@ -41,6 +41,7 @@ function HomePage() {
   const [searchResults, setSearchResults] = useState([])
   const [isSearching, setIsSearching] = useState(false)
   const [discovery, setDiscovery] = useState({})
+  const [themed, setThemed] = useState({})
   const [forYou, setForYou] = useState({ songs: [], loading: true })
   const [loading, setLoading] = useState(true)
   const [currentTime, setCurrentTime] = useState(new Date())
@@ -70,12 +71,14 @@ function HomePage() {
   const loadDiscoveryContent = async () => {
     setLoading(true)
     try {
-      const [forYouData, allContent] = await Promise.all([
-        getForYouMix(10),
-        getAllDiscoveryContent(6)
+      const [forYouData, allContent, themedContent] = await Promise.all([
+        getForYouMix(12),
+        getAllDiscoveryContent(10),
+        getAllThemedContent(10)
       ])
       setForYou({ songs: forYouData.songs, loading: false })
       setDiscovery(allContent)
+      setThemed(themedContent)
     } catch (error) { }
     finally {
       setLoading(false)
@@ -605,7 +608,7 @@ function HomePage() {
 
             {/* Discovery Sections - Show Recommendations OR Default Categories */}
             {currentSong && recommendations.length > 0 ? (
-              // RECOMMENDATIONS MODE - Replace all sections with recommendations
+              // RECOMMENDATIONS MODE - Show multiple varied sections
               <>
                 {/* Section 1: First batch of recommendations */}
                 <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
@@ -629,7 +632,7 @@ function HomePage() {
                     Top Recommendations
                   </p>
                   <DiscoverSection
-                    songs={recommendations.slice(0, 6)}
+                    songs={recommendations.slice(0, 8)}
                     loading={recommendationsLoading}
                     onPlaySong={handlePlaySong}
                     onAddToQueue={addToQueue}
@@ -637,7 +640,7 @@ function HomePage() {
                 </section>
 
                 {/* Section 2: More recommendations if available */}
-                {recommendations.length > 6 && (
+                {recommendations.length > 8 && (
                   <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
                     <h2 style={{
                       fontFamily: fonts.display,
@@ -659,8 +662,69 @@ function HomePage() {
                       You might also like
                     </p>
                     <DiscoverSection
-                      songs={recommendations.slice(6)}
+                      songs={recommendations.slice(8, 16)}
                       loading={recommendationsLoading}
+                      onPlaySong={handlePlaySong}
+                      onAddToQueue={addToQueue}
+                    />
+                  </section>
+                )}
+
+                {/* Add themed content to fill the page when in recommendations mode */}
+                {themed.party?.songs && themed.party.songs.length > 0 && (
+                  <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
+                    <h2 style={{
+                      fontFamily: fonts.display,
+                      fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
+                      fontWeight: 700,
+                      color: colors.ink,
+                      marginBottom: 'clamp(8px, 2vw, 12px)',
+                    }}>
+                      {themed.party.title}
+                    </h2>
+                    <p style={{
+                      fontFamily: fonts.mono,
+                      fontSize: 'clamp(0.65rem, 1.5vw, 0.7rem)',
+                      color: colors.inkLight,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      marginBottom: 'clamp(16px, 4vw, 20px)',
+                    }}>
+                      Keep the energy high
+                    </p>
+                    <DiscoverSection
+                      songs={themed.party.songs}
+                      loading={loading}
+                      onPlaySong={handlePlaySong}
+                      onAddToQueue={addToQueue}
+                    />
+                  </section>
+                )}
+
+                {themed.chill?.songs && themed.chill.songs.length > 0 && (
+                  <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
+                    <h2 style={{
+                      fontFamily: fonts.display,
+                      fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
+                      fontWeight: 700,
+                      color: colors.ink,
+                      marginBottom: 'clamp(8px, 2vw, 12px)',
+                    }}>
+                      {themed.chill.title}
+                    </h2>
+                    <p style={{
+                      fontFamily: fonts.mono,
+                      fontSize: 'clamp(0.65rem, 1.5vw, 0.7rem)',
+                      color: colors.inkLight,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      marginBottom: 'clamp(16px, 4vw, 20px)',
+                    }}>
+                      Relax and unwind
+                    </p>
+                    <DiscoverSection
+                      songs={themed.chill.songs}
+                      loading={loading}
                       onPlaySong={handlePlaySong}
                       onAddToQueue={addToQueue}
                     />
@@ -668,8 +732,39 @@ function HomePage() {
                 )}
               </>
             ) : (
-              // DEFAULT MODE - Show language-based categories
+              // DEFAULT MODE - Show varied content with language and themed categories
               <>
+                {/* Trending Now */}
+                {themed.trending?.songs && themed.trending.songs.length > 0 && (
+                  <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
+                    <h2 style={{
+                      fontFamily: fonts.display,
+                      fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
+                      fontWeight: 700,
+                      color: colors.ink,
+                      marginBottom: 'clamp(8px, 2vw, 12px)',
+                    }}>
+                      {themed.trending.title}
+                    </h2>
+                    <p style={{
+                      fontFamily: fonts.mono,
+                      fontSize: 'clamp(0.65rem, 1.5vw, 0.7rem)',
+                      color: colors.inkLight,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      marginBottom: 'clamp(16px, 4vw, 20px)',
+                    }}>
+                      What's hot right now
+                    </p>
+                    <DiscoverSection
+                      songs={themed.trending.songs}
+                      loading={loading}
+                      onPlaySong={handlePlaySong}
+                      onAddToQueue={addToQueue}
+                    />
+                  </section>
+                )}
+
                 {/* Hindi */}
                 <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
                   <h2 style={{
@@ -683,6 +778,37 @@ function HomePage() {
                   </h2>
                   <DiscoverSection songs={discovery.hindi?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
                 </section>
+
+                {/* Party Hits */}
+                {themed.party?.songs && themed.party.songs.length > 0 && (
+                  <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
+                    <h2 style={{
+                      fontFamily: fonts.display,
+                      fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
+                      fontWeight: 700,
+                      color: colors.ink,
+                      marginBottom: 'clamp(8px, 2vw, 12px)',
+                    }}>
+                      {themed.party.title}
+                    </h2>
+                    <p style={{
+                      fontFamily: fonts.mono,
+                      fontSize: 'clamp(0.65rem, 1.5vw, 0.7rem)',
+                      color: colors.inkLight,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      marginBottom: 'clamp(16px, 4vw, 20px)',
+                    }}>
+                      Dance & Celebration
+                    </p>
+                    <DiscoverSection
+                      songs={themed.party.songs}
+                      loading={loading}
+                      onPlaySong={handlePlaySong}
+                      onAddToQueue={addToQueue}
+                    />
+                  </section>
+                )}
 
                 {/* English */}
                 <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
@@ -698,6 +824,37 @@ function HomePage() {
                   <DiscoverSection songs={discovery.english?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
                 </section>
 
+                {/* Chill Vibes */}
+                {themed.chill?.songs && themed.chill.songs.length > 0 && (
+                  <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
+                    <h2 style={{
+                      fontFamily: fonts.display,
+                      fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
+                      fontWeight: 700,
+                      color: colors.ink,
+                      marginBottom: 'clamp(8px, 2vw, 12px)',
+                    }}>
+                      {themed.chill.title}
+                    </h2>
+                    <p style={{
+                      fontFamily: fonts.mono,
+                      fontSize: 'clamp(0.65rem, 1.5vw, 0.7rem)',
+                      color: colors.inkLight,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      marginBottom: 'clamp(16px, 4vw, 20px)',
+                    }}>
+                      Relax & Focus
+                    </p>
+                    <DiscoverSection
+                      songs={themed.chill.songs}
+                      loading={loading}
+                      onPlaySong={handlePlaySong}
+                      onAddToQueue={addToQueue}
+                    />
+                  </section>
+                )}
+
                 {/* Punjabi */}
                 <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
                   <h2 style={{
@@ -711,6 +868,84 @@ function HomePage() {
                   </h2>
                   <DiscoverSection songs={discovery.punjabi?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
                 </section>
+
+                {/* Romantic */}
+                {themed.romantic?.songs && themed.romantic.songs.length > 0 && (
+                  <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
+                    <h2 style={{
+                      fontFamily: fonts.display,
+                      fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
+                      fontWeight: 700,
+                      color: colors.ink,
+                      marginBottom: 'clamp(8px, 2vw, 12px)',
+                    }}>
+                      {themed.romantic.title}
+                    </h2>
+                    <p style={{
+                      fontFamily: fonts.mono,
+                      fontSize: 'clamp(0.65rem, 1.5vw, 0.7rem)',
+                      color: colors.inkLight,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      marginBottom: 'clamp(16px, 4vw, 20px)',
+                    }}>
+                      Love & Romance
+                    </p>
+                    <DiscoverSection
+                      songs={themed.romantic.songs}
+                      loading={loading}
+                      onPlaySong={handlePlaySong}
+                      onAddToQueue={addToQueue}
+                    />
+                  </section>
+                )}
+
+                {/* Marathi */}
+                {discovery.marathi?.songs && discovery.marathi.songs.length > 0 && (
+                  <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
+                    <h2 style={{
+                      fontFamily: fonts.display,
+                      fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
+                      fontWeight: 700,
+                      color: colors.ink,
+                      marginBottom: 'clamp(16px, 4vw, 20px)',
+                    }}>
+                      Marathi
+                    </h2>
+                    <DiscoverSection songs={discovery.marathi.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
+                  </section>
+                )}
+
+                {/* Workout Energy */}
+                {themed.workout?.songs && themed.workout.songs.length > 0 && (
+                  <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
+                    <h2 style={{
+                      fontFamily: fonts.display,
+                      fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
+                      fontWeight: 700,
+                      color: colors.ink,
+                      marginBottom: 'clamp(8px, 2vw, 12px)',
+                    }}>
+                      {themed.workout.title}
+                    </h2>
+                    <p style={{
+                      fontFamily: fonts.mono,
+                      fontSize: 'clamp(0.65rem, 1.5vw, 0.7rem)',
+                      color: colors.inkLight,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      marginBottom: 'clamp(16px, 4vw, 20px)',
+                    }}>
+                      Power your workout
+                    </p>
+                    <DiscoverSection
+                      songs={themed.workout.songs}
+                      loading={loading}
+                      onPlaySong={handlePlaySong}
+                      onAddToQueue={addToQueue}
+                    />
+                  </section>
+                )}
               </>
             )}
           </div>
