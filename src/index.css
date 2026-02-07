@@ -106,11 +106,21 @@ input[type="range"]::-moz-range-thumb {
   .header-greeting {
     display: none !important;
   }
+
+  /* Improved mobile spacing */
+  body {
+    font-size: 14px;
+  }
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
   body {
     font-size: 15px;
+  }
+
+  /* Tablet-specific optimizations */
+  .hide-scrollbar {
+    scrollbar-width: thin;
   }
 }
 
@@ -122,6 +132,25 @@ input[type="range"]::-moz-range-thumb {
   input[type="range"] {
     min-width: 44px;
     min-height: 44px;
+  }
+
+  /* Prevent iOS zoom on focus */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Smooth transitions for responsive breakpoints */
+@media (prefers-reduced-motion: no-preference) {
+  * {
+    transition-duration: 0.2s;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  *:focus {
+    transition-duration: 0.1s;
   }
 }
 
@@ -135,4 +164,16 @@ html {
 /* Better mobile scrolling */
 * {
   -webkit-overflow-scrolling: touch;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

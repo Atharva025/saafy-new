@@ -11,6 +11,7 @@ import ArtistPage from '@/components/ArtistPage'
 import DiscoverSection from '@/components/DiscoverSection'
 import QueuePanel from '@/components/QueuePanel'
 import SkeletonLoader from '@/components/SkeletonLoader'
+import KeyboardShortcuts from '@/components/KeyboardShortcuts'
 import { getAllDiscoveryContent, getForYouMix, refreshDiscovery } from '@/lib/discovery'
 
 // Local Storage Keys
@@ -91,8 +92,8 @@ function HomePage() {
     setIsSearching(false)
   }
 
-  const handlePlaySong = (song, queue = null) => {
-    playSong(song, queue)
+  const handlePlaySong = (song) => {
+    playSong(song)
     addToListeningHistory(song)
     setListeningHistory(getListeningHistory())
   }
@@ -106,7 +107,7 @@ function HomePage() {
     ]
     if (allSongs.length > 0) {
       const randomSong = allSongs[Math.floor(Math.random() * allSongs.length)]
-      handlePlaySong(randomSong, allSongs)
+      handlePlaySong(randomSong)
     }
   }
 
@@ -718,6 +719,23 @@ function HomePage() {
 
       <BasicPlayer />
       <QueuePanel isOpen={showQueue} onClose={() => setShowQueue(false)} />
+      <KeyboardShortcuts />
+
+      {/* Backdrop blur for history panel */}
+      {showHistory && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.25)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+            zIndex: 89,
+            animation: 'fadeIn 0.2s ease-out',
+          }}
+          onClick={() => setShowHistory(false)}
+        />
+      )}
     </div>
   )
 }

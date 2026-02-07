@@ -23,10 +23,12 @@ export default function BasicSearch({ onSelectSong }) {
     const [showSuggestions, setShowSuggestions] = useState(false)
     const [selectedIndex, setSelectedIndex] = useState(-1)
     const [isFocused, setIsFocused] = useState(false)
+    const [isExpanded, setIsExpanded] = useState(false)
     const [placeholderIndex, setPlaceholderIndex] = useState(0)
     const [isAnimating, setIsAnimating] = useState(false)
     const inputRef = useRef(null)
     const containerRef = useRef(null)
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
 
     useEffect(() => {
         if (query) return
@@ -69,6 +71,7 @@ export default function BasicSearch({ onSelectSong }) {
         const handleClickOutside = (e) => {
             if (containerRef.current && !containerRef.current.contains(e.target)) {
                 setShowSuggestions(false)
+                setIsExpanded(false)
             }
         }
         document.addEventListener('mousedown', handleClickOutside)
@@ -101,6 +104,7 @@ export default function BasicSearch({ onSelectSong }) {
         setQuery('')
         setSuggestions([])
         setShowSuggestions(false)
+        setIsExpanded(false)
     }
 
     const handleSearch = (e) => {
@@ -113,7 +117,41 @@ export default function BasicSearch({ onSelectSong }) {
     }
 
     return (
-        <div ref={containerRef} style={{ position: 'relative', width: '100%', maxWidth: '480px' }}>
+        <>
+            {/* Backdrop blur overlay - only show when expanded */}
+            {isExpanded && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.3)',
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
+                        zIndex: 149,
+                        animation: 'fadeIn 0.3s ease-out',
+                    }}
+                    onClick={() => {
+                        setIsExpanded(false)
+                        setShowSuggestions(false)
+                        setIsFocused(false)
+                    }}
+                />
+            )}
+
+            <div 
+                ref={containerRef} 
+                style={{ 
+                    position: isExpanded ? 'fixed' : 'relative',
+                    top: isExpanded ? '22vh' : 'auto',
+                    left: isExpanded ? '50%' : 'auto',
+                    transform: isExpanded ? 'translate(-50%, 0) scale(1.05)' : 'scale(1)',
+                    transformOrigin: 'center center',
+                    width: isExpanded ? (isMobile ? '90%' : 'min(750px, 85vw)') : '100%',
+                    maxWidth: isExpanded ? 'none' : '480px',
+                    zIndex: isExpanded ? 150 : 'auto',
+                    transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), max-width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                }}
+            >
             <form onSubmit={handleSearch}>
                 <div
                     style={{
@@ -121,25 +159,30 @@ export default function BasicSearch({ onSelectSong }) {
                         background: colors.paperDark,
                         borderRadius: '12px',
                         border: `2px solid ${isFocused ? colors.accent : 'transparent'}`,
-                        boxShadow: isFocused ? `0 0 0 4px ${isDark ? 'rgba(224,115,86,0.15)' : 'rgba(196,92,62,0.1)'}` : 'none',
-                        transition: 'all 0.2s ease',
+                        boxShadow: isExpanded 
+                            ? (isDark 
+                                ? '0 16px 48px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.3)' 
+                                : '0 16px 48px rgba(26,22,20,0.15), 0 8px 20px rgba(26,22,20,0.08)')
+                            : (isFocused ? `0 0 0 4px ${isDark ? 'rgba(224,115,86,0.15)' : 'rgba(196,92,62,0.1)'}` : 'none'),
+                        transition: 'all 0.5s ease',
                     }}
                 >
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
                         padding: '0 16px',
-                        height: '44px',
+                        height: isExpanded ? '56px' : '44px',
                         gap: '12px',
+                        transition: 'height 0.3s ease',
                     }}>
                         <svg
-                            width="18"
-                            height="18"
+                            width={isExpanded ? "20" : "18"}
+                            height={isExpanded ? "20" : "18"}
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke={isFocused ? colors.ink : colors.inkMuted}
                             strokeWidth="2.5"
-                            style={{ flexShrink: 0, transition: 'stroke 0.2s' }}
+                            style={{ flexShrink: 0, transition: 'all 0.3s' }}
                         >
                             <circle cx="11" cy="11" r="8" />
                             <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -158,7 +201,7 @@ export default function BasicSearch({ onSelectSong }) {
                                         display: 'flex',
                                         alignItems: 'center',
                                         fontFamily: fonts.primary,
-                                        fontSize: '0.875rem',
+                                        fontSize: isExpanded ? '0.95rem' : '0.875rem',
                                         color: colors.inkMuted,
                                         whiteSpace: 'nowrap',
                                         overflow: 'hidden',
@@ -166,7 +209,7 @@ export default function BasicSearch({ onSelectSong }) {
                                         pointerEvents: 'none',
                                         opacity: isAnimating ? 0 : 1,
                                         transform: isAnimating ? 'translateY(-8px)' : 'translateY(0)',
-                                        transition: 'opacity 0.3s ease, transform 0.3s ease',
+                                        transition: 'opacity 0.3s ease, transform 0.3s ease, font-size 0.3s ease',
                                     }}
                                 >
                                     {placeholders[placeholderIndex]}
@@ -181,6 +224,7 @@ export default function BasicSearch({ onSelectSong }) {
                                 onKeyDown={handleKeyDown}
                                 onFocus={() => {
                                     setIsFocused(true)
+                                    setIsExpanded(true)
                                     if (suggestions.length > 0) setShowSuggestions(true)
                                 }}
                                 onBlur={() => setIsFocused(false)}
@@ -194,12 +238,13 @@ export default function BasicSearch({ onSelectSong }) {
                                     width: '100%',
                                     height: '100%',
                                     padding: 0,
-                                    fontSize: '0.875rem',
+                                    fontSize: isExpanded ? '0.95rem' : '0.875rem',
                                     fontFamily: fonts.primary,
                                     background: 'transparent',
                                     color: colors.ink,
                                     border: 'none',
                                     outline: 'none',
+                                    transition: 'font-size 0.3s ease',
                                 }}
                             />
                         </div>
@@ -241,6 +286,33 @@ export default function BasicSearch({ onSelectSong }) {
                                     <line x1="6" y1="6" x2="18" y2="18" />
                                 </svg>
                             </button>
+                        ) : isExpanded ? (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsExpanded(false)
+                                    setShowSuggestions(false)
+                                    setIsFocused(false)
+                                }}
+                                style={{
+                                    width: '20px',
+                                    height: '20px',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: colors.inkMuted,
+                                    flexShrink: 0,
+                                }}
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
                         ) : null}
                     </div>
                 </div>
@@ -262,7 +334,11 @@ export default function BasicSearch({ onSelectSong }) {
                     zIndex: 100,
                     animation: 'dropIn 0.15s ease',
                 }}>
-                    <div style={{ maxHeight: '320px', overflowY: 'auto', padding: '6px' }}>
+                    <div style={{ 
+                        maxHeight: '280px', 
+                        overflowY: 'auto', 
+                        padding: '6px',
+                    }}>
                         {suggestions.map((song, index) => {
                             // Use highest quality image available - check both .link and .url
                             const imageUrl = song.image?.[0]?.link || song.image?.[0]?.url ||
@@ -280,7 +356,7 @@ export default function BasicSearch({ onSelectSong }) {
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '12px',
-                                        padding: '8px 10px',
+                                        padding: isExpanded ? '10px 12px' : '8px 10px',
                                         borderRadius: '8px',
                                         cursor: 'pointer',
                                         background: isSelected ? colors.paperDark : 'transparent',
@@ -288,8 +364,8 @@ export default function BasicSearch({ onSelectSong }) {
                                     }}
                                 >
                                     <div style={{
-                                        width: '36px',
-                                        height: '36px',
+                                        width: isExpanded ? '44px' : '36px',
+                                        height: isExpanded ? '44px' : '36px',
                                         borderRadius: '6px',
                                         overflow: 'hidden',
                                         flexShrink: 0,
@@ -316,7 +392,7 @@ export default function BasicSearch({ onSelectSong }) {
                                         <div style={{
                                             fontFamily: fonts.primary,
                                             fontWeight: 500,
-                                            fontSize: '0.8rem',
+                                            fontSize: isExpanded ? '0.875rem' : '0.8rem',
                                             color: colors.ink,
                                             whiteSpace: 'nowrap',
                                             overflow: 'hidden',
@@ -326,7 +402,7 @@ export default function BasicSearch({ onSelectSong }) {
                                         </div>
                                         <div style={{
                                             fontFamily: fonts.mono,
-                                            fontSize: '0.65rem',
+                                            fontSize: isExpanded ? '0.75rem' : '0.65rem',
                                             color: colors.inkMuted,
                                             whiteSpace: 'nowrap',
                                             overflow: 'hidden',
@@ -357,7 +433,12 @@ export default function BasicSearch({ onSelectSong }) {
           from { opacity: 0; transform: translateY(-4px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
       `}</style>
-        </div>
+            </div>
+        </>
     )
 }

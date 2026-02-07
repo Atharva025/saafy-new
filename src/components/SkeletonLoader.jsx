@@ -1,15 +1,15 @@
 import { useTheme } from '@/context/ThemeContext'
 
 export default function SkeletonLoader({ type = 'card', count = 1 }) {
-    const { colors } = useTheme()
+    const { colors, isDark } = useTheme()
 
     const shimmerStyle = {
-        background: `linear-gradient(90deg, 
+        background: `linear-gradient(110deg, 
       ${colors.paperDark}00 0%, 
-      ${colors.paperDark}40 50%, 
-      ${colors.paperDark}00 100%)`,
+      ${isDark ? `${colors.accent}15` : `${colors.accent}10`} 40%,
+      ${colors.paperDark}00 80%)`,
         backgroundSize: '200% 100%',
-        animation: 'shimmer 1.5s ease-in-out infinite',
+        animation: 'shimmer 2s ease-in-out infinite',
     }
 
     if (type === 'card') {
