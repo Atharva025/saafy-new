@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { HashRouter as Router, Routes, Route } from 'react-router-dom'
 import { PlayerProvider, usePlayer } from '@/context/PlayerContext'
 import { ThemeProvider, useTheme } from '@/context/ThemeContext'
 import { ToastProvider } from '@/context/ToastContext'
@@ -12,26 +12,31 @@ import DiscoverSection from '@/components/DiscoverSection'
 import QueuePanel from '@/components/QueuePanel'
 import SkeletonLoader from '@/components/SkeletonLoader'
 import KeyboardShortcuts from '@/components/KeyboardShortcuts'
+import Settings from '@/components/Settings'
+import LocalMusicPlayer from '@/components/LocalMusicPlayer'
 import { getAllDiscoveryContent, getForYouMix, getAllThemedContent, refreshDiscovery } from '@/lib/discovery'
+import { encryptedGetItem, encryptedSetItem } from '@/lib/encryption'
+import { validateSong } from '@/lib/security'
 
 // Local Storage Keys
-const HISTORY_KEY = 'saafy_listening_history'
+const HISTORY_KEY = 'listening_history'
 
-// Helper to get/set listening history
+// Helper to get/set listening history (with encryption)
 const getListeningHistory = () => {
   try {
-    return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')
+    const history = encryptedGetItem(HISTORY_KEY, [])
+    return Array.isArray(history) ? history : []
   } catch {
     return []
   }
 }
 
 const addToListeningHistory = (song) => {
-  if (!song) return
+  if (!song || !validateSong(song)) return
   const history = getListeningHistory()
   const filtered = history.filter(s => s.id !== song.id)
   const updated = [song, ...filtered].slice(0, 10)
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(updated))
+  encryptedSetItem(HISTORY_KEY, updated)
 }
 
 function HomePage() {
@@ -985,6 +990,8 @@ function App() {
               <Routes>
                 <Route path="/" element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
                 <Route path="/artist/:id" element={<ErrorBoundary><ArtistPage /></ErrorBoundary>} />
+                <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
+                <Route path="/local-music" element={<ErrorBoundary><LocalMusicPlayer /></ErrorBoundary>} />
               </Routes>
             </Router>
           </PlayerProvider>

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { safeGetStorage, safeSetStorage } from '@/lib/security'
 
 // Light mode colors
 const lightColors = {
@@ -33,16 +34,16 @@ const fonts = {
     mono: "'Space Grotesk', monospace",
 }
 
-const THEME_KEY = 'saafy_theme'
+const THEME_KEY = 'theme'
 
 const ThemeContext = createContext()
 
 export function ThemeProvider({ children }) {
     const [isDark, setIsDark] = useState(() => {
         try {
-            return localStorage.getItem(THEME_KEY) === 'dark'
+            return safeGetStorage(THEME_KEY, 'dark') === 'dark'
         } catch {
-            return false
+            return true
         }
     })
 
@@ -53,7 +54,7 @@ export function ThemeProvider({ children }) {
     }
 
     useEffect(() => {
-        localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light')
+        safeSetStorage(THEME_KEY, isDark ? 'dark' : 'light')
         // Apply to html element for global CSS access if needed
         document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light')
     }, [isDark])

@@ -2,6 +2,7 @@ import { createContext, useContext, useReducer, useRef, useEffect, useState } fr
 import { getSong, addSongToRecommender, getRecommendations } from '@/lib/api'
 import { getForYouMix } from '@/lib/discovery'
 import { addToSessionPlayedSongs, hasBeenPlayedInSession } from '@/utils/sessionStorage'
+import { updateTray, registerMediaControlHandler } from '@/lib/electron'
 
 // ============================================================================
 // PRODUCTION-SAFE LOGGER
@@ -765,6 +766,38 @@ export function PlayerProvider({ children }) {
     const clearError = () => {
         dispatch({ type: 'CLEAR_ERROR' })
     }
+
+    // ============================================================================
+    // ELECTRON INTEGRATION
+    // ============================================================================
+
+    // Update system tray when song/playing state changes
+    useEffect(() => {
+        const songName = state.currentSong?.name || state.currentSong?.title || 'Not playing'
+        const artist = state.currentSong?.primaryArtists || ''
+        const displayName = artist ? `${songName} - ${artist}` : songName
+
+        updateTray(displayName, state.isPlaying)
+    }, [state.currentSong, state.isPlaying])
+
+    // Register media control handlers (from global shortcuts/tray)
+    useEffect(() => {
+        const cleanup = registerMediaControlHandler((action) => {
+            switch (action) {
+                case 'playpause':
+                    togglePlay()
+                    break
+                case 'next':
+                    handleNext()
+                    break
+                case 'previous':
+                    handlePrevious()
+                    break
+            }
+        })
+
+        return cleanup
+    }, [])
 
     // ============================================================================
     // CONTEXT VALUE

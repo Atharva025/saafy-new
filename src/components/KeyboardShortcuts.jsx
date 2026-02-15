@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTheme } from '@/context/ThemeContext'
 import { usePlayer } from '@/context/PlayerContext'
+import { safeGetStorage, safeSetStorage } from '@/lib/security'
 
 export default function KeyboardShortcuts() {
     const { colors, fonts, isDark } = useTheme()
@@ -10,12 +11,12 @@ export default function KeyboardShortcuts() {
 
     useEffect(() => {
         // Show hints on first load
-        const hasSeenHints = localStorage.getItem('saafy_keyboard_hints_seen')
+        const hasSeenHints = safeGetStorage('keyboard_hints_seen', false)
         if (!hasSeenHints && currentSong) {
             setTimeout(() => setIsVisible(true), 2000)
             setTimeout(() => {
                 setIsVisible(false)
-                localStorage.setItem('saafy_keyboard_hints_seen', 'true')
+                safeSetStorage('keyboard_hints_seen', true)
             }, 8000)
         }
 
