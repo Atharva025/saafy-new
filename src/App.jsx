@@ -141,17 +141,22 @@ function HomePage() {
   }
 
   const iconBtnStyle = (isActive = false) => ({
-    width: '40px',
-    height: '40px',
+    width: '38px',
+    height: '38px',
     borderRadius: '10px',
-    background: isActive ? colors.paperDarker : colors.paperDark,
-    border: 'none',
+    background: isActive
+      ? (isDark ? 'rgba(224,115,86,0.18)' : 'rgba(196,92,62,0.1)')
+      : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'),
+    border: isActive
+      ? `1px solid ${colors.accent}40`
+      : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     color: isActive ? colors.accent : colors.inkMuted,
     transition: 'all 0.15s ease',
+    backdropFilter: 'blur(4px)',
   })
 
   return (
@@ -165,49 +170,69 @@ function HomePage() {
         position: 'sticky',
         top: 0,
         zIndex: 50,
-        background: colors.paper,
-        borderBottom: `1px solid ${colors.rule}`,
-        transition: 'background 0.3s ease, border-color 0.3s ease',
+        background: isDark
+          ? 'rgba(26, 22, 20, 0.88)'
+          : 'rgba(250, 247, 242, 0.88)',
+        borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+        transition: 'background 0.3s ease',
       }}>
         <div className="header-container" style={{
           maxWidth: '1400px',
           margin: '0 auto',
-          padding: 'clamp(12px, 3vw, 16px) clamp(16px, 4vw, 32px)',
+          padding: 'clamp(10px, 2.5vw, 14px) clamp(16px, 4vw, 28px)',
           display: 'flex',
           alignItems: 'center',
-          gap: 'clamp(12px, 3vw, 24px)',
+          gap: 'clamp(10px, 2.5vw, 20px)',
           flexWrap: 'wrap',
         }}>
           {/* Left - Logo + Greeting */}
-          <div className="header-left" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 'clamp(12px, 3vw, 20px)' }}>
+          <div className="header-left" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 'clamp(10px, 2.5vw, 16px)' }}>
             <div style={{
               fontFamily: fonts.display,
-              fontSize: 'clamp(1.1rem, 4vw, 1.4rem)',
+              fontSize: 'clamp(1.05rem, 3.5vw, 1.25rem)',
               fontWeight: 800,
               color: colors.ink,
-              letterSpacing: '-0.02em',
+              letterSpacing: '-0.03em',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
             }}>
+              <div style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '6px',
+                background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff">
+                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                </svg>
+              </div>
               SAAFY
             </div>
 
-            <div className="header-divider" style={{ width: '1px', height: '28px', background: colors.rule }} />
+            <div className="header-divider" style={{ width: '1px', height: '22px', background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
 
             <div className="header-greeting">
               <div style={{
                 fontFamily: fonts.primary,
-                fontSize: 'clamp(0.75rem, 2vw, 0.9rem)',
+                fontSize: 'clamp(0.72rem, 1.8vw, 0.85rem)',
                 fontWeight: 600,
                 color: colors.ink,
+                lineHeight: 1.2,
               }}>
                 {getGreeting()}
               </div>
               <div style={{
                 fontFamily: fonts.mono,
-                fontSize: 'clamp(0.6rem, 1.5vw, 0.65rem)',
+                fontSize: 'clamp(0.58rem, 1.3vw, 0.62rem)',
                 color: colors.inkLight,
                 textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginTop: '1px',
+                letterSpacing: '0.06em',
+                marginTop: '2px',
               }}>
                 {formatDate()}
               </div>
@@ -220,7 +245,7 @@ function HomePage() {
           </div>
 
           {/* Right - Actions */}
-          <div className="header-actions" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 'clamp(6px, 2vw, 8px)' }}>
+          <div className="header-actions" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
             {/* Queue Button */}
             <button
               onClick={() => setShowQueue(!showQueue)}
@@ -432,18 +457,20 @@ function HomePage() {
               onClick={handleShuffleAll}
               style={{
                 ...iconBtnStyle(),
-                background: colors.accent,
-                color: isDark ? colors.paper : '#fff',
+                background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`,
+                color: '#fff',
+                border: 'none',
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)' }}
               title="Shuffle All - Play Random"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="2" y="2" width="20" height="20" rx="3" ry="3" fill="none" stroke="currentColor" strokeWidth="2" />
-                <circle cx="8" cy="8" r="1.5" />
-                <circle cx="12" cy="12" r="1.5" />
-                <circle cx="16" cy="16" r="1.5" />
-                <circle cx="16" cy="8" r="1.5" />
-                <circle cx="8" cy="16" r="1.5" />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="16 3 21 3 21 8" />
+                <line x1="4" y1="20" x2="21" y2="3" />
+                <polyline points="21 16 21 21 16 21" />
+                <line x1="15" y1="15" x2="21" y2="21" />
+                <line x1="4" y1="4" x2="9" y2="9" />
               </svg>
             </button>
 
@@ -451,14 +478,14 @@ function HomePage() {
             <button
               onClick={handleRefresh}
               style={{
-                padding: '10px 14px',
+                padding: '8px 14px',
                 fontFamily: fonts.mono,
-                fontSize: '0.7rem',
+                fontSize: '0.68rem',
                 textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                color: isDark ? colors.ink : colors.paper,
-                background: isDark ? colors.paperDarker : colors.ink,
-                border: `1px solid ${colors.rule}`,
+                letterSpacing: '0.06em',
+                color: colors.inkMuted,
+                background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
                 borderRadius: '10px',
                 cursor: 'pointer',
                 display: 'flex',
@@ -466,8 +493,10 @@ function HomePage() {
                 gap: '6px',
                 transition: 'all 0.15s ease',
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = colors.ink; e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = colors.inkMuted; e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="23 4 23 10 17 10" />
                 <polyline points="1 20 1 14 7 14" />
                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
@@ -531,63 +560,97 @@ function HomePage() {
         ) : (
           <div>
             {/* For You */}
-            <section style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}>
+            <section style={{ marginBottom: 'clamp(36px, 7vw, 56px)' }}>
               <div style={{
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-end',
                 justifyContent: 'space-between',
                 gap: 'clamp(12px, 3vw, 16px)',
-                marginBottom: 'clamp(16px, 4vw, 20px)',
+                marginBottom: 'clamp(18px, 4vw, 24px)',
                 flexWrap: 'wrap',
               }}>
                 <div>
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '3px 10px',
+                    borderRadius: '20px',
+                    background: isDark ? 'rgba(224,115,86,0.14)' : 'rgba(196,92,62,0.08)',
+                    border: `1px solid ${isDark ? 'rgba(224,115,86,0.25)' : 'rgba(196,92,62,0.15)'}`,
+                    marginBottom: '10px',
+                  }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill={colors.accent}>
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                    <span style={{
+                      fontFamily: fonts.mono,
+                      fontSize: '0.6rem',
+                      fontWeight: 600,
+                      color: colors.accent,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                    }}>Curated for you</span>
+                  </div>
                   <h1 style={{
                     fontFamily: fonts.display,
-                    fontSize: 'clamp(1.6rem, 6vw, 2.4rem)',
+                    fontSize: 'clamp(1.5rem, 5vw, 2.2rem)',
                     fontWeight: 800,
                     color: colors.ink,
                     margin: 0,
+                    letterSpacing: '-0.02em',
+                    lineHeight: 1.1,
                   }}>
                     {currentSong && recommendations.length > 0 ? 'Recommended for You' : 'For You'}
                   </h1>
                   <div style={{
                     fontFamily: fonts.mono,
-                    fontSize: 'clamp(0.7rem, 2vw, 0.8rem)',
+                    fontSize: 'clamp(0.68rem, 1.8vw, 0.75rem)',
                     color: colors.inkLight,
-                    marginTop: '6px',
+                    marginTop: '8px',
                   }}>
                     {currentSong && recommendations.length > 0
                       ? `Based on "${currentSong.name || currentSong.title}"`
-                      : 'Curated mix • Fresh discoveries'}
+                      : 'Curated mix · Fresh discoveries'}
                   </div>
                 </div>
 
                 <button
                   onClick={handleShuffleAll}
                   style={{
-                    padding: 'clamp(10px, 2.5vw, 12px) clamp(16px, 4vw, 20px)',
-                    borderRadius: 'clamp(10px, 2.5vw, 12px)',
+                    padding: 'clamp(9px, 2vw, 11px) clamp(16px, 3.5vw, 20px)',
+                    borderRadius: '10px',
                     background: colors.accent,
                     border: 'none',
-                    color: colors.paper,
+                    color: '#fff',
                     cursor: 'pointer',
                     fontFamily: fonts.mono,
-                    fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
-                    fontWeight: 700,
+                    fontSize: 'clamp(0.7rem, 1.8vw, 0.78rem)',
+                    fontWeight: 600,
                     textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                    boxShadow: `0 4px 12px ${colors.accent}30`,
+                    letterSpacing: '0.07em',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease',
+                    boxShadow: `0 4px 16px ${colors.accent}35`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '7px',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.boxShadow = `0 6px 20px ${colors.accent}50`
+                    e.currentTarget.style.boxShadow = `0 8px 24px ${colors.accent}50`
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = `0 4px 12px ${colors.accent}30`
+                    e.currentTarget.style.boxShadow = `0 4px 16px ${colors.accent}35`
                   }}
                 >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="16 3 21 3 21 8" />
+                    <line x1="4" y1="20" x2="21" y2="3" />
+                    <polyline points="21 16 21 21 16 21" />
+                    <line x1="15" y1="15" x2="21" y2="21" />
+                    <line x1="4" y1="4" x2="9" y2="9" />
+                  </svg>
                   Play All
                 </button>
               </div>
@@ -595,11 +658,10 @@ function HomePage() {
               <div style={{
                 borderRadius: '20px',
                 padding: '16px',
-                background: isDark ? colors.paperDark : colors.paper,
-                border: `1px solid ${colors.rule}`,
-                boxShadow: isDark
-                  ? '0 10px 30px rgba(0,0,0,0.3)'
-                  : '0 10px 30px rgba(26,22,20,0.08)',
+                background: isDark
+                  ? 'rgba(255,255,255,0.025)'
+                  : 'rgba(0,0,0,0.018)',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
               }}>
                 <DiscoverSection
                   songs={currentSong && recommendations.length > 0 ? recommendations : forYou.songs}
@@ -961,16 +1023,17 @@ function HomePage() {
       <QueuePanel isOpen={showQueue} onClose={() => setShowQueue(false)} />
       <KeyboardShortcuts />
 
-      {/* Backdrop blur for history panel */}
+      {/* Backdrop for history panel */}
       {showHistory && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            background: isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.25)',
-            backdropFilter: 'blur(6px)',
-            WebkitBackdropFilter: 'blur(6px)',
-            zIndex: 89,
+            top: '65px', // below header
+            background: isDark ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.2)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            zIndex: 45,
             animation: 'fadeIn 0.2s ease-out',
           }}
           onClick={() => setShowHistory(false)}

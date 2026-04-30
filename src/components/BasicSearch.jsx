@@ -124,11 +124,12 @@ export default function BasicSearch({ onSelectSong }) {
                     style={{
                         position: 'fixed',
                         inset: 0,
-                        background: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.3)',
-                        backdropFilter: 'blur(8px)',
-                        WebkitBackdropFilter: 'blur(8px)',
-                        zIndex: 149,
+                        background: isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.2)',
+                        backdropFilter: 'blur(6px)',
+                        WebkitBackdropFilter: 'blur(6px)',
+                        zIndex: 40,
                         animation: 'fadeIn 0.3s ease-out',
+                        top: '65px', // Start below the header
                     }}
                     onClick={() => {
                         setIsExpanded(false)
@@ -142,14 +143,14 @@ export default function BasicSearch({ onSelectSong }) {
                 ref={containerRef}
                 style={{
                     position: isExpanded ? 'fixed' : 'relative',
-                    top: isExpanded ? '22vh' : 'auto',
+                    top: isExpanded ? '90px' : 'auto',
                     left: isExpanded ? '50%' : 'auto',
-                    transform: isExpanded ? 'translate(-50%, 0) scale(1.05)' : 'scale(1)',
+                    transform: isExpanded ? 'translate(-50%, 0)' : 'scale(1)',
                     transformOrigin: 'center center',
-                    width: isExpanded ? (isMobile ? '90%' : 'min(750px, 85vw)') : '100%',
+                    width: isExpanded ? (isMobile ? '90%' : 'min(680px, 80vw)') : '100%',
                     maxWidth: isExpanded ? 'none' : '480px',
-                    zIndex: isExpanded ? 150 : 'auto',
-                    transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), max-width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    zIndex: isExpanded ? 55 : 'auto',
+                    transition: 'transform 0.3s cubic-bezier(0.2, 0, 0, 1), width 0.3s cubic-bezier(0.2, 0, 0, 1), max-width 0.3s cubic-bezier(0.2, 0, 0, 1)',
                 }}
             >
                 <form onSubmit={handleSearch}>

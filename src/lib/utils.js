@@ -34,22 +34,19 @@ export function cleanText(text) {
 }
 
 // Get optimized image URL
-export function getOptimizedImageUrl(url, size = 'medium') {
+export function getOptimizedImageUrl(url, size = 'high') {
   if (!url || typeof url !== 'string') return '/placeholder-album.jpg'
 
-  // If it's already optimized or doesn't need optimization
-  if (url.includes('150x150') || url.includes('500x500')) {
-    return url
-  }
-
-  // Replace image size for optimization
+  // Replace image size for optimization - always request highest quality
   const sizeMap = {
     small: '150x150',
     medium: '500x500',
-    large: '1000x1000'
+    high: '500x500',
+    large: '500x500'
   }
 
-  return url.replace(/\d+x\d+/, sizeMap[size] || sizeMap.medium)
+  // Upgrade any low-quality size strings to the requested size
+  return url.replace(/\d+x\d+/, sizeMap[size] || sizeMap.high)
 }
 
 // Debounce function for search
@@ -70,14 +67,16 @@ export function generateId() {
   return Math.random().toString(36).substr(2, 9)
 }
 
-// Get the last (highest quality) image from an image array
+// Get the highest quality image from an image array
+// Note: formatSongs in api.js remaps image arrays so [0] = highest quality (500x500)
 export function getLastImage(imageArray) {
   if (!imageArray || !Array.isArray(imageArray) || imageArray.length === 0) {
     return '/placeholder-album.jpg'
   }
 
-  const lastImage = imageArray[imageArray.length - 1]
-  return lastImage?.link || lastImage?.url || '/placeholder-album.jpg'
+  // Index [0] is highest quality after formatSongs remapping
+  const best = imageArray[0]
+  return best?.link || best?.url || '/placeholder-album.jpg'
 }
 
 // Optimize image URL for different sizes

@@ -331,7 +331,7 @@ export function PlayerProvider({ children }) {
 
     const extendQueueIfNeeded = async () => {
         if (autoQueueingRef.current) return
-        if (state.queue.length > 3) return // Don't extend if we still have songs
+        if (state.queue.length > 0) return // Only extend if queue is completely empty
 
         autoQueueingRef.current = true
 

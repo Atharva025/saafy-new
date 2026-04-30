@@ -288,7 +288,8 @@ const formatSongs = (songs) => {
                         id: String(artist.id || ''),
                         name: decodeHtmlEntities(String(artist.name || 'Unknown')),
                         url: artist.url || '',
-                        image: artist.image?.[1]?.url || ''
+                        // Use highest available quality: API returns [0]=50x50, [1]=150x150, [2]=500x500
+                        image: artist.image?.[2]?.url || artist.image?.[1]?.url || artist.image?.[0]?.url || ''
                     }))
                     : song.primaryArtists
                         ? song.primaryArtists.split(',').map(name => ({ name: decodeHtmlEntities(name.trim()) }))
