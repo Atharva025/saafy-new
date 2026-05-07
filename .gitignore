@@ -1,4 +1,6 @@
+# =========================
 # Logs
+# =========================
 logs
 *.log
 npm-debug.log*
@@ -7,22 +9,100 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# =========================
+# Dependencies
+# =========================
+node_modules/
+scripts/node_modules/
 
-# Editor directories and files
+# =========================
+# Build Outputs
+# =========================
+dist/
+dist-ssr/
+build/
+out/
+coverage/
+
+# Electron Build Artifacts
+release/
+*.exe
+*.msi
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+*.blockmap
+
+# Electron unpacked builds
+*-unpacked/
+
+# =========================
+# Environment Files
+# =========================
+.env
+.env.local
+.env.*
+!.env.example
+
+# =========================
+# Cache Files
+# =========================
+.cache/
+.parcel-cache/
+.vite/
+.eslintcache
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDE / Editors
+# =========================
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.swp
 
-.env
-.env.local
+# =========================
+# Temporary Files
+# =========================
+tmp/
+temp/
+*.tmp
 
+# =========================
+# Runtime / Process Files
+# =========================
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# =========================
+# Optional Large Assets
+# =========================
+*.zip
+*.7z
+*.rar
+*.tar.gz
+
+# =========================
+# Testing
+# =========================
+coverage/
+.nyc_output/
+
+# =========================
+# Misc
+# =========================
+*.local
