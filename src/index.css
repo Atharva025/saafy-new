@@ -1,5 +1,68 @@
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap');
 
+/* ═══════════════════════════════════════════════════════════
+   SKEUOMORPHIC DESIGN SYSTEM — Tailwind v4 @theme extensions
+   Material world: WARM TERRACOTTA (Option D — brand-derived)
+   Light source: top-left at ~135deg
+   ═══════════════════════════════════════════════════════════ */
+
+@theme {
+  /* ── Skeuomorphic shadow vocabulary ── */
+  --shadow-ske-xs:
+    1px 2px 4px var(--ske-shadow),
+    -1px -1px 3px var(--ske-highlight),
+    inset 0 1px 0 var(--ske-inner-highlight);
+
+  --shadow-ske-sm:
+    2px 3px 6px var(--ske-shadow),
+    -2px -2px 5px var(--ske-highlight),
+    inset 0 1px 1px var(--ske-inner-highlight),
+    inset 0 -1px 1px var(--ske-inner-shadow);
+
+  --shadow-ske-md:
+    4px 5px 10px var(--ske-shadow),
+    -3px -3px 8px var(--ske-highlight),
+    inset 0 1px 1px var(--ske-inner-highlight),
+    inset 0 -1px 2px var(--ske-inner-shadow);
+
+  --shadow-ske-lg:
+    0 12px 30px var(--ske-shadow),
+    0 4px 8px var(--ske-shadow),
+    inset 0 1px 0 var(--ske-inner-highlight);
+
+  --shadow-ske-inset-sm:
+    inset 1px 2px 5px var(--ske-inner-shadow),
+    inset -1px -1px 3px var(--ske-inner-highlight);
+
+  --shadow-ske-inset-md:
+    inset 2px 3px 8px var(--ske-shadow),
+    inset -1px -1px 4px var(--ske-highlight);
+
+  --shadow-ske-pressed:
+    inset 2px 3px 7px var(--ske-shadow-deep),
+    inset -1px -1px 3px var(--ske-inner-highlight);
+
+  --shadow-ske-focus:
+    0 0 0 3px rgba(196, 92, 62, 0.32),
+    inset 2px 3px 8px var(--ske-inner-shadow);
+
+  /* ── Directional surface gradients ── */
+  --background-image-ske-surface:
+    linear-gradient(145deg, var(--ske-highlight) 0%, transparent 50%, var(--ske-inner-shadow) 100%);
+  --background-image-ske-button:
+    linear-gradient(145deg, var(--ske-highlight) 0%, transparent 40%, rgba(0,0,0,0.07) 100%);
+  --background-image-ske-recessed:
+    linear-gradient(to bottom, rgba(0,0,0,0.055) 0%, transparent 60%);
+
+  /* ── Noise texture (SVG inline) ── */
+  --background-image-noise:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+
+  /* ── Custom easing ── */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-snappy: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
 /* ── Reset ─────────────────────────────────────────────────────── */
 *,
 *::before,
@@ -109,6 +172,15 @@ body {
   --shadow-md: 0 4px 14px rgba(26, 22, 20, 0.09);
   --shadow-lg: 0 12px 36px rgba(26, 22, 20, 0.13);
   --shadow-xl: 0 24px 64px rgba(26, 22, 20, 0.16);
+
+  /* ── SKEUOMORPHIC LIGHT SOURCE (light mode) ── */
+  /* Brand-derived: highlights from warm cream, shadows from deep terracotta-brown */
+  --ske-highlight: rgba(255, 248, 240, 0.78);         /* warm cream highlight */
+  --ske-highlight-strong: rgba(255, 252, 248, 0.95);  /* near-white top edge */
+  --ske-shadow: rgba(26, 22, 20, 0.20);               /* ink-dark drop shadow */
+  --ske-shadow-deep: rgba(26, 22, 20, 0.38);          /* pressed-in deep shadow */
+  --ske-inner-highlight: rgba(255, 248, 240, 0.82);   /* inset top-edge sheen */
+  --ske-inner-shadow: rgba(26, 22, 20, 0.13);         /* inset bottom-edge depth */
 }
 
 /* Dark mode CSS vars (synced with ThemeContext darkColors) */
@@ -132,6 +204,184 @@ body {
   --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.30);
   --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.40);
   --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.50);
+
+  /* ── SKEUOMORPHIC LIGHT SOURCE (dark mode — inverted ratios) ── */
+  /* Highlights become subtle edge glints; shadows are deep and dramatic */
+  --ske-highlight: rgba(255, 230, 200, 0.07);         /* barely-there warm glint */
+  --ske-highlight-strong: rgba(255, 240, 220, 0.13);  /* edge shimmer on raised */
+  --ske-shadow: rgba(0, 0, 0, 0.58);                  /* deep dark drop shadow */
+  --ske-shadow-deep: rgba(0, 0, 0, 0.76);             /* pressed-state abyss */
+  --ske-inner-highlight: rgba(255, 220, 180, 0.06);   /* inset top warm ghost */
+  --ske-inner-shadow: rgba(0, 0, 0, 0.48);            /* inset bottom darkness */
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SKEUOMORPHIC COMPONENT CLASSES — @layer components
+   These compose with existing inline styles via JS variables
+   ═══════════════════════════════════════════════════════════ */
+@layer components {
+
+  /* ── Raised interactive surface (buttons, action pills) ── */
+  .ske-raised {
+    box-shadow: var(--shadow-ske-md);
+    background-image: var(--background-image-ske-button);
+    transition:
+      box-shadow 80ms ease-out,
+      transform 80ms ease-out,
+      filter 80ms ease-out;
+  }
+  .ske-raised:hover {
+    box-shadow: var(--shadow-ske-lg);
+    filter: brightness(1.06);
+  }
+  .ske-raised:active {
+    box-shadow: var(--shadow-ske-pressed);
+    transform: translateY(1px);
+    filter: brightness(0.95);
+    transition-duration: 40ms;
+  }
+  .ske-raised:focus-visible {
+    box-shadow: var(--shadow-ske-focus);
+    outline: none;
+  }
+  .ske-raised:disabled,
+  .ske-raised[disabled] {
+    box-shadow: none;
+    transform: none;
+    filter: none;
+    opacity: 0.52;
+    pointer-events: none;
+  }
+
+  /* ── Raised extra-small (badges, chips, small pills ≥24px) ── */
+  .ske-raised-xs {
+    box-shadow: var(--shadow-ske-xs);
+    background-image: var(--background-image-ske-button);
+    transition: box-shadow 100ms ease-out, transform 80ms ease-out;
+  }
+  .ske-raised-xs:hover {
+    box-shadow: var(--shadow-ske-sm);
+    filter: brightness(1.04);
+  }
+  .ske-raised-xs:active {
+    box-shadow: var(--shadow-ske-pressed);
+    transform: translateY(1px);
+  }
+
+  /* ── Recessed surface (inputs, search, wells, progress tracks) ── */
+  .ske-recessed {
+    box-shadow: var(--shadow-ske-inset-md);
+    background-image: var(--background-image-ske-recessed);
+    transition: box-shadow 120ms ease-out;
+  }
+  .ske-recessed:focus,
+  .ske-recessed:focus-within {
+    box-shadow: var(--shadow-ske-focus);
+    outline: none;
+  }
+
+  /* ── Card / panel surface (raised shelf above page) ── */
+  .ske-card {
+    box-shadow: var(--shadow-ske-sm);
+    background-image: var(--background-image-ske-surface);
+    transition: box-shadow 200ms ease-out;
+  }
+  .ske-card:hover {
+    box-shadow: var(--shadow-ske-md);
+  }
+
+  /* ── Floating layer (modals, dropdowns, popovers) ── */
+  .ske-float {
+    box-shadow: var(--shadow-ske-lg);
+    background-image: var(--background-image-ske-surface);
+  }
+
+  /* ── Noise texture overlay (applies via ::before pseudo) ── */
+  .ske-textured {
+    position: relative;
+    isolation: isolate;
+  }
+  .ske-textured::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--background-image-noise);
+    opacity: 0.028;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 0;
+  }
+  .ske-textured > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Groove separator (replaces flat hr / border divider) ── */
+  .ske-groove {
+    border: none;
+    border-top: 1px solid var(--ske-inner-shadow);
+    box-shadow: 0 1px 0 var(--ske-inner-highlight);
+    margin-block: 0;
+  }
+
+  /* ── Embossed text (labels on raised surfaces) ── */
+  .ske-text-raised {
+    text-shadow:
+      0 1px 1px var(--ske-highlight-strong),
+      0 -1px 1px var(--ske-inner-shadow);
+  }
+
+  /* ── Engraved text (labels on recessed surfaces) ── */
+  .ske-text-recessed {
+    text-shadow: 0 1px 2px var(--ske-shadow);
+  }
+
+  /* ── Scroll card lift effect ── */
+  .ske-lift {
+    transition:
+      transform 280ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      box-shadow 280ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .ske-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-ske-lg);
+  }
+  .ske-lift:active {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-ske-md);
+    transition-duration: 100ms;
+  }
+
+  /* ── Progress fill raised (fill within recessed track) ── */
+  .ske-progress-fill {
+    box-shadow:
+      inset 0 1px 2px var(--ske-inner-shadow),
+      0 1px 0 var(--ske-inner-highlight);
+  }
+
+  /* ── Album art elevated (raised art thumbnails ≥40px) ── */
+  .ske-art {
+    box-shadow:
+      var(--shadow-ske-sm),
+      inset 0 1px 0 var(--ske-inner-highlight);
+    transition: box-shadow 200ms ease-out;
+  }
+
+  /* ── Section pill badge ── */
+  .ske-pill {
+    box-shadow: var(--shadow-ske-xs);
+    background-image: var(--background-image-ske-button);
+  }
+
+  /* ── Icon drop shadow on raised surfaces ── */
+  .ske-icon-raised {
+    filter: drop-shadow(1px 2px 2px var(--ske-shadow));
+  }
+
+  /* ── Icon drop shadow on recessed surfaces (inverted) ── */
+  .ske-icon-recessed {
+    filter: drop-shadow(-1px -1px 1px var(--ske-highlight));
+  }
 }
 
 /* ── Base Elements ──────────────────────────────────────────────── */
@@ -221,6 +471,7 @@ button {
   overflow: hidden;
 }
 
+/* App Header — raised shelf sitting above page content */
 .app-header {
   height: var(--layout-header-height);
   flex-shrink: 0;
@@ -230,6 +481,11 @@ button {
   -webkit-backdrop-filter: blur(16px) saturate(160%);
   z-index: var(--z-sticky);
   transition: background var(--transition-slow);
+  /* Skeuomorphic: raised shelf — shadow below, highlight at top edge */
+  box-shadow:
+    0 2px 8px var(--ske-shadow),
+    0 1px 0 var(--ske-inner-highlight),
+    inset 0 1px 0 var(--ske-highlight);
 }
 
 .app-content {
@@ -248,6 +504,10 @@ button {
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   z-index: var(--z-player);
   transition: background var(--transition-slow);
+  /* Skeuomorphic: raised shelf from below — shadow up, highlight at bottom edge */
+  box-shadow:
+    0 -2px 8px var(--ske-shadow),
+    inset 0 1px 0 var(--ske-inner-highlight);
 }
 
 /* ── Scrollbar ──────────────────────────────────────────────────── */
@@ -342,44 +602,62 @@ input[type="range"]:hover::-moz-range-thumb {
 
 /* ── Reusable Component Classes ─────────────────────────────────── */
 
-/* Icon button — replaces the inline iconBtnStyle() function in App.jsx */
+/* Icon button — skeuomorphic raised treatment */
 .icon-btn {
   width: 38px;
   height: 38px;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
   background: transparent;
+  background-image: var(--background-image-ske-button);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--color-ink-muted);
   transition:
-    background var(--transition-fast),
+    background-color var(--transition-fast),
     color var(--transition-fast),
     border-color var(--transition-fast),
-    transform var(--transition-fast),
-    box-shadow var(--transition-fast);
+    transform 80ms ease-out,
+    box-shadow 80ms ease-out,
+    filter 80ms ease-out;
   flex-shrink: 0;
+  /* Raised state */
+  box-shadow: var(--shadow-ske-xs);
 }
 
 .icon-btn:hover {
-  background: var(--color-paper-dark);
+  background-color: var(--color-paper-dark);
   color: var(--color-ink);
   transform: translateY(-1px);
+  box-shadow: var(--shadow-ske-sm);
+  filter: brightness(1.04);
 }
 
 .icon-btn:active {
-  transform: translateY(0);
+  transform: translateY(1px);
+  box-shadow: var(--shadow-ske-pressed);
+  filter: brightness(0.96);
+  transition-duration: 40ms;
+}
+
+.icon-btn:focus-visible {
+  box-shadow: var(--shadow-ske-focus);
+  outline: none;
 }
 
 .icon-btn.active {
-  background: var(--color-accent-subtle);
+  background-color: var(--color-accent-subtle);
   border-color: var(--color-accent-border);
   color: var(--color-accent);
+  /* Active = recessed (pressed in, not raised) */
+  box-shadow: var(--shadow-ske-inset-sm);
+  background-image: var(--background-image-ske-recessed);
+  transform: translateY(1px);
 }
 
-/* Section label pill */
+/* Section label pill — skeuomorphic raised chip */
 .section-pill {
   display: inline-flex;
   align-items: center;
@@ -391,9 +669,12 @@ input[type="range"]:hover::-moz-range-thumb {
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: var(--color-accent-subtle);
+  background-color: var(--color-accent-subtle);
+  background-image: var(--background-image-ske-button);
   border: 1px solid var(--color-accent-border);
   color: var(--color-accent);
+  box-shadow: var(--shadow-ske-xs);
+  text-shadow: 0 1px 1px var(--ske-highlight-strong), 0 -1px 1px var(--ske-inner-shadow);
 }
 
 /* Skeleton shimmer */

@@ -53,22 +53,19 @@ function QueueBtn({ song, onAddToQueue, success, size = 28 }) {
             }}
             title="Add to queue"
             aria-label="Add to queue"
+            className="ske-raised"
             style={{
                 width: `${size}px`,
                 height: `${size}px`,
                 borderRadius: '50%',
-                background: 'rgba(255,255,255,0.92)',
-                border: 'none',
+                background: 'rgba(255,255,255,0.94)',
+                border: '1px solid rgba(255,255,255,0.6)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.28)',
-                transition: 'transform 0.15s ease, background 0.15s ease',
                 flexShrink: 0,
             }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.12)'; e.currentTarget.style.background = '#fff' }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.92)' }}
         >
             <svg width={size * 0.43} height={size * 0.43} viewBox="0 0 24 24" fill="none" stroke="#1A1614" strokeWidth="2.5">
                 <line x1="12" y1="5" x2="12" y2="19" />
@@ -83,20 +80,21 @@ function PlayCircle({ isActive, isPlaying, accentColor, size = 42, hovered }) {
     const bg = isActive && isPlaying ? accentColor : 'rgba(255,255,255,0.96)'
     const iconColor = isActive && isPlaying ? '#fff' : '#1A1614'
     return (
-        <div style={{
-            width: `${size}px`,
-            height: `${size}px`,
-            borderRadius: '50%',
-            background: bg,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: `0 6px 20px rgba(0,0,0,0.3)`,
-            transform: hovered ? 'scale(1)' : 'scale(0.88)',
-            opacity: hovered || (isActive && isPlaying) ? 1 : 0,
-            transition: 'transform 0.22s cubic-bezier(0.2,0,0,1), opacity 0.2s ease, background 0.25s ease',
-            flexShrink: 0,
-        }}>
+        <div
+            className="ske-raised"
+            style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                borderRadius: '50%',
+                background: bg,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transform: hovered ? 'scale(1)' : 'scale(0.88)',
+                opacity: hovered || (isActive && isPlaying) ? 1 : 0,
+                transition: 'transform 0.22s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s ease, background 0.25s ease',
+                flexShrink: 0,
+            }}>
             {isActive && isPlaying ? (
                 <svg width={size * 0.36} height={size * 0.36} viewBox="0 0 24 24" fill={iconColor}>
                     <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
@@ -132,18 +130,19 @@ function HeroCard({ song, onPlay, onAddToQueue, currentSong, isPlaying, colors, 
                     position: 'relative',
                     width: '100%',
                     height: '100%',
-                    borderRadius: '16px',
+                    borderRadius: '18px',
                     overflow: 'hidden',
                     cursor: 'pointer',
                     border: isActive
                         ? `2px solid ${colors.accent}`
-                        : `1px solid ${colors.rule}`,
+                        : `1px solid rgba(255,255,255,0.12)`,
                     boxShadow: isActive
-                        ? `0 0 0 2px ${colors.accent}35, 0 16px 48px ${colors.accent}22`
+                        ? `4px 5px 12px var(--ske-shadow), -2px -2px 8px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), 0 0 0 2px ${colors.accent}35, 0 16px 48px ${colors.accent}28`
                         : hovered
-                            ? '0 24px 56px rgba(0,0,0,0.24)'
-                            : '0 8px 28px rgba(0,0,0,0.14)',
-                    transition: 'box-shadow 0.3s ease, border-color 0.3s ease',
+                            ? `6px 8px 20px var(--ske-shadow), -4px -4px 12px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow)`
+                            : `2px 3px 8px var(--ske-shadow), -2px -2px 5px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 1px var(--ske-inner-shadow)`,
+                    transition: 'box-shadow 200ms ease-out, border-color 200ms ease-out, transform 200ms ease-out',
+                    transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
                 }}
             >
                 {/* Album image */}
@@ -291,16 +290,17 @@ function SmallCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying, 
                 position: 'relative',
                 width: '100%',
                 height: '100%',
-                borderRadius: '12px',
+                borderRadius: '14px',
                 overflow: 'hidden',
                 cursor: 'pointer',
-                border: isActive ? `2px solid ${colors.accent}` : `1px solid ${colors.rule}`,
+                border: isActive ? `2px solid ${colors.accent}` : `1px solid rgba(255,255,255,0.10)`,
                 boxShadow: isActive
-                    ? `0 0 0 2px ${colors.accent}28, 0 8px 28px ${colors.accent}22`
+                    ? `2px 3px 8px var(--ske-shadow), -1px -1px 5px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight), 0 0 0 2px ${colors.accent}28, 0 8px 28px ${colors.accent}22`
                     : hovered
-                        ? '0 14px 32px rgba(0,0,0,0.22)'
-                        : '0 4px 14px rgba(0,0,0,0.12)',
-                transition: 'box-shadow 0.25s ease, border-color 0.25s ease',
+                        ? `4px 5px 14px var(--ske-shadow), -3px -3px 8px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow)`
+                        : `1px 2px 6px var(--ske-shadow), -1px -1px 4px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight), inset 0 -1px 1px var(--ske-inner-shadow)`,
+                transition: 'box-shadow 200ms ease-out, border-color 200ms ease-out, transform 200ms ease-out',
+                transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
                 animation: 'cardFadeIn 0.4s ease-out both',
                 animationDelay: `${index * 0.06}s`,
             }}
@@ -412,8 +412,8 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying,
                 flexShrink: 0,
                 width: 'clamp(140px, 20vw, 172px)',
                 cursor: 'pointer',
-                transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
-                transition: 'transform 0.28s cubic-bezier(0.2,0,0,1)',
+                transition: 'transform 280ms cubic-bezier(0.25,0.46,0.45,0.94)',
+                transform: hovered ? 'translateY(-6px)' : 'translateY(0)',
                 animation: 'cardFadeIn 0.42s ease-out both',
                 animationDelay: `${index * 0.055}s`,
             }}
@@ -423,7 +423,7 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying,
                 position: 'relative',
                 width: '100%',
                 paddingBottom: '100%',
-                borderRadius: '12px',
+                borderRadius: '14px',
                 overflow: 'hidden',
                 background: colors.paperDark,
                 border: isActive

@@ -56,26 +56,28 @@ export default function QueuePanel({ isOpen, onClose }) {
                 maxWidth: isMobile ? '100%' : '380px',
                 maxHeight: isMobile ? 'calc(100vh - 80px)' : 'calc(100vh - 120px)',
                 background: colors.paper,
-                borderRadius: isMobile ? '20px 20px 0 0' : '16px',
-                borderLeft: isMobile ? 'none' : `1px solid ${colors.rule}`,
-                border: isMobile ? `1px solid ${colors.rule}` : `1px solid ${colors.rule}`,
+                backgroundImage: 'var(--background-image-ske-surface)',
+                borderRadius: isMobile ? '20px 20px 0 0' : '18px',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.80)'}`,
                 boxShadow: isDark
-                    ? '0 -8px 32px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3)'
-                    : '0 -8px 32px rgba(26,22,20,0.15), 0 4px 16px rgba(26,22,20,0.08)',
+                    ? `8px 10px 32px var(--ske-shadow), -4px -4px 16px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow), 0 -8px 32px rgba(0,0,0,0.5)`
+                    : `6px 8px 24px var(--ske-shadow), -4px -4px 14px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow), 0 -8px 32px rgba(26,22,20,0.15)`,
                 zIndex: 150,
                 display: 'flex',
                 flexDirection: 'column',
-                animation: isMobile ? 'slideInBottom 0.3s ease-out' : 'slideInRight 0.3s ease-out',
+                animation: isMobile ? 'slideInBottom 0.3s cubic-bezier(0.25,0.46,0.45,0.94)' : 'slideInRight 0.3s cubic-bezier(0.25,0.46,0.45,0.94)',
             }}
                 ref={panelRef}
             >
                 {/* Header */}
                 <div style={{
                     padding: 'clamp(16px, 4vw, 20px) clamp(20px, 5vw, 24px)',
-                    borderBottom: `1px solid ${colors.rule}`,
+                    borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(26,22,20,0.06)'}`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
+                    /* Raised shelf header with groove separator */
+                    boxShadow: `0 1px 0 var(--ske-inner-highlight), inset 0 1px 0 var(--ske-highlight)`,
                 }}>
                     <div>
                         <h2 style={{

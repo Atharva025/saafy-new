@@ -158,14 +158,17 @@ export default function BasicSearch({ onSelectSong }) {
                         style={{
                             position: 'relative',
                             background: colors.paperDark,
-                            borderRadius: '12px',
-                            border: `2px solid ${isFocused ? colors.accent : 'transparent'}`,
-                            boxShadow: isExpanded
-                                ? (isDark
-                                    ? '0 16px 48px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.3)'
-                                    : '0 16px 48px rgba(26,22,20,0.15), 0 8px 20px rgba(26,22,20,0.08)')
-                                : (isFocused ? `0 0 0 4px ${isDark ? 'rgba(224,115,86,0.15)' : 'rgba(196,92,62,0.1)'}` : 'none'),
-                            transition: 'all 0.5s ease',
+                            backgroundImage: 'var(--background-image-ske-recessed)',
+                            borderRadius: '14px',
+                            border: isFocused
+                                ? `1.5px solid ${colors.accent}`
+                                : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.70)'}`,
+                            boxShadow: isFocused
+                                ? `var(--shadow-ske-focus)`
+                                : isExpanded
+                                    ? `inset 2px 3px 10px var(--ske-shadow), inset -1px -1px 5px var(--ske-highlight), 0 12px 36px var(--ske-shadow)`
+                                    : `inset 1px 2px 6px var(--ske-inner-shadow), inset -1px -1px 3px var(--ske-inner-highlight)`,
+                            transition: 'box-shadow 150ms ease-out, border-color 150ms ease-out, border-radius 0.3s ease',
                         }}
                     >
                         <div style={{
@@ -322,18 +325,19 @@ export default function BasicSearch({ onSelectSong }) {
                 {showSuggestions && suggestions.length > 0 && (
                     <div style={{
                         position: 'absolute',
-                        top: 'calc(100% + 8px)',
+                        top: 'calc(100% + 10px)',
                         left: 0,
                         right: 0,
                         background: colors.paper,
-                        borderRadius: '12px',
-                        border: `1px solid ${colors.rule}`,
+                        backgroundImage: 'var(--background-image-ske-surface)',
+                        borderRadius: '14px',
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.80)'}`,
                         boxShadow: isDark
-                            ? '0 16px 48px rgba(0,0,0,0.4), 0 8px 20px rgba(0,0,0,0.3)'
-                            : '0 16px 48px rgba(26,22,20,0.12), 0 8px 20px rgba(26,22,20,0.06)',
+                            ? `6px 8px 28px var(--ske-shadow), -4px -4px 14px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow)`
+                            : `4px 6px 20px var(--ske-shadow), -3px -3px 10px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow)`,
                         overflow: 'hidden',
                         zIndex: 100,
-                        animation: 'dropIn 0.15s ease',
+                        animation: 'dropIn 0.15s cubic-bezier(0.25,0.46,0.45,0.94)',
                     }}>
                         <div style={{
                             maxHeight: '280px',
@@ -367,10 +371,12 @@ export default function BasicSearch({ onSelectSong }) {
                                         <div style={{
                                             width: isExpanded ? '44px' : '36px',
                                             height: isExpanded ? '44px' : '36px',
-                                            borderRadius: '6px',
+                                            borderRadius: '8px',
                                             overflow: 'hidden',
                                             flexShrink: 0,
                                             background: colors.paperDark,
+                                            /* Art thumbnail raised */
+                                            boxShadow: `1px 2px 4px var(--ske-shadow), -1px -1px 3px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight)`,
                                         }}>
                                             {imageUrl ? (
                                                 <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

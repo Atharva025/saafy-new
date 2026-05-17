@@ -110,21 +110,21 @@ export default function BasicPlayer() {
 
             <div style={{
                 background: isDark
-                    ? 'rgba(13, 13, 13, 0.85)'
-                    : 'rgba(250, 250, 250, 0.85)',
-                backdropFilter: 'blur(20px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                borderRadius: 'clamp(12px, 3vw, 16px)',
+                    ? 'rgba(15, 13, 11, 0.88)'
+                    : 'rgba(252, 250, 247, 0.90)',
+                backdropFilter: 'blur(24px) saturate(200%)',
+                WebkitBackdropFilter: 'blur(24px) saturate(200%)',
+                borderRadius: 'clamp(14px, 3vw, 18px)',
                 boxShadow: isHovered
                     ? isDark
-                        ? '0 16px 48px rgba(0,0,0,0.5), 0 6px 20px rgba(0,0,0,0.4)'
-                        : '0 16px 48px rgba(26,22,20,0.2), 0 6px 20px rgba(26,22,20,0.12)'
+                        ? `8px 10px 30px var(--ske-shadow), -4px -4px 16px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow), 0 20px 60px rgba(0,0,0,0.5)`
+                        : `6px 8px 24px var(--ske-shadow), -4px -4px 14px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow), 0 16px 48px rgba(26,22,20,0.2)`
                     : isDark
-                        ? '0 8px 32px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.3)'
-                        : '0 8px 32px rgba(26,22,20,0.14), 0 4px 12px rgba(26,22,20,0.08)',
-                border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
+                        ? `4px 5px 16px var(--ske-shadow), -2px -2px 8px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight), inset 0 -1px 1px var(--ske-inner-shadow)`
+                        : `3px 4px 12px var(--ske-shadow), -2px -2px 7px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight), inset 0 -1px 1px var(--ske-inner-shadow)`,
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.80)'}`,
                 overflow: 'hidden',
-                transition: 'box-shadow 0.25s ease, background 0.3s ease',
+                transition: 'box-shadow 250ms ease-out, background 0.3s ease',
                 position: 'relative',
             }}>
                 {/* Main Content Row */}
@@ -248,13 +248,16 @@ export default function BasicPlayer() {
                                 height: isTinyScreen ? '28px' : 'clamp(30px, 7vw, 32px)',
                                 borderRadius: '50%',
                                 background: colors.paperDark,
-                                border: 'none',
+                                backgroundImage: 'var(--background-image-ske-button)',
+                                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.70)'}`,
                                 cursor: currentSong ? 'pointer' : 'default',
                                 opacity: currentSong ? 1 : 0.4,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 color: colors.ink,
+                                boxShadow: 'var(--shadow-ske-xs)',
+                                transition: 'box-shadow 80ms ease-out, transform 80ms ease-out',
                             }}
                         >
                             <svg width={isTinyScreen ? '11px' : 'clamp(12px, 3vw, 14px)'} height={isTinyScreen ? '11px' : 'clamp(12px, 3vw, 14px)'} viewBox="0 0 24 24" fill="currentColor">
@@ -267,43 +270,53 @@ export default function BasicPlayer() {
                             onClick={togglePlay}
                             disabled={!currentSong}
                             style={{
-                                width: isTinyScreen ? '36px' : 'clamp(40px, 10vw, 44px)',
-                                height: isTinyScreen ? '36px' : 'clamp(40px, 10vw, 44px)',
+                                width: isTinyScreen ? '38px' : 'clamp(42px, 10vw, 46px)',
+                                height: isTinyScreen ? '38px' : 'clamp(42px, 10vw, 46px)',
                                 borderRadius: '50%',
                                 background: currentSong
                                     ? (dominantColor
                                         ? adjustColorForTheme(dominantColor, isDark)?.rgb || colors.accent
                                         : colors.accent)
                                     : colors.paperDark,
-                                border: 'none',
+                                backgroundImage: 'var(--background-image-ske-button)',
+                                border: `1px solid ${currentSong ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)'}`,
                                 cursor: currentSong ? 'pointer' : 'default',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 boxShadow: currentSong
-                                    ? (dominantColor
-                                        ? `0 2px 12px ${adjustColorForTheme(dominantColor, isDark)?.rgba(0.4) || dominantColor.rgba(0.4)}, inset 0 0 0 1px ${adjustColorForTheme(dominantColor, isDark)?.rgba(0.2) || dominantColor.rgba(0.2)}`
-                                        : '0 2px 8px rgba(196,92,62,0.3)')
-                                    : 'none',
+                                    ? `4px 5px 10px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow), 0 4px 16px ${colors.accent}45`
+                                    : 'var(--shadow-ske-sm)',
                                 position: 'relative',
-                                transition: 'all 0.3s ease',
+                                transition: 'box-shadow 80ms ease-out, transform 80ms ease-out',
+                            }}
+                            onMouseDown={e => {
+                                if (!currentSong) return
+                                e.currentTarget.style.boxShadow = 'var(--shadow-ske-pressed)'
+                                e.currentTarget.style.transform = 'translateY(1px)'
+                            }}
+                            onMouseUp={e => {
+                                e.currentTarget.style.transform = 'translateY(0)'
+                                e.currentTarget.style.boxShadow = currentSong
+                                    ? `4px 5px 10px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow), 0 4px 16px ${colors.accent}45`
+                                    : 'var(--shadow-ske-sm)'
                             }}
                         >
                             {isPlaying && (
                                 <div style={{
                                     position: 'absolute',
-                                    inset: '-4px',
+                                    inset: '-5px',
                                     borderRadius: '50%',
                                     border: `2px solid ${dominantColor ? (adjustColorForTheme(dominantColor, isDark)?.rgba(0.5) || dominantColor.rgba(0.5)) : colors.accent}`,
                                     animation: 'progressRing 2s ease-in-out infinite',
                                 }} />
                             )}
                             {isPlaying ? (
-                                <svg width={isTinyScreen ? '13px' : '16px'} height={isTinyScreen ? '13px' : '16px'} viewBox="0 0 24 24" fill={isDark ? colors.paper : '#fff'}>
+                                <svg width={isTinyScreen ? '13px' : '16px'} height={isTinyScreen ? '13px' : '16px'} viewBox="0 0 24 24" fill={isDark ? colors.paper : '#fff'} style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}>
                                     <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
                                 </svg>
                             ) : (
-                                <svg width={isTinyScreen ? '13px' : '16px'} height={isTinyScreen ? '13px' : '16px'} viewBox="0 0 24 24" fill={currentSong ? (isDark ? colors.paper : '#fff') : colors.inkLight} style={{ marginLeft: '2px' }}>
+                                <svg width={isTinyScreen ? '13px' : '16px'} height={isTinyScreen ? '13px' : '16px'} viewBox="0 0 24 24" fill={currentSong ? (isDark ? colors.paper : '#fff') : colors.inkLight} style={{ marginLeft: '2px', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}>
                                     <path d="M8 5v14l11-7L8 5z" />
                                 </svg>
                             )}
@@ -318,13 +331,16 @@ export default function BasicPlayer() {
                                 height: isTinyScreen ? '28px' : '32px',
                                 borderRadius: '50%',
                                 background: colors.paperDark,
-                                border: 'none',
+                                backgroundImage: 'var(--background-image-ske-button)',
+                                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.70)'}`,
                                 cursor: currentSong ? 'pointer' : 'default',
                                 opacity: currentSong ? 1 : 0.4,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 color: colors.ink,
+                                boxShadow: 'var(--shadow-ske-xs)',
+                                transition: 'box-shadow 80ms ease-out, transform 80ms ease-out',
                             }}
                         >
                             <svg width={isTinyScreen ? '11px' : '14px'} height={isTinyScreen ? '11px' : '14px'} viewBox="0 0 24 24" fill="currentColor">
@@ -551,31 +567,35 @@ export default function BasicPlayer() {
                                 onClick={handleProgressClick}
                                 style={{
                                     flex: 1,
-                                    height: isTinyScreen ? '3px' : '4px',
+                                    height: isTinyScreen ? '4px' : '5px',
                                     background: colors.paperDarker,
-                                    borderRadius: '2px',
+                                    backgroundImage: 'var(--background-image-ske-recessed)',
+                                    borderRadius: '3px',
                                     cursor: 'pointer',
                                     position: 'relative',
+                                    boxShadow: 'var(--shadow-ske-inset-sm)',
                                 }}
                             >
                                 <div style={{
                                     height: '100%',
                                     width: `${progressPercent}%`,
-                                    background: colors.accent,
-                                    borderRadius: '2px',
+                                    background: `linear-gradient(to right, ${colors.accent}cc, ${colors.accent})`,
+                                    borderRadius: '3px',
                                     transition: 'width 0.1s linear',
+                                    boxShadow: 'inset 0 1px 2px var(--ske-inner-shadow), 0 1px 0 var(--ske-inner-highlight)',
                                 }} />
                                 <div style={{
                                     position: 'absolute',
                                     top: '50%',
                                     left: `${progressPercent}%`,
                                     transform: 'translate(-50%, -50%)',
-                                    width: '10px',
-                                    height: isTinyScreen ? '8px' : '10px',
+                                    width: '12px',
+                                    height: isTinyScreen ? '10px' : '12px',
                                     borderRadius: '50%',
                                     background: colors.paper,
+                                    backgroundImage: 'var(--background-image-ske-button)',
                                     border: `2px solid ${colors.accent}`,
-                                    boxShadow: '0 1px 3px rgba(196,92,62,0.3)',
+                                    boxShadow: `var(--shadow-ske-xs), 0 0 0 1px ${colors.accent}40`,
                                 }} />
                             </div>
                             <span style={{
