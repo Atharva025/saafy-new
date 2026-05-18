@@ -60,10 +60,18 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
                             gap: 'clamp(12px, 3vw, 16px)',
                             padding: 'clamp(12px, 3vw, 16px)',
                             cursor: 'pointer',
-                            background: isCurrentSong ? colors.paperDark : (hoveredIndex === index ? colors.paperDark : 'transparent'),
-                            borderRadius: 'clamp(6px, 2vw, 8px)',
+                            background: isCurrentSong
+                                ? (isDark ? 'rgba(224,115,86,0.07)' : 'rgba(196,92,62,0.05)')
+                                : hoveredIndex === index ? colors.paperDark : 'transparent',
+                            backgroundImage: (isCurrentSong || hoveredIndex === index) ? 'var(--background-image-ske-surface)' : 'none',
+                            borderRadius: 'clamp(8px, 2vw, 10px)',
                             borderLeft: isCurrentSong ? `3px solid ${colors.accent}` : '3px solid transparent',
-                            transition: 'all 0.15s',
+                            boxShadow: isCurrentSong
+                                ? `inset 1px 2px 5px var(--ske-inner-shadow), inset -1px -1px 3px var(--ske-inner-highlight)`
+                                : hoveredIndex === index
+                                    ? `1px 2px 6px var(--ske-shadow), -1px -1px 4px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight)`
+                                    : 'none',
+                            transition: 'background 0.1s ease, box-shadow 100ms ease-out',
                             marginBottom: '2px',
                             position: 'relative',
                         }}
@@ -109,18 +117,21 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
                                 height: 'clamp(42px, 10vw, 48px)',
                                 objectFit: 'cover',
                                 flexShrink: 0,
-                                borderRadius: 'clamp(4px, 1.5vw, 6px)'
+                                borderRadius: 'clamp(6px, 1.5vw, 8px)',
+                                boxShadow: `1px 2px 5px var(--ske-shadow), -1px -1px 3px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight)`,
                             }} />
                         ) : (
                             <div style={{
                                 width: 'clamp(42px, 10vw, 48px)',
                                 height: 'clamp(42px, 10vw, 48px)',
                                 background: colors.paperDark,
+                                backgroundImage: 'var(--background-image-ske-recessed)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 flexShrink: 0,
-                                borderRadius: '6px',
+                                borderRadius: 'clamp(6px, 1.5vw, 8px)',
+                                boxShadow: 'var(--shadow-ske-inset-sm)',
                             }}>
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill={colors.inkLight}>
                                     <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
@@ -182,20 +193,27 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
                                     height: 'clamp(32px, 8vw, 36px)',
                                     borderRadius: 'clamp(6px, 2vw, 8px)',
                                     background: colors.paperDarker,
-                                    border: `1px solid ${colors.rule}`,
+                                    backgroundImage: 'var(--background-image-ske-button)',
+                                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'}`,
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    transition: 'all 0.2s',
+                                    color: colors.inkMuted,
+                                    boxShadow: 'var(--shadow-ske-xs)',
+                                    transition: 'box-shadow 80ms ease-out, transform 80ms ease-out, background 0.1s',
                                 }}
+                                onMouseDown={(e) => { e.stopPropagation(); e.currentTarget.style.boxShadow = 'var(--shadow-ske-pressed)'; e.currentTarget.style.transform = 'translateY(1px)' }}
+                                onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-ske-xs)' }}
                                 onMouseEnter={(e) => {
                                     e.currentTarget.style.background = colors.accent
+                                    e.currentTarget.style.color = '#fff'
                                     e.currentTarget.style.borderColor = colors.accent
                                 }}
                                 onMouseLeave={(e) => {
                                     e.currentTarget.style.background = colors.paperDarker
-                                    e.currentTarget.style.borderColor = colors.rule
+                                    e.currentTarget.style.color = colors.inkMuted
+                                    e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'
                                 }}
                                 title="Add to Queue"
                             >

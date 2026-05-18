@@ -146,10 +146,17 @@ export default function ArtistPage() {
                             textTransform: 'uppercase',
                             letterSpacing: '0.05em',
                             color: colors.inkMuted,
-                            background: 'none',
-                            border: 'none',
+                            background: colors.paperDark,
+                            backgroundImage: 'linear-gradient(145deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
+                            border: `1px solid rgba(255,255,255,0.60)`,
+                            borderRadius: '10px',
+                            padding: '8px 14px',
                             cursor: 'pointer',
+                            boxShadow: `2px 3px 6px rgba(26,22,20,0.12), -1px -1px 4px rgba(255,255,255,0.80), inset 0 1px 0 rgba(255,255,255,0.80)`,
+                            transition: 'box-shadow 80ms ease-out, transform 80ms ease-out',
                         }}
+                        onMouseDown={(e) => { e.currentTarget.style.boxShadow = 'inset 2px 3px 6px rgba(26,22,20,0.15), inset -1px -1px 3px rgba(255,255,255,0.60)'; e.currentTarget.style.transform = 'translateY(1px)' }}
+                        onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `2px 3px 6px rgba(26,22,20,0.12), -1px -1px 4px rgba(255,255,255,0.80), inset 0 1px 0 rgba(255,255,255,0.80)` }}
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -187,7 +194,9 @@ export default function ArtistPage() {
                                 width: '200px',
                                 height: '200px',
                                 objectFit: 'cover',
-                                border: `1px solid ${colors.rule}`,
+                                borderRadius: '16px',
+                                border: `1px solid rgba(255,255,255,0.60)`,
+                                boxShadow: `6px 8px 20px rgba(26,22,20,0.22), -3px -3px 10px rgba(255,255,255,0.75), inset 0 1px 1px rgba(255,255,255,0.80), inset 0 -1px 2px rgba(26,22,20,0.10)`,
                             }}
                         />
                     ) : (
@@ -195,6 +204,9 @@ export default function ArtistPage() {
                             width: '200px',
                             height: '200px',
                             background: colors.ink,
+                            borderRadius: '16px',
+                            border: `1px solid rgba(255,255,255,0.60)`,
+                            boxShadow: `6px 8px 20px rgba(26,22,20,0.22), -3px -3px 10px rgba(255,255,255,0.75)`,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -295,11 +307,31 @@ export default function ArtistPage() {
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '16px',
-                                        padding: '16px',
+                                        padding: '14px 16px',
                                         cursor: 'pointer',
-                                        background: isCurrentSong ? colors.paperDark : 'transparent',
+                                        background: isCurrentSong ? 'rgba(196,92,62,0.06)' : 'transparent',
+                                        backgroundImage: isCurrentSong ? 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, transparent 100%)' : 'none',
+                                        borderRadius: '10px',
                                         borderLeft: isCurrentSong ? `3px solid ${colors.accent}` : '3px solid transparent',
-                                        transition: 'all 0.15s',
+                                        boxShadow: isCurrentSong
+                                            ? `inset 1px 2px 5px rgba(26,22,20,0.10), inset -1px -1px 3px rgba(255,255,255,0.60)`
+                                            : 'none',
+                                        transition: 'background 0.12s ease, box-shadow 100ms ease-out',
+                                        marginBottom: '2px',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (!isCurrentSong) {
+                                            e.currentTarget.style.background = colors.paperDark
+                                            e.currentTarget.style.backgroundImage = 'linear-gradient(145deg, rgba(255,255,255,0.06) 0%, transparent 100%)'
+                                            e.currentTarget.style.boxShadow = `1px 2px 6px rgba(26,22,20,0.12), -1px -1px 4px rgba(255,255,255,0.75), inset 0 1px 0 rgba(255,255,255,0.70)`
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (!isCurrentSong) {
+                                            e.currentTarget.style.background = 'transparent'
+                                            e.currentTarget.style.backgroundImage = 'none'
+                                            e.currentTarget.style.boxShadow = 'none'
+                                        }
                                     }}
                                 >
                                     <div style={{
@@ -317,12 +349,22 @@ export default function ArtistPage() {
                                     </div>
 
                                     {imageUrl ? (
-                                        <img src={imageUrl} alt="" style={{ width: '48px', height: '48px', objectFit: 'cover' }} />
+                                        <img src={imageUrl} alt="" style={{
+                                            width: '48px',
+                                            height: '48px',
+                                            objectFit: 'cover',
+                                            borderRadius: '8px',
+                                            boxShadow: `1px 2px 5px rgba(26,22,20,0.14), -1px -1px 3px rgba(255,255,255,0.75), inset 0 1px 0 rgba(255,255,255,0.60)`,
+                                        }} />
                                     ) : (
                                         <div style={{
                                             width: '48px',
                                             height: '48px',
-                                            background: colors.ink,
+                                            background: colors.paperDark,
+                                            backgroundImage: 'linear-gradient(145deg, rgba(255,255,255,0.04) 0%, transparent 100%)',
+                                            borderRadius: '8px',
+                                            border: `1px solid rgba(255,255,255,0.50)`,
+                                            boxShadow: `inset 1px 2px 4px rgba(26,22,20,0.10), inset -1px -1px 2px rgba(255,255,255,0.60)`,
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',

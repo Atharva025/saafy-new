@@ -122,16 +122,20 @@ export default function QueuePanel({ isOpen, onClose }) {
                             height: '36px',
                             borderRadius: '10px',
                             background: colors.paperDark,
-                            border: 'none',
+                            backgroundImage: 'var(--background-image-ske-button)',
+                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'}`,
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             color: colors.ink,
-                            transition: 'background 0.2s ease',
+                            boxShadow: 'var(--shadow-ske-xs)',
+                            transition: 'box-shadow 80ms ease-out, transform 80ms ease-out',
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = colors.paperDarker}
-                        onMouseLeave={(e) => e.currentTarget.style.background = colors.paperDark}
+                        onMouseDown={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-ske-pressed)'; e.currentTarget.style.transform = 'translateY(1px)' }}
+                        onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-ske-xs)' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-ske-sm)' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-ske-xs)' }}
                     >
                         <X size={20} />
                     </button>
@@ -190,19 +194,29 @@ export default function QueuePanel({ isOpen, onClose }) {
                                             gap: '12px',
                                             padding: '10px',
                                             borderRadius: '10px',
-                                            background: isPlaying ? `${colors.accent}15` : 'transparent',
-                                            border: `1px solid ${isPlaying ? colors.accent : colors.rule}`,
-                                            transition: 'all 0.2s ease',
+                                            background: isPlaying
+                                                ? (isDark ? `rgba(196,92,62,0.10)` : `rgba(196,92,62,0.06)`)
+                                                : 'transparent',
+                                            backgroundImage: isPlaying ? 'var(--background-image-ske-surface)' : 'none',
+                                            border: `1px solid ${isPlaying ? colors.accent + '55' : 'transparent'}`,
+                                            boxShadow: isPlaying
+                                                ? `inset 1px 2px 6px var(--ske-inner-shadow), inset -1px -1px 3px var(--ske-inner-highlight)`
+                                                : 'none',
+                                            transition: 'background 0.12s ease, box-shadow 100ms ease-out',
                                             cursor: 'pointer',
                                         }}
                                         onMouseEnter={(e) => {
                                             if (!isPlaying) {
                                                 e.currentTarget.style.background = colors.paperDark
+                                                e.currentTarget.style.backgroundImage = 'var(--background-image-ske-surface)'
+                                                e.currentTarget.style.boxShadow = `1px 2px 5px var(--ske-shadow), -1px -1px 3px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight)`
                                             }
                                         }}
                                         onMouseLeave={(e) => {
                                             if (!isPlaying) {
                                                 e.currentTarget.style.background = 'transparent'
+                                                e.currentTarget.style.backgroundImage = 'none'
+                                                e.currentTarget.style.boxShadow = 'none'
                                             }
                                         }}
                                     >
@@ -261,6 +275,7 @@ export default function QueuePanel({ isOpen, onClose }) {
                                                 background: colors.paperDark,
                                                 position: 'relative',
                                                 cursor: 'pointer',
+                                                boxShadow: `1px 2px 5px var(--ske-shadow), -1px -1px 3px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight)`,
                                             }}
                                         >
                                             {imageUrl ? (
@@ -332,22 +347,28 @@ export default function QueuePanel({ isOpen, onClose }) {
                                                 width: '32px',
                                                 height: '32px',
                                                 borderRadius: '8px',
-                                                background: 'transparent',
-                                                border: 'none',
+                                                background: colors.paperDark,
+                                                backgroundImage: 'var(--background-image-ske-button)',
+                                                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.65)'}`,
                                                 cursor: 'pointer',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
                                                 color: colors.inkMuted,
-                                                transition: 'all 0.2s ease',
+                                                boxShadow: 'var(--shadow-ske-xs)',
+                                                transition: 'box-shadow 80ms ease-out, transform 80ms ease-out, background 0.1s',
                                             }}
+                                            onMouseDown={(e) => { e.stopPropagation(); e.currentTarget.style.boxShadow = 'var(--shadow-ske-pressed)'; e.currentTarget.style.transform = 'translateY(1px)' }}
+                                            onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-ske-xs)' }}
                                             onMouseEnter={(e) => {
-                                                e.currentTarget.style.background = colors.paperDarker
+                                                e.currentTarget.style.background = 'rgba(255,75,75,0.12)'
                                                 e.currentTarget.style.color = '#FF6B6B'
+                                                e.currentTarget.style.borderColor = 'rgba(255,75,75,0.3)'
                                             }}
                                             onMouseLeave={(e) => {
-                                                e.currentTarget.style.background = 'transparent'
+                                                e.currentTarget.style.background = colors.paperDark
                                                 e.currentTarget.style.color = colors.inkMuted
+                                                e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.65)'
                                             }}
                                         >
                                             <Trash2 size={16} />

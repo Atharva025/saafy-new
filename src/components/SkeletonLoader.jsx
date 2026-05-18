@@ -18,12 +18,15 @@ export default function SkeletonLoader({ type = 'card', count = 1 }) {
                 {Array.from({ length: count }).map((_, i) => (
                     <div
                         key={i}
-                        style={{
+                    style={{
                             width: 'clamp(140px, 35vw, 160px)',
                             background: colors.paperDark,
-                            borderRadius: '12px',
+                            backgroundImage: 'var(--background-image-ske-surface)',
+                            borderRadius: '14px',
                             overflow: 'hidden',
                             position: 'relative',
+                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.75)'}`,
+                            boxShadow: `2px 3px 8px var(--ske-shadow), -1px -1px 5px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight), inset 0 -1px 1px var(--ske-inner-shadow)`,
                         }}
                     >
                         {/* Image placeholder */}
@@ -102,19 +105,25 @@ export default function SkeletonLoader({ type = 'card', count = 1 }) {
                             gap: '12px',
                             padding: '12px',
                             background: colors.paperDark,
-                            borderRadius: '8px',
+                            backgroundImage: 'var(--background-image-ske-surface)',
+                            borderRadius: '10px',
                             marginBottom: '8px',
+                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.70)'}`,
+                            boxShadow: `1px 2px 5px var(--ske-shadow), -1px -1px 3px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight)`,
                         }}
                     >
                         {/* Image placeholder */}
                         <div style={{
                             width: '48px',
                             height: '48px',
-                            background: colors.rule,
-                            borderRadius: '6px',
+                            background: colors.paperDarker,
+                            backgroundImage: 'var(--background-image-ske-recessed)',
+                            borderRadius: '8px',
                             flexShrink: 0,
                             position: 'relative',
                             overflow: 'hidden',
+                            boxShadow: 'var(--shadow-ske-inset-sm)',
+                            border: `1px solid ${isDark ? 'rgba(0,0,0,0.15)' : 'rgba(26,22,20,0.08)'}`,
                         }}>
                             <div style={{
                                 position: 'absolute',
@@ -196,7 +205,10 @@ export default function SkeletonLoader({ type = 'card', count = 1 }) {
                 gap: '16px',
                 padding: '16px',
                 background: colors.paperDark,
-                borderRadius: '12px',
+                backgroundImage: 'var(--background-image-ske-surface)',
+                borderRadius: '16px',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.75)'}`,
+                boxShadow: `3px 4px 10px var(--ske-shadow), -2px -2px 7px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight), inset 0 -1px 1px var(--ske-inner-shadow)`,
             }}>
                 {/* Album art */}
                 <div style={{
