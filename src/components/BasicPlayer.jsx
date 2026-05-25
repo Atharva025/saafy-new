@@ -24,6 +24,7 @@ export default function BasicPlayer() {
     const [volumeExpanded, setVolumeExpanded] = useState(false)
     const [dominantColor, setDominantColor] = useState(null)
     const [gradientBg, setGradientBg] = useState(null)
+    const [progressHovered, setProgressHovered] = useState(false)
 
     // Extract color from album art
     useEffect(() => {
@@ -82,9 +83,10 @@ export default function BasicPlayer() {
 
     return (
         <div
+            className="player-bar-wrapper"
             style={{
                 position: 'fixed',
-                bottom: 'clamp(12px, 3vw, 20px)',
+                bottom: 'clamp(10px, 2.5vw, 20px)',
                 left: '50%',
                 transform: 'translateX(-50%)',
                 zIndex: 100,
@@ -186,15 +188,40 @@ export default function BasicPlayer() {
                                     {currentSong.name}
                                 </div>
                                 <div style={{
-                                    fontFamily: fonts.mono,
-                                    fontSize: isTinyScreen ? '0.6rem' : 'clamp(0.62rem, 1.8vw, 0.7rem)',
-                                    color: colors.inkMuted,
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
                                     marginTop: '2px',
+                                    minWidth: 0,
                                 }}>
-                                    {currentSong.primaryArtists}
+                                    <div style={{
+                                        fontFamily: fonts.mono,
+                                        fontSize: isTinyScreen ? '0.6rem' : 'clamp(0.62rem, 1.8vw, 0.7rem)',
+                                        color: colors.inkMuted,
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        flex: 1,
+                                    }}>
+                                        {currentSong.primaryArtists}
+                                    </div>
+                                    {isPlaying && (
+                                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.5px', height: '8px', flexShrink: 0, paddingBottom: '1px' }}>
+                                            {[0.6, 1, 0.4].map((h, i) => (
+                                                <div
+                                                    key={i}
+                                                    style={{
+                                                        width: '2px',
+                                                        height: `${h * 100}%`,
+                                                        background: colors.accent,
+                                                        borderRadius: '1px',
+                                                        animation: `barBounce 0.6s ease-in-out ${i * 0.15}s infinite alternate`,
+                                                        transformOrigin: 'bottom',
+                                                    }}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </>
                         ) : (
@@ -288,7 +315,14 @@ export default function BasicPlayer() {
                                     ? `4px 5px 10px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow), 0 4px 16px ${colors.accent}45`
                                     : 'var(--shadow-ske-sm)',
                                 position: 'relative',
-                                transition: 'box-shadow 80ms ease-out, transform 80ms ease-out',
+                                transition: 'box-shadow 150ms var(--ease-premium), transform 150ms var(--ease-premium)',
+                                animation: isPlaying ? 'playBreathe 2s ease-in-out infinite' : 'none',
+                                '--accent-glow-color': dominantColor
+                                    ? adjustColorForTheme(dominantColor, isDark)?.rgba(0.28) || `${colors.accent}30`
+                                    : `${colors.accent}30`,
+                                '--accent-glow-color-strong': dominantColor
+                                    ? adjustColorForTheme(dominantColor, isDark)?.rgba(0.55) || `${colors.accent}55`
+                                    : `${colors.accent}55`,
                             }}
                             onMouseDown={e => {
                                 if (!currentSong) return
@@ -502,12 +536,13 @@ export default function BasicPlayer() {
                                         position: 'absolute',
                                         top: '50%',
                                         left: `${volume * 100}%`,
-                                        transform: 'translate(-50%, -50%)',
-                                        width: '12px',
-                                        height: '12px',
+                                        transform: volumeHovered ? 'translate(-50%, -50%) scale(1.2)' : 'translate(-50%, -50%) scale(1)',
+                                        width: '10px',
+                                        height: '10px',
                                         borderRadius: '50%',
                                         background: colors.accent,
-                                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                                        boxShadow: volumeHovered ? `0 2px 6px ${colors.accent}60` : '0 2px 4px rgba(0,0,0,0.3)',
+                                        transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease',
                                     }} />
                                 </div>
                             </div>
@@ -565,22 +600,27 @@ export default function BasicPlayer() {
                             </span>
                             <div
                                 onClick={handleProgressClick}
+                                onMouseEnter={() => setProgressHovered(true)}
+                                onMouseLeave={() => setProgressHovered(false)}
                                 style={{
                                     flex: 1,
-                                    height: isTinyScreen ? '4px' : '5px',
+                                    height: progressHovered
+                                        ? (isTinyScreen ? '6px' : '7px')
+                                        : (isTinyScreen ? '4px' : '5px'),
                                     background: colors.paperDarker,
                                     backgroundImage: 'var(--background-image-ske-recessed)',
-                                    borderRadius: '3px',
+                                    borderRadius: '4px',
                                     cursor: 'pointer',
                                     position: 'relative',
                                     boxShadow: 'var(--shadow-ske-inset-sm)',
+                                    transition: 'height 200ms cubic-bezier(0.16, 1, 0.3, 1)',
                                 }}
                             >
                                 <div style={{
                                     height: '100%',
                                     width: `${progressPercent}%`,
                                     background: `linear-gradient(to right, ${colors.accent}cc, ${colors.accent})`,
-                                    borderRadius: '3px',
+                                    borderRadius: '4px',
                                     transition: 'width 0.1s linear',
                                     boxShadow: 'inset 0 1px 2px var(--ske-inner-shadow), 0 1px 0 var(--ske-inner-highlight)',
                                 }} />
@@ -588,14 +628,17 @@ export default function BasicPlayer() {
                                     position: 'absolute',
                                     top: '50%',
                                     left: `${progressPercent}%`,
-                                    transform: 'translate(-50%, -50%)',
+                                    transform: progressHovered ? 'translate(-50%, -50%) scale(1.3)' : 'translate(-50%, -50%) scale(1)',
                                     width: '12px',
                                     height: isTinyScreen ? '10px' : '12px',
                                     borderRadius: '50%',
                                     background: colors.paper,
                                     backgroundImage: 'var(--background-image-ske-button)',
                                     border: `2px solid ${colors.accent}`,
-                                    boxShadow: `var(--shadow-ske-xs), 0 0 0 1px ${colors.accent}40`,
+                                    boxShadow: progressHovered
+                                        ? `0 0 0 3px ${colors.accent}30, 0 3px 8px rgba(0,0,0,0.25)`
+                                        : `var(--shadow-ske-xs), 0 0 0 1px ${colors.accent}40`,
+                                    transition: 'transform 200ms var(--ease-spring), box-shadow 200ms ease',
                                 }} />
                             </div>
                             <span style={{
@@ -629,6 +672,20 @@ export default function BasicPlayer() {
                         transform: rotate(360deg) scale(1.2);
                         opacity: 0;
                     }
+                }
+                @keyframes playBreathe {
+                    0%, 100% {
+                        box-shadow: 4px 5px 10px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow), 0 4px 14px var(--accent-glow-color, rgba(196,92,62,0.3));
+                        transform: scale(1);
+                    }
+                    50% {
+                        box-shadow: 4px 5px 14px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow), 0 6px 24px var(--accent-glow-color-strong, rgba(196,92,62,0.55));
+                        transform: scale(1.05);
+                    }
+                }
+                @keyframes barBounce {
+                    from { transform: scaleY(0.35); opacity: 0.7; }
+                    to   { transform: scaleY(1);    opacity: 1; }
                 }
             `}</style>
         </div>

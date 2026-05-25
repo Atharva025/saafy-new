@@ -125,6 +125,18 @@ const playerReducer = (state, action) => {
             }
         }
 
+        case 'REORDER_QUEUE': {
+            const { startIndex, endIndex } = action.payload
+            const newQueue = Array.from(state.queue)
+            const [removed] = newQueue.splice(startIndex, 1)
+            newQueue.splice(endIndex, 0, removed)
+            return {
+                ...state,
+                queue: newQueue,
+                originalQueue: state.shuffleMode ? state.originalQueue : newQueue
+            }
+        }
+
         case 'PLAY_NEXT': {
             // Move to next song in queue
             if (state.queue.length === 0) {
@@ -624,8 +636,8 @@ export function PlayerProvider({ children }) {
             return
         }
 
-        // Check if we need to extend queue
-        await extendQueueIfNeeded()
+        // Check if we need to extend queue (disabled as per user request to prevent random songs from polluting the queue)
+        // await extendQueueIfNeeded()
 
         if (state.queue.length === 0) {
             // No more songs in queue - play a random song for continuous playback
@@ -759,6 +771,11 @@ export function PlayerProvider({ children }) {
         dispatch({ type: 'REMOVE_FROM_QUEUE', payload: index })
     }
 
+    const reorderQueue = (startIndex, endIndex) => {
+        if (typeof startIndex !== 'number' || typeof endIndex !== 'number') return
+        dispatch({ type: 'REORDER_QUEUE', payload: { startIndex, endIndex } })
+    }
+
     const clearQueue = () => {
         dispatch({ type: 'CLEAR_QUEUE' })
     }
@@ -818,6 +835,7 @@ export function PlayerProvider({ children }) {
         toggleShuffle,
         addToQueue,
         removeFromQueue,
+        reorderQueue,
         clearQueue,
         clearError,
         // Recommendations

@@ -90,9 +90,9 @@ function PlayCircle({ isActive, isPlaying, accentColor, size = 42, hovered }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transform: hovered ? 'scale(1)' : 'scale(0.88)',
+                transform: hovered ? 'scale(1.08) translateY(-1px)' : 'scale(0.82)',
                 opacity: hovered || (isActive && isPlaying) ? 1 : 0,
-                transition: 'transform 0.22s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s ease, background 0.25s ease',
+                transition: 'transform 300ms var(--ease-spring), opacity 220ms ease, background 250ms ease',
                 flexShrink: 0,
             }}>
             {isActive && isPlaying ? (
@@ -139,9 +139,9 @@ function HeroCard({ song, onPlay, onAddToQueue, currentSong, isPlaying, colors, 
                     boxShadow: isActive
                         ? `4px 5px 12px var(--ske-shadow), -2px -2px 8px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), 0 0 0 2px ${colors.accent}35, 0 16px 48px ${colors.accent}28`
                         : hovered
-                            ? `6px 8px 20px var(--ske-shadow), -4px -4px 12px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow)`
+                            ? `6px 8px 20px var(--ske-shadow), 0 12px 32px ${colors.accent}22, -4px -4px 12px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight)`
                             : `2px 3px 8px var(--ske-shadow), -2px -2px 5px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 1px var(--ske-inner-shadow)`,
-                    transition: 'box-shadow 200ms ease-out, border-color 200ms ease-out, transform 200ms ease-out',
+                    transition: 'box-shadow 250ms var(--ease-premium), border-color 250ms var(--ease-premium), transform 250ms var(--ease-premium)',
                     transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
                 }}
             >
@@ -297,9 +297,9 @@ function SmallCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying, 
                 boxShadow: isActive
                     ? `2px 3px 8px var(--ske-shadow), -1px -1px 5px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight), 0 0 0 2px ${colors.accent}28, 0 8px 28px ${colors.accent}22`
                     : hovered
-                        ? `4px 5px 14px var(--ske-shadow), -3px -3px 8px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow)`
+                        ? `4px 5px 14px var(--ske-shadow), 0 8px 24px ${colors.accent}18, -3px -3px 8px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight)`
                         : `1px 2px 6px var(--ske-shadow), -1px -1px 4px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight), inset 0 -1px 1px var(--ske-inner-shadow)`,
-                transition: 'box-shadow 200ms ease-out, border-color 200ms ease-out, transform 200ms ease-out',
+                transition: 'box-shadow 250ms var(--ease-premium), border-color 250ms var(--ease-premium), transform 250ms var(--ease-premium)',
                 transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
                 animation: 'cardFadeIn 0.4s ease-out both',
                 animationDelay: `${index * 0.06}s`,
@@ -393,7 +393,103 @@ function SmallCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying, 
     )
 }
 
-// ─── Horizontal scroll card ───────────────────────────────────────────────────
+// ─── Mobile Compact Card (4-column strip under hero on small screens) ──────────
+function MobileCompactCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying, colors, fonts, success }) {
+    const [touched, setTouched] = useState(false)
+    const isActive = currentSong?.id === song.id
+    const imageUrl = getImageUrl(song)
+
+    return (
+        <div
+            onClick={() => onPlay(song)}
+            role="button"
+            tabIndex={0}
+            aria-label={`Play ${song.name}`}
+            onKeyDown={e => e.key === 'Enter' && onPlay(song)}
+            onTouchStart={() => setTouched(true)}
+            onTouchEnd={() => setTimeout(() => setTouched(false), 180)}
+            style={{
+                cursor: 'pointer',
+                borderRadius: '10px',
+                overflow: 'hidden',
+                position: 'relative',
+                border: isActive
+                    ? `2px solid ${colors.accent}`
+                    : `1px solid ${colors.rule}`,
+                boxShadow: isActive
+                    ? `0 0 0 2px ${colors.accent}28, 0 6px 18px ${colors.accent}22`
+                    : touched
+                    ? 'none'
+                    : '0 2px 8px rgba(0,0,0,0.10)',
+                animation: `cardFadeIn 0.4s ease-out both`,
+                animationDelay: `${index * 0.07}s`,
+                transform: touched ? 'scale(0.95)' : 'scale(1)',
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+            }}
+        >
+            {/* Square art container using padding trick for aspect ratio */}
+            <div style={{ position: 'relative', paddingBottom: '100%', background: colors.paperDark }}>
+                {imageUrl ? (
+                    <img
+                        src={imageUrl}
+                        alt={song.name}
+                        loading="lazy"
+                        style={{
+                            position: 'absolute', inset: 0,
+                            width: '100%', height: '100%',
+                            objectFit: 'cover',
+                        }}
+                    />
+                ) : (
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill={colors.inkLight}>
+                            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                        </svg>
+                    </div>
+                )}
+
+                {/* Bottom gradient scrim */}
+                <div style={{
+                    position: 'absolute', inset: 0,
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0) 55%, transparent 100%)',
+                }} />
+
+                {/* Now playing bars */}
+                {isActive && isPlaying && (
+                    <div style={{ position: 'absolute', top: '5px', left: '5px' }}>
+                        <NowPlayingBars color={colors.accent} size={10} />
+                    </div>
+                )}
+
+                {/* Queue btn on touch */}
+                {touched && onAddToQueue && !isActive && (
+                    <div style={{ position: 'absolute', top: '4px', right: '4px' }}>
+                        <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={22} />
+                    </div>
+                )}
+
+                {/* Song name overlay at bottom */}
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '4px 5px 5px' }}>
+                    <div style={{
+                        fontFamily: fonts.primary,
+                        fontWeight: 600,
+                        fontSize: '0.58rem',
+                        color: '#fff',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        lineHeight: 1.25,
+                        textShadow: '0 1px 4px rgba(0,0,0,0.7)',
+                    }}>
+                        {song.name}
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// ─── Horizontal scroll card ────────────────────────────────────────────────────
 function ScrollCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying, colors, fonts, success }) {
     const [hovered, setHovered] = useState(false)
     const isActive = currentSong?.id === song.id
@@ -401,6 +497,7 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying,
 
     return (
         <div
+            className="scroll-snap-item"
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             onClick={() => onPlay(song)}
@@ -410,12 +507,13 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying,
             onKeyDown={e => e.key === 'Enter' && onPlay(song)}
             style={{
                 flexShrink: 0,
-                width: 'clamp(140px, 20vw, 172px)',
+                width: 'clamp(120px, 36vw, 172px)',
                 cursor: 'pointer',
                 transition: 'transform 280ms cubic-bezier(0.25,0.46,0.45,0.94)',
                 transform: hovered ? 'translateY(-6px)' : 'translateY(0)',
                 animation: 'cardFadeIn 0.42s ease-out both',
                 animationDelay: `${index * 0.055}s`,
+                scrollSnapAlign: 'start',
             }}
         >
             {/* Cover art square */}
@@ -432,9 +530,9 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying,
                 boxShadow: isActive && isPlaying
                     ? `0 0 0 3px ${colors.accent}22, 0 10px 28px ${colors.accent}28`
                     : hovered
-                        ? '0 14px 32px rgba(0,0,0,0.22)'
-                        : '0 4px 14px rgba(0,0,0,0.1)',
-                transition: 'box-shadow 0.28s ease, border-color 0.28s ease',
+                        ? `0 14px 32px rgba(0,0,0,0.15), 0 6px 20px ${colors.accent}25`
+                        : '0 4px 14px rgba(0,0,0,0.06)',
+                transition: 'box-shadow 280ms var(--ease-premium), border-color 280ms var(--ease-premium)',
                 marginBottom: '10px',
             }}>
                 {imageUrl ? (
@@ -542,11 +640,7 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
 
     if (loading && featured) {
         return (
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                gap: '12px',
-            }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
                 <SkeletonLoader type="card" count={5} />
             </div>
         )
@@ -563,33 +657,70 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
     if (!songs || songs.length === 0) return null
 
     const handlePlay = (song) => { if (onPlaySong) onPlaySong(song) }
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
 
     const sharedProps = { onPlay: handlePlay, onAddToQueue, currentSong, isPlaying, colors, fonts, success }
 
     // ─── Featured editorial grid ─────────────────────────────────────────────
     if (featured && songs.length >= 5) {
         const [hero, ...rest] = songs.slice(0, 5)
-        return (
-            <>
-                <style>{`
+        const animStyle = `
           @keyframes cardFadeIn {
             from { opacity: 0; transform: translateY(14px); }
             to   { opacity: 1; transform: translateY(0); }
           }
-        `}</style>
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'minmax(0, 3fr) minmax(0, 2fr)',
-                    gap: '14px',
-                    height: 'clamp(300px, 33vw, 440px)',
-                }}>
-                    <HeroCard song={hero} {...sharedProps} />
-                    <div style={{
+        `
+
+        // ── MOBILE: hero stacked above 4-square compact grid ──
+        if (isMobile) {
+            return (
+                <>
+                    <style>{animStyle}</style>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {/* Hero — full width */}
+                        <div style={{ height: 'clamp(200px, 52vw, 260px)', borderRadius: '16px', overflow: 'hidden' }}>
+                            <HeroCard song={hero} {...sharedProps} />
+                        </div>
+                        {/* 4 compact square cards in equal-width row */}
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(4, 1fr)',
+                            gap: '8px',
+                        }}>
+                            {rest.slice(0, 4).map((song, i) => (
+                                <MobileCompactCard key={song.id} song={song} index={i} {...sharedProps} />
+                            ))}
+                        </div>
+                    </div>
+                </>
+            )
+        }
+
+        // ── DESKTOP: side-by-side hero | 2×2 grid ──
+        return (
+            <>
+                <style>{animStyle}</style>
+                <div
+                    className="featured-grid"
+                    style={{
                         display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gridTemplateRows: '1fr 1fr',
-                        gap: '12px',
-                    }}>
+                        gridTemplateColumns: 'minmax(0, 3fr) minmax(0, 2fr)',
+                        gap: '14px',
+                        height: 'clamp(300px, 33vw, 440px)',
+                    }}
+                >
+                    <div className="featured-hero" style={{ height: '100%' }}>
+                        <HeroCard song={hero} {...sharedProps} />
+                    </div>
+                    <div
+                        className="featured-small-grid"
+                        style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            gridTemplateRows: '1fr 1fr',
+                            gap: '12px',
+                        }}
+                    >
                         {rest.slice(0, 4).map((song, i) => (
                             <SmallCard key={song.id} song={song} index={i} {...sharedProps} />
                         ))}
@@ -609,7 +740,7 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
         }
       `}</style>
             <div
-                className="hide-scrollbar"
+                className="hide-scrollbar scroll-snap-x"
                 style={{
                     display: 'flex',
                     gap: '14px',
