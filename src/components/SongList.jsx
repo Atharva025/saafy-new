@@ -177,7 +177,7 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
                         </div>
 
                         {/* Add to Queue Button */}
-                        {hoveredIndex === index && (onAddToQueue || addToQueue) && (
+                        {(hoveredIndex === index || isMobile) && (onAddToQueue || addToQueue) && (
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation()
@@ -189,12 +189,16 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
                                     success(`Added "${song.name}" to queue`, { duration: 2000 })
                                 }}
                                 style={{
-                                    width: 'clamp(32px, 8vw, 36px)',
-                                    height: 'clamp(32px, 8vw, 36px)',
-                                    borderRadius: 'clamp(6px, 2vw, 8px)',
+                                    width: isMobile ? '24px' : '32px',
+                                    height: isMobile ? '24px' : '32px',
+                                    borderRadius: isMobile ? '6px' : '8px',
                                     background: colors.paperDarker,
                                     backgroundImage: 'var(--background-image-ske-button)',
                                     border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'}`,
+                                    padding: 0,
+                                    minWidth: 0,
+                                    minHeight: 0,
+                                    boxSizing: 'border-box',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -202,6 +206,7 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
                                     color: colors.inkMuted,
                                     boxShadow: 'var(--shadow-ske-xs)',
                                     transition: 'box-shadow 80ms ease-out, transform 80ms ease-out, background 0.1s',
+                                    position: 'relative',
                                 }}
                                 onMouseDown={(e) => { e.stopPropagation(); e.currentTarget.style.boxShadow = 'var(--shadow-ske-pressed)'; e.currentTarget.style.transform = 'translateY(1px)' }}
                                 onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-ske-xs)' }}
@@ -217,6 +222,15 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
                                 }}
                                 title="Add to Queue"
                             >
+                                {/* Invisible touch expander for better mobile accessibility */}
+                                <span style={{
+                                    position: 'absolute',
+                                    top: '-10px',
+                                    left: '-10px',
+                                    right: '-10px',
+                                    bottom: '-10px',
+                                    cursor: 'pointer',
+                                }} />
                                 <svg width="clamp(14px, 3.5vw, 16px)" height="clamp(14px, 3.5vw, 16px)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                     <line x1="12" y1="5" x2="12" y2="19" />
                                     <line x1="5" y1="12" x2="19" y2="12" />

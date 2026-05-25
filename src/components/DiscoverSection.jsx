@@ -58,15 +58,29 @@ function QueueBtn({ song, onAddToQueue, success, size = 28 }) {
                 width: `${size}px`,
                 height: `${size}px`,
                 borderRadius: '50%',
-                background: 'rgba(255,255,255,0.94)',
+                background: 'rgba(255,255,255,0.96)',
                 border: '1px solid rgba(255,255,255,0.6)',
+                padding: 0,
+                minWidth: 0,
+                minHeight: 0,
+                boxSizing: 'border-box',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
+                position: 'relative',
             }}
         >
+            {/* Invisible touch expander for better mobile accessibility */}
+            <span style={{
+                position: 'absolute',
+                top: '-12px',
+                left: '-12px',
+                right: '-12px',
+                bottom: '-12px',
+                cursor: 'pointer',
+            }} />
             <svg width={size * 0.43} height={size * 0.43} viewBox="0 0 24 24" fill="none" stroke="#1A1614" strokeWidth="2.5">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
@@ -113,6 +127,7 @@ function HeroCard({ song, onPlay, onAddToQueue, currentSong, isPlaying, colors, 
     const [hovered, setHovered] = useState(false)
     const isActive = currentSong?.id === song.id
     const imageUrl = getImageUrl(song)
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
 
     return (
         <div
@@ -218,9 +233,9 @@ function HeroCard({ song, onPlay, onAddToQueue, currentSong, isPlaying, colors, 
                 </div>
 
                 {/* Top-right: queue button */}
-                {hovered && onAddToQueue && !isActive && (
-                    <div style={{ position: 'absolute', top: '14px', right: '14px' }}>
-                        <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={34} />
+                {(hovered || isMobile) && onAddToQueue && !isActive && (
+                    <div style={{ position: 'absolute', top: '14px', right: '14px', zIndex: 10 }}>
+                        <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={isMobile ? 24 : 34} />
                     </div>
                 )}
 
@@ -276,6 +291,7 @@ function SmallCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying, 
     const [hovered, setHovered] = useState(false)
     const isActive = currentSong?.id === song.id
     const imageUrl = getImageUrl(song)
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
 
     return (
         <div
@@ -337,9 +353,9 @@ function SmallCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying, 
             )}
 
             {/* Top-right: queue button */}
-            {hovered && onAddToQueue && !isActive && (
-                <div style={{ position: 'absolute', top: '8px', right: '8px' }}>
-                    <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={28} />
+            {(hovered || isMobile) && onAddToQueue && !isActive && (
+                <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10 }}>
+                    <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={isMobile ? 20 : 28} />
                 </div>
             )}
 
@@ -461,10 +477,10 @@ function MobileCompactCard({ song, index, onPlay, onAddToQueue, currentSong, isP
                     </div>
                 )}
 
-                {/* Queue btn on touch */}
-                {touched && onAddToQueue && !isActive && (
-                    <div style={{ position: 'absolute', top: '4px', right: '4px' }}>
-                        <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={22} />
+                {/* Queue btn on mobile layout */}
+                {onAddToQueue && !isActive && (
+                    <div style={{ position: 'absolute', top: '4px', right: '4px', zIndex: 10 }}>
+                        <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={18} />
                     </div>
                 )}
 
@@ -494,6 +510,7 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying,
     const [hovered, setHovered] = useState(false)
     const isActive = currentSong?.id === song.id
     const imageUrl = getImageUrl(song)
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
 
     return (
         <div
@@ -581,9 +598,9 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying,
                 </div>
 
                 {/* Queue button */}
-                {hovered && onAddToQueue && (
-                    <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 2 }}>
-                        <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={28} />
+                {(hovered || isMobile) && onAddToQueue && !isActive && (
+                    <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10 }}>
+                        <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={isMobile ? 20 : 28} />
                     </div>
                 )}
 

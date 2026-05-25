@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { searchSongs } from '@/lib/api'
 import { debounce } from '@/lib/security'
 import { useTheme } from '@/context/ThemeContext'
@@ -118,8 +119,8 @@ export default function BasicSearch({ onSelectSong }) {
 
     return (
         <>
-            {/* Backdrop blur overlay - only show when expanded */}
-            {isExpanded && (
+            {/* Backdrop blur overlay - only show when focused */}
+            {isFocused && typeof document !== 'undefined' && createPortal(
                 <div
                     style={{
                         position: 'fixed',
@@ -127,16 +128,27 @@ export default function BasicSearch({ onSelectSong }) {
                         background: isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.2)',
                         backdropFilter: 'blur(6px)',
                         WebkitBackdropFilter: 'blur(6px)',
-                        zIndex: 40,
-                        animation: 'fadeIn 0.3s ease-out',
-                        top: '65px', // Start below the header
+                        zIndex: 49,
+                        animation: 'fadeIn 0.2s ease-out',
                     }}
                     onClick={() => {
                         setIsExpanded(false)
                         setShowSuggestions(false)
                         setIsFocused(false)
                     }}
-                />
+                />,
+                document.body
+            )}
+
+            {isExpanded && (
+                <div style={{
+                    width: '100%',
+                    maxWidth: '480px',
+                    height: '44px',
+                    flexShrink: 0,
+                    visibility: 'hidden',
+                    pointerEvents: 'none',
+                }} />
             )}
 
             <div

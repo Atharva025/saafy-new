@@ -11,7 +11,6 @@ import ArtistPage from '@/components/ArtistPage'
 import DiscoverSection from '@/components/DiscoverSection'
 import QueuePanel from '@/components/QueuePanel'
 import SkeletonLoader from '@/components/SkeletonLoader'
-import KeyboardShortcuts from '@/components/KeyboardShortcuts'
 import Settings from '@/components/Settings'
 import LocalMusicPlayer from '@/components/LocalMusicPlayer'
 import { getAllDiscoveryContent, getForYouMix, getAllThemedContent, refreshDiscovery } from '@/lib/discovery'
@@ -1457,7 +1456,7 @@ function HomePage() {
 
       <BasicPlayer />
       <QueuePanel isOpen={showQueue} onClose={() => setShowQueue(false)} />
-      <KeyboardShortcuts />
+
 
       {/* Backdrop for history panel */}
       {showHistory && (

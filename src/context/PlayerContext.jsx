@@ -272,6 +272,8 @@ export function PlayerProvider({ children }) {
     const [state, dispatch] = useReducer(playerReducer, initialState)
     const audioRef = useRef(null)
     const autoQueueingRef = useRef(false)
+    const defaultFaviconRef = useRef(null)
+    const defaultFaviconTypeRef = useRef(null)
 
     // Recommendations state
     const [recommendations, setRecommendations] = useState([])
@@ -420,6 +422,63 @@ export function PlayerProvider({ children }) {
             document.title = defaultTitle
         }
     }, [state.currentSong, state.isPlaying])
+
+    // ============================================================================
+    // DYNAMIC FAVICON BASED ON PLAYING SONG
+    // ============================================================================
+
+    useEffect(() => {
+        const faviconLink = document.querySelector("link[rel*='icon']")
+        if (faviconLink && !defaultFaviconRef.current) {
+            defaultFaviconRef.current = faviconLink.getAttribute('href') || '/logo.svg'
+            defaultFaviconTypeRef.current = faviconLink.getAttribute('type') || 'image/svg+xml'
+        }
+    }, [])
+
+    useEffect(() => {
+        const faviconLink = document.querySelector("link[rel*='icon']")
+        if (!faviconLink) return
+
+        let active = true
+
+        if (state.currentSong) {
+            const imageUrl = state.currentSong.image?.[0]?.link || 
+                             state.currentSong.image?.[1]?.link || 
+                             state.currentSong.image?.[2]?.link || 
+                             state.currentSong.imageUrl || ''
+            
+            if (imageUrl) {
+                const img = new Image()
+                img.src = imageUrl
+                img.onload = () => {
+                    if (active) {
+                        faviconLink.setAttribute('href', imageUrl)
+                        faviconLink.setAttribute('type', 'image/jpeg')
+                    }
+                }
+                img.onerror = () => {
+                    if (active && defaultFaviconRef.current) {
+                        faviconLink.setAttribute('href', defaultFaviconRef.current)
+                        faviconLink.setAttribute('type', defaultFaviconTypeRef.current || 'image/svg+xml')
+                    }
+                }
+            } else {
+                if (defaultFaviconRef.current) {
+                    faviconLink.setAttribute('href', defaultFaviconRef.current)
+                    faviconLink.setAttribute('type', defaultFaviconTypeRef.current || 'image/svg+xml')
+                }
+            }
+        } else {
+            if (defaultFaviconRef.current) {
+                faviconLink.setAttribute('href', defaultFaviconRef.current)
+                faviconLink.setAttribute('type', defaultFaviconTypeRef.current || 'image/svg+xml')
+            }
+        }
+
+        return () => {
+            active = false
+        }
+    }, [state.currentSong])
 
     // ============================================================================
     // RECOMMENDATION SYSTEM
