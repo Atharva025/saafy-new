@@ -526,7 +526,7 @@ export function PlayerProvider({ children }) {
 
                 // Double-check image quality - log any issues
                 validSongs.forEach(song => {
-                    if (!song.image?.[0]?.link) {
+                    if (!song.image?.[2]?.link) {
                         log.warn('Recommendation missing high-quality image:', song.name, song.id)
                     }
                 })

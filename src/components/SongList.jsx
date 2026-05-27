@@ -4,7 +4,7 @@ import { useTheme } from '@/context/ThemeContext'
 import { useToast } from '@/context/ToastContext'
 
 export default function SongList({ songs, onPlaySong, onAddToQueue }) {
-    const { colors, fonts } = useTheme()
+    const { colors, fonts, isDark } = useTheme()
     const { playSong, addToQueue, currentSong, isPlaying } = usePlayer()
     const { success } = useToast()
     const [hoveredIndex, setHoveredIndex] = useState(null)
@@ -43,9 +43,9 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
             {songs.map((song, index) => {
                 const isCurrentSong = currentSong?.id === song.id
                 // Use highest quality image available - check both .link and .url
-                const imageUrl = song.image?.[0]?.link || song.image?.[0]?.url ||
+                const imageUrl = song.image?.[2]?.link || song.image?.[2]?.url ||
                     song.image?.[1]?.link || song.image?.[1]?.url ||
-                    song.image?.[2]?.link || song.image?.[2]?.url ||
+                    song.image?.[0]?.link || song.image?.[0]?.url ||
                     song.imageUrl || ''
 
                 return (
@@ -112,14 +112,20 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
 
                         {/* Album Art */}
                         {imageUrl ? (
-                            <img src={imageUrl} alt="" style={{
-                                width: 'clamp(42px, 10vw, 48px)',
-                                height: 'clamp(42px, 10vw, 48px)',
-                                objectFit: 'cover',
-                                flexShrink: 0,
-                                borderRadius: 'clamp(6px, 1.5vw, 8px)',
-                                boxShadow: `1px 2px 5px var(--ske-shadow), -1px -1px 3px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight)`,
-                            }} />
+                            <img 
+                                src={imageUrl} 
+                                alt="" 
+                                className="ske-art"
+                                style={{
+                                    width: 'clamp(42px, 10vw, 48px)',
+                                    height: 'clamp(42px, 10vw, 48px)',
+                                    objectFit: 'cover',
+                                    flexShrink: 0,
+                                    borderRadius: 'clamp(6px, 1.5vw, 8px)',
+                                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                                    transform: hoveredIndex === index ? 'scale(1.05)' : 'scale(1)',
+                                }} 
+                            />
                         ) : (
                             <div style={{
                                 width: 'clamp(42px, 10vw, 48px)',

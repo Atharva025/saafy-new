@@ -4,7 +4,7 @@ import { useTheme } from '@/context/ThemeContext'
 import AudioVisualizer from './AudioVisualizer'
 
 export default function MiniPlayer({ onExpand }) {
-    const { colors, fonts } = useTheme()
+    const { colors, fonts, isDark } = useTheme()
     const {
         currentSong,
         isPlaying,
@@ -18,9 +18,9 @@ export default function MiniPlayer({ onExpand }) {
     if (!currentSong) return null
 
     // Use highest quality image available - check both .link and .url
-    const imageUrl = currentSong?.image?.[0]?.link || currentSong?.image?.[0]?.url ||
+    const imageUrl = currentSong?.image?.[2]?.link || currentSong?.image?.[2]?.url ||
         currentSong?.image?.[1]?.link || currentSong?.image?.[1]?.url ||
-        currentSong?.image?.[2]?.link || currentSong?.image?.[2]?.url ||
+        currentSong?.image?.[0]?.link || currentSong?.image?.[0]?.url ||
         currentSong?.imageUrl || ''
     const progressPercent = duration ? (progress / duration) * 100 : 0
 
@@ -28,6 +28,7 @@ export default function MiniPlayer({ onExpand }) {
         <div
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
+            className="ske-float ske-textured"
             style={{
                 position: 'fixed',
                 bottom: '16px',
@@ -36,29 +37,31 @@ export default function MiniPlayer({ onExpand }) {
                 width: '280px',
                 background: colors.paper,
                 borderRadius: '14px',
-                border: `1px solid ${colors.rule}`,
-                boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.80)'}`,
                 overflow: 'hidden',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                transform: isHovered ? 'translateY(-4px) scale(1.02)' : 'translateY(0) scale(1)',
+                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                transform: isHovered ? 'translateY(-5px) scale(1.02)' : 'translateY(0) scale(1)',
                 cursor: 'pointer',
             }}
             onClick={onExpand}
         >
             {/* Progress Bar */}
-            <div style={{
-                height: '3px',
-                background: colors.paperDark,
-                position: 'relative',
-                overflow: 'hidden',
-            }}>
+            <div 
+                className="ske-recessed"
+                style={{
+                    height: '4px',
+                    background: colors.paperDark,
+                    position: 'relative',
+                    overflow: 'hidden',
+                }}
+            >
                 <div style={{
                     position: 'absolute',
                     left: 0,
                     top: 0,
                     height: '100%',
                     width: `${progressPercent}%`,
-                    background: `linear-gradient(90deg, ${colors.accent}, ${colors.accent}cc)`,
+                    background: colors.accent,
                     transition: 'width 0.1s linear',
                 }} />
             </div>
@@ -70,15 +73,18 @@ export default function MiniPlayer({ onExpand }) {
                 gap: '12px',
             }}>
                 {/* Album Art */}
-                <div style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    flexShrink: 0,
-                    background: colors.paperDark,
-                    position: 'relative',
-                }}>
+                <div 
+                    className="ske-art"
+                    style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        background: colors.paperDark,
+                        position: 'relative',
+                    }}
+                >
                     {imageUrl && (
                         <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     )}
@@ -129,17 +135,19 @@ export default function MiniPlayer({ onExpand }) {
                             e.stopPropagation()
                             togglePlay()
                         }}
+                        className="ske-raised-xs"
                         style={{
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
                             background: colors.accent,
-                            border: 'none',
+                            backgroundImage: 'var(--background-image-ske-button)',
+                            border: '1px solid rgba(255,255,255,0.22)',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            transition: 'transform 0.2s',
+                            transition: 'transform 0.15s var(--ease-premium)',
                         }}
                         onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
                         onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -160,18 +168,20 @@ export default function MiniPlayer({ onExpand }) {
                             e.stopPropagation()
                             handleNext()
                         }}
+                        className="ske-raised-xs"
                         style={{
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
                             background: colors.paperDark,
-                            border: 'none',
+                            backgroundImage: 'var(--background-image-ske-button)',
+                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.70)'}`,
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             color: colors.ink,
-                            transition: 'transform 0.2s',
+                            transition: 'transform 0.15s var(--ease-premium)',
                         }}
                         onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
                         onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}

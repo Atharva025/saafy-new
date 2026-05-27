@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { usePlayer } from '@/context/PlayerContext'
 import { useTheme } from '@/context/ThemeContext'
 import { useToast } from '@/context/ToastContext'
@@ -6,20 +6,64 @@ import SkeletonLoader from './SkeletonLoader'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function getImageUrl(song) {
-    return (
-        song.image?.[0]?.link || song.image?.[0]?.url ||
-        song.image?.[1]?.link || song.image?.[1]?.url ||
-        song.image?.[2]?.link || song.image?.[2]?.url ||
-        song.imageUrl || ''
-    )
+    if (!song) return ''
+    
+    // Collect all candidates
+    const urls = new Set()
+    
+    // 1. Check song.image array
+    if (Array.isArray(song.image)) {
+        song.image.forEach(img => {
+            if (img) {
+                if (typeof img === 'string') {
+                    urls.add(img)
+                } else if (typeof img === 'object') {
+                    if (img.link && typeof img.link === 'string') urls.add(img.link)
+                    if (img.url && typeof img.url === 'string') urls.add(img.url)
+                }
+            }
+        })
+    }
+    
+    // 2. Check song.imageUrl string
+    if (song.imageUrl && typeof song.imageUrl === 'string') {
+        urls.add(song.imageUrl)
+    }
+    
+    // Convert to array and filter out empty strings
+    const candidates = Array.from(urls).map(u => u.trim()).filter(Boolean)
+    if (candidates.length === 0) return ''
+
+    // Helper to score a URL based on resolution
+    const getScore = (url) => {
+        if (url.includes('500x500')) return 3
+        if (url.includes('350x350')) return 2.5
+        if (url.includes('250x250')) return 2.2
+        if (url.includes('150x150')) return 2
+        if (url.includes('50x50')) return 1
+        return 1.5 // neutral default
+    }
+
+    // Sort by score descending (prefer highest resolution first)
+    candidates.sort((a, b) => getScore(b) - getScore(a))
+    
+    let bestUrl = candidates[0]
+    
+    // Auto-upgrade JioSaavn CDN image quality to 500x500 if low quality
+    if (bestUrl && (bestUrl.includes('150x150') || bestUrl.includes('50x50')) && !bestUrl.includes('500x500')) {
+        const upgraded = bestUrl.replace('150x150', '500x500').replace('50x50', '500x500')
+        bestUrl = upgraded
+    }
+    
+    return bestUrl
 }
 
-// ─── Animated bars (now playing) ─────────────────────────────────────────────
+// ─── Bouncy Equalizer Visualizer ─────────────────────────────────────────────
 function NowPlayingBars({ color = '#fff', size = 14 }) {
     return (
         <>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: `${size}px` }}>
-                {[0.55, 1, 0.4, 0.75, 0.5].map((h, i) => (
+                {[0.6, 1, 0.45, 0.8, 0.55].map((h, i) => (
                     <div
                         key={i}
                         style={{
@@ -28,22 +72,24 @@ function NowPlayingBars({ color = '#fff', size = 14 }) {
                             background: color,
                             borderRadius: '2px',
                             animation: `barBounce 0.75s ease-in-out ${i * 0.13}s infinite alternate`,
+                            transformOrigin: 'bottom',
                         }}
                     />
                 ))}
             </div>
             <style>{`
-        @keyframes barBounce {
-          from { transform: scaleY(0.35); opacity: 0.7; }
-          to   { transform: scaleY(1);    opacity: 1; }
-        }
-      `}</style>
+                @keyframes barBounce {
+                    from { transform: scaleY(0.35); opacity: 0.7; }
+                    to   { transform: scaleY(1);    opacity: 1; }
+                }
+            `}</style>
         </>
     )
 }
 
-// ─── Queue button ─────────────────────────────────────────────────────────────
+// ─── Queue button (Translucent Glassmorphic) ───────────────────────────────
 function QueueBtn({ song, onAddToQueue, success, size = 28 }) {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
     return (
         <button
             onClick={(e) => {
@@ -58,8 +104,8 @@ function QueueBtn({ song, onAddToQueue, success, size = 28 }) {
                 width: `${size}px`,
                 height: `${size}px`,
                 borderRadius: '50%',
-                background: 'rgba(255,255,255,0.96)',
-                border: '1px solid rgba(255,255,255,0.6)',
+                background: 'rgba(255, 255, 255, 0.96)',
+                border: '1px solid rgba(255, 255, 255, 0.7)',
                 padding: 0,
                 minWidth: 0,
                 minHeight: 0,
@@ -70,9 +116,12 @@ function QueueBtn({ song, onAddToQueue, success, size = 28 }) {
                 justifyContent: 'center',
                 flexShrink: 0,
                 position: 'relative',
+                transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s',
             }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
-            {/* Invisible touch expander for better mobile accessibility */}
+            {/* Invisible touch target expander for mobile accessibility */}
             <span style={{
                 position: 'absolute',
                 top: '-12px',
@@ -81,7 +130,7 @@ function QueueBtn({ song, onAddToQueue, success, size = 28 }) {
                 bottom: '-12px',
                 cursor: 'pointer',
             }} />
-            <svg width={size * 0.43} height={size * 0.43} viewBox="0 0 24 24" fill="none" stroke="#1A1614" strokeWidth="2.5">
+            <svg width={size * 0.44} height={size * 0.44} viewBox="0 0 24 24" fill="none" stroke="#1A1614" strokeWidth="2.5">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
@@ -89,9 +138,9 @@ function QueueBtn({ song, onAddToQueue, success, size = 28 }) {
     )
 }
 
-// ─── Play circle button ───────────────────────────────────────────────────────
+// ─── Play button (Frosted Glass or Solid Accent) ─────────────────────────────
 function PlayCircle({ isActive, isPlaying, accentColor, size = 42, hovered }) {
-    const bg = isActive && isPlaying ? accentColor : 'rgba(255,255,255,0.96)'
+    const bg = isActive && isPlaying ? accentColor : 'rgba(255, 255, 255, 0.95)'
     const iconColor = isActive && isPlaying ? '#fff' : '#1A1614'
     return (
         <div
@@ -104,17 +153,19 @@ function PlayCircle({ isActive, isPlaying, accentColor, size = 42, hovered }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transform: hovered ? 'scale(1.08) translateY(-1px)' : 'scale(0.82)',
+                transform: hovered ? 'scale(1.1) translateY(-1px)' : 'scale(0.85)',
                 opacity: hovered || (isActive && isPlaying) ? 1 : 0,
-                transition: 'transform 300ms var(--ease-spring), opacity 220ms ease, background 250ms ease',
+                transition: 'transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 250ms ease, background 250ms ease',
                 flexShrink: 0,
+                border: '1px solid rgba(255, 255, 255, 0.6)',
+                boxShadow: hovered ? `0 8px 20px ${accentColor}35` : 'none',
             }}>
             {isActive && isPlaying ? (
-                <svg width={size * 0.36} height={size * 0.36} viewBox="0 0 24 24" fill={iconColor}>
+                <svg width={size * 0.38} height={size * 0.38} viewBox="0 0 24 24" fill={iconColor}>
                     <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
                 </svg>
             ) : (
-                <svg width={size * 0.36} height={size * 0.36} viewBox="0 0 24 24" fill={iconColor} style={{ marginLeft: '2px' }}>
+                <svg width={size * 0.38} height={size * 0.38} viewBox="0 0 24 24" fill={iconColor} style={{ marginLeft: '2px' }}>
                     <path d="M8 5v14l11-7L8 5z" />
                 </svg>
             )}
@@ -122,7 +173,7 @@ function PlayCircle({ isActive, isPlaying, accentColor, size = 42, hovered }) {
     )
 }
 
-// ─── Hero Card ────────────────────────────────────────────────────────────────
+// ─── Hero Card (Frosted Asymmetric Glass Capsule) ──────────────────────────
 function HeroCard({ song, onPlay, onAddToQueue, currentSong, isPlaying, colors, fonts, success }) {
     const [hovered, setHovered] = useState(false)
     const isActive = currentSong?.id === song.id
@@ -131,7 +182,7 @@ function HeroCard({ song, onPlay, onAddToQueue, currentSong, isPlaying, colors, 
 
     return (
         <div
-            style={{ height: '100%' }}
+            style={{ height: '100%', perspective: '1000px' }}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
         >
@@ -145,22 +196,24 @@ function HeroCard({ song, onPlay, onAddToQueue, currentSong, isPlaying, colors, 
                     position: 'relative',
                     width: '100%',
                     height: '100%',
-                    borderRadius: '18px',
+                    borderRadius: '24px',
                     overflow: 'hidden',
                     cursor: 'pointer',
+                    background: colors.paperDarker,
                     border: isActive
                         ? `2px solid ${colors.accent}`
-                        : `1px solid rgba(255,255,255,0.12)`,
+                        : `1px solid ${colors.border}`,
                     boxShadow: isActive
-                        ? `4px 5px 12px var(--ske-shadow), -2px -2px 8px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), 0 0 0 2px ${colors.accent}35, 0 16px 48px ${colors.accent}28`
+                        ? `0 24px 48px ${colors.accent}24, var(--shadow-ske-sm)`
                         : hovered
-                            ? `6px 8px 20px var(--ske-shadow), 0 12px 32px ${colors.accent}22, -4px -4px 12px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight)`
-                            : `2px 3px 8px var(--ske-shadow), -2px -2px 5px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 1px var(--ske-inner-shadow)`,
-                    transition: 'box-shadow 250ms var(--ease-premium), border-color 250ms var(--ease-premium), transform 250ms var(--ease-premium)',
-                    transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
+                            ? `0 30px 60px ${colors.accent}1c, 0 12px 24px var(--ske-shadow), var(--shadow-ske-md)`
+                            : `0 8px 24px var(--ske-shadow), var(--shadow-ske-xs)`,
+                    transform: hovered ? 'translateY(-6px) rotateX(1deg) rotateY(1deg)' : 'translateY(0) rotateX(0) rotateY(0)',
+                    transition: 'all 400ms cubic-bezier(0.16, 1, 0.3, 1)',
+                    transformStyle: 'preserve-3d',
                 }}
             >
-                {/* Album image */}
+                {/* Artwork */}
                 {imageUrl && (
                     <img
                         src={imageUrl}
@@ -172,121 +225,141 @@ function HeroCard({ song, onPlay, onAddToQueue, currentSong, isPlaying, colors, 
                             width: '100%',
                             height: '100%',
                             objectFit: 'cover',
-                            transform: hovered ? 'scale(1.04)' : 'scale(1)',
-                            transition: 'transform 0.55s cubic-bezier(0.2,0,0,1)',
+                            transform: hovered ? 'scale(1.05)' : 'scale(1)',
+                            transition: 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
                         }}
                     />
                 )}
 
-                {/* Scrim — layered for better depth */}
+                {/* Dark depth scrim */}
                 <div style={{
                     position: 'absolute',
                     inset: 0,
-                    background: 'linear-gradient(175deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.48) 60%, rgba(0,0,0,0.88) 100%)',
+                    background: 'linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.7) 100%)',
                 }} />
 
-                {/* Top-left: now playing pill OR genre badge */}
-                <div style={{ position: 'absolute', top: '14px', left: '14px' }}>
+                {/* Top badges */}
+                <div style={{
+                    position: 'absolute',
+                    top: '16px',
+                    left: '16px',
+                    right: '16px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    zIndex: 10
+                }}>
                     {isActive && isPlaying ? (
                         <div style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '7px',
+                            gap: '8px',
                             background: colors.accent,
                             borderRadius: '99px',
-                            padding: '5px 11px',
-                            boxShadow: `0 4px 14px ${colors.accent}55`,
+                            padding: '6px 14px',
+                            boxShadow: `0 8px 20px ${colors.accent}40`,
+                            animation: 'glowPulse 2s infinite alternate',
                         }}>
-                            <NowPlayingBars color="#fff" size={12} />
+                            <NowPlayingBars color="#fff" size={11} />
                             <span style={{
                                 fontFamily: fonts.mono,
-                                fontSize: 'var(--text-xs)',
+                                fontSize: '0.62rem',
                                 color: '#fff',
                                 fontWeight: 700,
-                                letterSpacing: '0.07em',
+                                letterSpacing: '0.08em',
                                 textTransform: 'uppercase',
                             }}>
-                                Now Playing
+                                Playing
                             </span>
                         </div>
                     ) : (
                         <div style={{
-                            background: 'rgba(255,255,255,0.14)',
-                            backdropFilter: 'blur(8px)',
-                            WebkitBackdropFilter: 'blur(8px)',
+                            background: 'rgba(0,0,0,0.4)',
+                            backdropFilter: 'blur(10px)',
+                            WebkitBackdropFilter: 'blur(10px)',
                             borderRadius: '99px',
-                            padding: '4px 10px',
-                            border: '1px solid rgba(255,255,255,0.2)',
+                            padding: '6px 14px',
+                            border: '1px solid rgba(255,255,255,0.15)',
                         }}>
                             <span style={{
                                 fontFamily: fonts.mono,
-                                fontSize: 'var(--text-xs)',
-                                color: 'rgba(255,255,255,0.88)',
+                                fontSize: '0.62rem',
+                                color: 'rgba(255,255,255,0.9)',
                                 fontWeight: 600,
-                                letterSpacing: '0.07em',
+                                letterSpacing: '0.08em',
                                 textTransform: 'uppercase',
                             }}>
-                                Featured
+                                FEATURED
                             </span>
                         </div>
                     )}
+
+                    {onAddToQueue && !isActive && (
+                        <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={isMobile ? 24 : 34} />
+                    )}
                 </div>
 
-                {/* Top-right: queue button */}
-                {(hovered || isMobile) && onAddToQueue && !isActive && (
-                    <div style={{ position: 'absolute', top: '14px', right: '14px', zIndex: 10 }}>
-                        <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={isMobile ? 24 : 34} />
-                    </div>
-                )}
-
-                {/* Bottom info */}
+                {/* Floating Frosted Glass Info Panel */}
                 <div style={{
                     position: 'absolute',
                     bottom: 0,
                     left: 0,
                     right: 0,
-                    padding: '32px 20px 20px',
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 100%)',
+                    margin: isMobile ? '12px' : '16px',
+                    padding: isMobile ? '14px' : '18px 20px',
+                    borderRadius: '16px',
+                    background: colors.overlay,
+                    backdropFilter: 'blur(20px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                    border: `1px solid ${colors.border}`,
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
                     display: 'flex',
-                    alignItems: 'flex-end',
+                    alignItems: 'center',
                     justifyContent: 'space-between',
-                    gap: '14px',
+                    gap: '16px',
+                    transform: 'translateZ(20px)', // Lifted 3D element
+                    transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
                 }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{
                             fontFamily: fonts.display,
-                            fontWeight: 700,
-                            fontSize: 'clamp(1rem, 2.4vw, 1.45rem)',
-                            color: '#fff',
-                            marginBottom: '5px',
+                            fontWeight: 800,
+                            fontSize: 'clamp(0.95rem, 2.5vw, 1.3rem)',
+                            color: colors.ink,
+                            marginBottom: '4px',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
                             lineHeight: 1.2,
-                            textShadow: '0 2px 8px rgba(0,0,0,0.4)',
                         }}>
                             {song.name}
                         </div>
                         <div style={{
                             fontFamily: fonts.mono,
-                            fontSize: 'var(--text-xs)',
-                            color: 'rgba(255,255,255,0.72)',
+                            fontSize: 'clamp(0.68rem, 1.8vw, 0.75rem)',
+                            color: colors.inkMuted,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
-                            letterSpacing: '0.02em',
+                            letterSpacing: '0.01em',
                         }}>
                             {song.primaryArtists}
                         </div>
                     </div>
-                    <PlayCircle isActive={isActive} isPlaying={isPlaying} accentColor={colors.accent} size={46} hovered={hovered} />
+                    <PlayCircle isActive={isActive} isPlaying={isPlaying} accentColor={colors.accent} size={isMobile ? 40 : 46} hovered={hovered} />
                 </div>
             </div>
+            <style>{`
+                @keyframes glowPulse {
+                    from { box-shadow: 0 4px 12px var(--color-accent-subtle); }
+                    to   { box-shadow: 0 8px 24px var(--color-accent-border); }
+                }
+            `}</style>
         </div>
     )
 }
 
-// ─── Small companion card ─────────────────────────────────────────────────────
+// ─── Small companion card (Frosted Sleek Row-Card style) ──────────────────────
 function SmallCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying, colors, fonts, success }) {
     const [hovered, setHovered] = useState(false)
     const isActive = currentSong?.id === song.id
@@ -306,21 +379,23 @@ function SmallCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying, 
                 position: 'relative',
                 width: '100%',
                 height: '100%',
-                borderRadius: '14px',
+                borderRadius: '16px',
                 overflow: 'hidden',
                 cursor: 'pointer',
-                border: isActive ? `2px solid ${colors.accent}` : `1px solid rgba(255,255,255,0.10)`,
+                background: colors.paperDark,
+                border: isActive ? `2px solid ${colors.accent}` : `1px solid ${colors.border}`,
                 boxShadow: isActive
-                    ? `2px 3px 8px var(--ske-shadow), -1px -1px 5px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight), 0 0 0 2px ${colors.accent}28, 0 8px 28px ${colors.accent}22`
+                    ? `0 12px 28px ${colors.accent}18, var(--shadow-ske-sm)`
                     : hovered
-                        ? `4px 5px 14px var(--ske-shadow), 0 8px 24px ${colors.accent}18, -3px -3px 8px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight)`
-                        : `1px 2px 6px var(--ske-shadow), -1px -1px 4px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight), inset 0 -1px 1px var(--ske-inner-shadow)`,
-                transition: 'box-shadow 250ms var(--ease-premium), border-color 250ms var(--ease-premium), transform 250ms var(--ease-premium)',
-                transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
+                        ? `0 16px 36px rgba(0,0,0,0.12), var(--shadow-ske-md)`
+                        : `0 4px 12px var(--ske-shadow), var(--shadow-ske-xs)`,
+                transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
+                transition: 'all 350ms cubic-bezier(0.16, 1, 0.3, 1)',
                 animation: 'cardFadeIn 0.4s ease-out both',
                 animationDelay: `${index * 0.06}s`,
             }}
         >
+            {/* Artwork */}
             {imageUrl && (
                 <img
                     src={imageUrl}
@@ -333,33 +408,46 @@ function SmallCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying, 
                         height: '100%',
                         objectFit: 'cover',
                         transform: hovered ? 'scale(1.06)' : 'scale(1)',
-                        transition: 'transform 0.42s cubic-bezier(0.2,0,0,1)',
+                        transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
                     }}
                 />
             )}
 
-            {/* Scrim */}
+            {/* Gradient Scrim */}
             <div style={{
                 position: 'absolute',
                 inset: 0,
-                background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.08) 55%, transparent 100%)',
+                background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)',
             }} />
 
-            {/* Top-left: now playing bars */}
-            {isActive && isPlaying && (
-                <div style={{ position: 'absolute', top: '9px', left: '9px' }}>
-                    <NowPlayingBars color={colors.accent} size={13} />
-                </div>
-            )}
+            {/* Top widgets */}
+            <div style={{
+                position: 'absolute',
+                top: '10px',
+                left: '10px',
+                right: '10px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                zIndex: 10
+            }}>
+                {isActive && isPlaying ? (
+                    <div style={{
+                        background: colors.accent,
+                        borderRadius: '99px',
+                        padding: '4px 10px',
+                        boxShadow: `0 4px 12px ${colors.accent}40`,
+                    }}>
+                        <NowPlayingBars color="#fff" size={10} />
+                    </div>
+                ) : <div />}
 
-            {/* Top-right: queue button */}
-            {(hovered || isMobile) && onAddToQueue && !isActive && (
-                <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10 }}>
+                {onAddToQueue && !isActive && (
                     <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={isMobile ? 20 : 28} />
-                </div>
-            )}
+                )}
+            </div>
 
-            {/* Play overlay */}
+            {/* Center Play Circle Reveal */}
             <div style={{
                 position: 'absolute',
                 inset: 0,
@@ -371,31 +459,32 @@ function SmallCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying, 
                 <PlayCircle isActive={isActive} isPlaying={isPlaying} accentColor={colors.accent} size={38} hovered={hovered} />
             </div>
 
-            {/* Bottom info */}
+            {/* Card Metadata info */}
             <div style={{
                 position: 'absolute',
                 bottom: 0,
                 left: 0,
                 right: 0,
-                padding: '10px',
+                padding: '12px',
+                background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%)',
             }}>
                 <div style={{
                     fontFamily: fonts.primary,
-                    fontWeight: 600,
+                    fontWeight: 700,
                     fontSize: 'var(--text-sm)',
                     color: '#fff',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
                     lineHeight: 1.3,
-                    textShadow: '0 1px 6px rgba(0,0,0,0.5)',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.5)',
                 }}>
                     {song.name}
                 </div>
                 <div style={{
                     fontFamily: fonts.mono,
                     fontSize: 'var(--text-xs)',
-                    color: 'rgba(255,255,255,0.62)',
+                    color: 'rgba(255,255,255,0.65)',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
@@ -409,7 +498,7 @@ function SmallCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying, 
     )
 }
 
-// ─── Mobile Compact Card (4-column strip under hero on small screens) ──────────
+// ─── Mobile Compact Card (Glassmorphic cells under hero on mobile) ───────────
 function MobileCompactCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying, colors, fonts, success }) {
     const [touched, setTouched] = useState(false)
     const isActive = currentSong?.id === song.id
@@ -426,24 +515,21 @@ function MobileCompactCard({ song, index, onPlay, onAddToQueue, currentSong, isP
             onTouchEnd={() => setTimeout(() => setTouched(false), 180)}
             style={{
                 cursor: 'pointer',
-                borderRadius: '10px',
+                borderRadius: '12px',
                 overflow: 'hidden',
                 position: 'relative',
                 border: isActive
-                    ? `2px solid ${colors.accent}`
-                    : `1px solid ${colors.rule}`,
+                    ? `1.5px solid ${colors.accent}`
+                    : `1px solid ${colors.border}`,
                 boxShadow: isActive
-                    ? `0 0 0 2px ${colors.accent}28, 0 6px 18px ${colors.accent}22`
-                    : touched
-                    ? 'none'
-                    : '0 2px 8px rgba(0,0,0,0.10)',
-                animation: `cardFadeIn 0.4s ease-out both`,
-                animationDelay: `${index * 0.07}s`,
-                transform: touched ? 'scale(0.95)' : 'scale(1)',
+                    ? `0 6px 14px ${colors.accent}1c`
+                    : touched ? 'none' : '0 2px 6px rgba(0,0,0,0.06)',
+                animation: `cardFadeIn 0.35s ease-out both`,
+                animationDelay: `${index * 0.05}s`,
+                transform: touched ? 'scale(0.96)' : 'scale(1)',
                 transition: 'transform 0.15s ease, box-shadow 0.15s ease',
             }}
         >
-            {/* Square art container using padding trick for aspect ratio */}
             <div style={{ position: 'relative', paddingBottom: '100%', background: colors.paperDark }}>
                 {imageUrl ? (
                     <img
@@ -458,44 +544,44 @@ function MobileCompactCard({ song, index, onPlay, onAddToQueue, currentSong, isP
                     />
                 ) : (
                     <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill={colors.inkLight}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill={colors.inkLight}>
                             <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
                         </svg>
                     </div>
                 )}
 
-                {/* Bottom gradient scrim */}
+                {/* Dark Vignette overlay */}
                 <div style={{
                     position: 'absolute', inset: 0,
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0) 55%, transparent 100%)',
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)',
                 }} />
 
-                {/* Now playing bars */}
+                {/* Playing EQ overlay */}
                 {isActive && isPlaying && (
-                    <div style={{ position: 'absolute', top: '5px', left: '5px' }}>
-                        <NowPlayingBars color={colors.accent} size={10} />
+                    <div style={{ position: 'absolute', top: '6px', left: '6px', zIndex: 10 }}>
+                        <NowPlayingBars color={colors.accent} size={9} />
                     </div>
                 )}
 
-                {/* Queue btn on mobile layout */}
+                {/* Queue button */}
                 {onAddToQueue && !isActive && (
-                    <div style={{ position: 'absolute', top: '4px', right: '4px', zIndex: 10 }}>
+                    <div style={{ position: 'absolute', top: '5px', right: '5px', zIndex: 10 }}>
                         <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={18} />
                     </div>
                 )}
 
-                {/* Song name overlay at bottom */}
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '4px 5px 5px' }}>
+                {/* Label Overlay */}
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '6px 8px 8px' }}>
                     <div style={{
                         fontFamily: fonts.primary,
-                        fontWeight: 600,
-                        fontSize: '0.58rem',
+                        fontWeight: 700,
+                        fontSize: '0.62rem',
                         color: '#fff',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        lineHeight: 1.25,
-                        textShadow: '0 1px 4px rgba(0,0,0,0.7)',
+                        lineHeight: 1.2,
+                        textShadow: '0 1px 3px rgba(0,0,0,0.8)',
                     }}>
                         {song.name}
                     </div>
@@ -505,7 +591,7 @@ function MobileCompactCard({ song, index, onPlay, onAddToQueue, currentSong, isP
     )
 }
 
-// ─── Horizontal scroll card ────────────────────────────────────────────────────
+// ─── Scroll Card (Premium Sleeve Pull-out Design) ───────────────────────────
 function ScrollCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying, colors, fonts, success }) {
     const [hovered, setHovered] = useState(false)
     const isActive = currentSong?.id === song.id
@@ -524,49 +610,48 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying,
             onKeyDown={e => e.key === 'Enter' && onPlay(song)}
             style={{
                 flexShrink: 0,
-                width: 'clamp(120px, 36vw, 172px)',
+                width: 'clamp(124px, 37vw, 176px)',
                 cursor: 'pointer',
-                transition: 'transform 280ms cubic-bezier(0.25,0.46,0.45,0.94)',
-                transform: hovered ? 'translateY(-6px)' : 'translateY(0)',
-                animation: 'cardFadeIn 0.42s ease-out both',
-                animationDelay: `${index * 0.055}s`,
                 scrollSnapAlign: 'start',
+                display: 'flex',
+                flexDirection: 'column',
+                animation: 'cardFadeIn 0.4s ease-out both',
+                animationDelay: `${index * 0.05}s`,
             }}
         >
-            {/* Cover art square */}
+            {/* Artwork sleeve */}
             <div style={{
                 position: 'relative',
                 width: '100%',
                 paddingBottom: '100%',
-                borderRadius: '14px',
-                overflow: 'hidden',
+                borderRadius: '16px',
                 background: colors.paperDark,
-                border: isActive
-                    ? `2px solid ${colors.accent}`
-                    : `1px solid ${colors.rule}`,
+                border: isActive ? `2px solid ${colors.accent}` : `1px solid ${colors.border}`,
                 boxShadow: isActive && isPlaying
-                    ? `0 0 0 3px ${colors.accent}22, 0 10px 28px ${colors.accent}28`
+                    ? `0 14px 28px ${colors.accent}24, var(--shadow-ske-sm)`
                     : hovered
-                        ? `0 14px 32px rgba(0,0,0,0.15), 0 6px 20px ${colors.accent}25`
-                        : '0 4px 14px rgba(0,0,0,0.06)',
-                transition: 'box-shadow 280ms var(--ease-premium), border-color 280ms var(--ease-premium)',
-                marginBottom: '10px',
+                        ? `0 20px 40px ${colors.accent}18, 0 8px 16px var(--ske-shadow), var(--shadow-ske-md)`
+                        : `0 4px 12px var(--ske-shadow), var(--shadow-ske-xs)`,
+                transform: hovered ? 'translateY(-6px)' : 'translateY(0)',
+                transition: 'all 350ms cubic-bezier(0.16, 1, 0.3, 1)',
+                marginBottom: '12px',
+                overflow: 'hidden',
             }}>
                 {imageUrl ? (
                     <img
                         src={imageUrl}
                         alt={song.name}
                         loading="lazy"
-                        width="172"
-                        height="172"
+                        width="176"
+                        height="176"
                         style={{
                             position: 'absolute',
                             inset: 0,
                             width: '100%',
                             height: '100%',
                             objectFit: 'cover',
-                            transform: hovered ? 'scale(1.06)' : 'scale(1)',
-                            transition: 'transform 0.38s cubic-bezier(0.2,0,0,1)',
+                            transform: hovered ? 'scale(1.05)' : 'scale(1)',
+                            transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
                         }}
                     />
                 ) : (
@@ -577,19 +662,19 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying,
                         alignItems: 'center',
                         justifyContent: 'center',
                     }}>
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill={colors.inkLight}>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill={colors.inkLight}>
                             <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
                         </svg>
                     </div>
                 )}
 
-                {/* Dark overlay + play circle on hover */}
+                {/* Dark Hover overlay and Play button */}
                 <div style={{
                     position: 'absolute',
                     inset: 0,
-                    background: 'rgba(0,0,0,0.36)',
+                    background: 'rgba(0, 0, 0, 0.38)',
                     opacity: hovered || (isActive && isPlaying) ? 1 : 0,
-                    transition: 'opacity 0.2s ease',
+                    transition: 'opacity 0.25s ease',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -597,63 +682,73 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying,
                     <PlayCircle isActive={isActive} isPlaying={isPlaying} accentColor={colors.accent} size={42} hovered={hovered} />
                 </div>
 
-                {/* Queue button */}
-                {(hovered || isMobile) && onAddToQueue && !isActive && (
-                    <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10 }}>
+                {/* Queue button widget */}
+                {onAddToQueue && !isActive && (
+                    <div style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        zIndex: 10,
+                        opacity: hovered || isMobile ? 1 : 0,
+                        transition: 'opacity 0.22s ease',
+                    }}>
                         <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={isMobile ? 20 : 28} />
                     </div>
                 )}
 
-                {/* Active indicator dot */}
-                {isActive && !isPlaying && (
-                    <div style={{
-                        position: 'absolute',
-                        bottom: '8px',
-                        left: '8px',
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        background: colors.accent,
-                        boxShadow: `0 0 8px ${colors.accent}80`,
-                    }} />
+                {/* Bouncing EQ overlay */}
+                {isActive && isPlaying && (
+                    <div style={{ position: 'absolute', bottom: '8px', right: '8px', zIndex: 10, background: 'rgba(0,0,0,0.6)', padding: '4px 8px', borderRadius: '8px' }}>
+                        <NowPlayingBars color={colors.accent} size={10} />
+                    </div>
                 )}
             </div>
 
-            {/* Text */}
-            <div style={{
-                fontFamily: fonts.primary,
-                fontWeight: 600,
-                fontSize: 'var(--text-sm)',
-                color: isActive ? colors.accent : colors.ink,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                marginBottom: '3px',
-                transition: 'color 0.22s ease',
-                lineHeight: 1.3,
-            }}>
-                {song.name || song.title}
-            </div>
-            <div style={{
-                fontFamily: fonts.mono,
-                fontSize: 'var(--text-xs)',
-                color: colors.inkMuted,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                letterSpacing: '0.01em',
-            }}>
-                {song.primaryArtists || 'Unknown Artist'}
+            {/* Sleeve Text Description */}
+            <div style={{ padding: '0 2px' }}>
+                <div style={{
+                    fontFamily: fonts.primary,
+                    fontWeight: 700,
+                    fontSize: 'var(--text-sm)',
+                    color: isActive ? colors.accent : colors.ink,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    marginBottom: '3px',
+                    transition: 'color 0.22s ease',
+                    lineHeight: 1.3,
+                }}>
+                    {song.name || song.title}
+                </div>
+                <div style={{
+                    fontFamily: fonts.mono,
+                    fontSize: 'var(--text-xs)',
+                    color: colors.inkMuted,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    letterSpacing: '0.01em',
+                }}>
+                    {song.primaryArtists || 'Unknown Artist'}
+                </div>
             </div>
         </div>
     )
 }
 
-// ─── Main export ──────────────────────────────────────────────────────────────
+// ─── DiscoverSection Export ──────────────────────────────────────────────────
 export default function DiscoverSection({ songs, loading, featured = false, onPlaySong, onAddToQueue }) {
     const { colors, fonts } = useTheme()
     const { currentSong, isPlaying } = usePlayer()
     const { success } = useToast()
+    const scrollRef = useRef(null)
+
+    const handleScroll = (direction) => {
+        if (scrollRef.current) {
+            const scrollAmount = direction === 'left' ? -400 : 400
+            scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+        }
+    }
 
     if (loading && featured) {
         return (
@@ -678,27 +773,27 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
 
     const sharedProps = { onPlay: handlePlay, onAddToQueue, currentSong, isPlaying, colors, fonts, success }
 
-    // ─── Featured editorial grid ─────────────────────────────────────────────
+    // ─── Asymmetric Editorial Grid (Featured Section) ───────────────────────
     if (featured && songs.length >= 5) {
         const [hero, ...rest] = songs.slice(0, 5)
         const animStyle = `
-          @keyframes cardFadeIn {
-            from { opacity: 0; transform: translateY(14px); }
-            to   { opacity: 1; transform: translateY(0); }
-          }
+            @keyframes cardFadeIn {
+                from { opacity: 0; transform: translateY(18px); }
+                to   { opacity: 1; transform: translateY(0); }
+            }
         `
 
-        // ── MOBILE: hero stacked above 4-square compact grid ──
+        // ── MOBILE VIEWPORT: Asymmetric Stack ──
         if (isMobile) {
             return (
                 <>
                     <style>{animStyle}</style>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        {/* Hero — full width */}
-                        <div style={{ height: 'clamp(200px, 52vw, 260px)', borderRadius: '16px', overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {/* Hero Capsule */}
+                        <div style={{ height: 'clamp(210px, 55vw, 270px)', borderRadius: '24px', overflow: 'hidden' }}>
                             <HeroCard song={hero} {...sharedProps} />
                         </div>
-                        {/* 4 compact square cards in equal-width row */}
+                        {/* 4 Compact Glass Cards */}
                         <div style={{
                             display: 'grid',
                             gridTemplateColumns: 'repeat(4, 1fr)',
@@ -713,7 +808,7 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
             )
         }
 
-        // ── DESKTOP: side-by-side hero | 2×2 grid ──
+        // ── DESKTOP VIEWPORT: Asymmetric Editorial Layout ──
         return (
             <>
                 <style>{animStyle}</style>
@@ -722,20 +817,23 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
                     style={{
                         display: 'grid',
                         gridTemplateColumns: 'minmax(0, 3fr) minmax(0, 2fr)',
-                        gap: '14px',
-                        height: 'clamp(300px, 33vw, 440px)',
+                        gap: '16px',
+                        height: 'clamp(320px, 35vw, 460px)',
                     }}
                 >
+                    {/* Primary Hero Capsule */}
                     <div className="featured-hero" style={{ height: '100%' }}>
                         <HeroCard song={hero} {...sharedProps} />
                     </div>
+
+                    {/* Secondary 2x2 Grid of frosted cards */}
                     <div
                         className="featured-small-grid"
                         style={{
                             display: 'grid',
                             gridTemplateColumns: '1fr 1fr',
                             gridTemplateRows: '1fr 1fr',
-                            gap: '12px',
+                            gap: '14px',
                         }}
                     >
                         {rest.slice(0, 4).map((song, i) => (
@@ -747,22 +845,35 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
         )
     }
 
-    // ─── Horizontal scroll row ────────────────────────────────────────────────
+    // ─── Horizontal Scroll snaps Carousel (Snapping Sleeve lists) ──────────
     return (
-        <>
+        <div className="carousel-wrapper">
             <style>{`
-        @keyframes cardFadeIn {
-          from { opacity: 0; transform: translateY(14px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+                @keyframes cardFadeIn {
+                    from { opacity: 0; transform: translateY(18px); }
+                    to   { opacity: 1; transform: translateY(0); }
+                }
+            `}</style>
+
+            {/* Left Scroll Button */}
+            <button
+                className="carousel-arrow carousel-arrow-left"
+                onClick={(e) => { e.stopPropagation(); handleScroll('left'); }}
+                aria-label="Scroll left"
+            >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="15 18 9 12 15 6" />
+                </svg>
+            </button>
+
             <div
+                ref={scrollRef}
                 className="hide-scrollbar scroll-snap-x"
                 style={{
                     display: 'flex',
-                    gap: '14px',
+                    gap: '18px',
                     overflowX: 'auto',
-                    paddingBottom: '12px',
+                    paddingBottom: '16px',
                     paddingLeft: '4px',
                     marginLeft: '-4px',
                     WebkitOverflowScrolling: 'touch',
@@ -772,6 +883,17 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
                     <ScrollCard key={song.id} song={song} index={index} {...sharedProps} />
                 ))}
             </div>
-        </>
+
+            {/* Right Scroll Button */}
+            <button
+                className="carousel-arrow carousel-arrow-right"
+                onClick={(e) => { e.stopPropagation(); handleScroll('right'); }}
+                aria-label="Scroll right"
+            >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="9 18 15 12 9 6" />
+                </svg>
+            </button>
+        </div>
     )
 }

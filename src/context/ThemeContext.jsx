@@ -5,9 +5,9 @@ import { safeGetStorage, safeSetStorage } from '@/lib/security'
 
 const lightColors = {
     // Surfaces (light → dark layering)
-    paper: '#FAF7F2',
-    paperDark: '#F0EBE3',
-    paperDarker: '#E5DFD7',
+    paper: '#FDFBF9',
+    paperDark: '#F5F2EB',
+    paperDarker: '#EAE5DB',
 
     // Text hierarchy
     ink: '#1A1614',   // Primary text
@@ -22,12 +22,12 @@ const lightColors = {
     accentBorder: 'rgba(196, 92, 62, 0.18)',
 
     // Structure
-    rule: '#E5DFD7',   // Dividers
+    rule: '#EAE5DB',   // Dividers
     border: 'rgba(26, 22, 20, 0.09)',  // Alpha-blended borders
 
     // Overlays
-    overlay: 'rgba(250, 247, 242, 0.88)',  // Frosted header/panel bg
-    overlayDeep: 'rgba(250, 247, 242, 0.96)',
+    overlay: 'rgba(253, 251, 249, 0.88)',  // Frosted header/panel bg
+    overlayDeep: 'rgba(253, 251, 249, 0.96)',
 
     // Shadows (warm-toned)
     shadowSm: '0 1px 3px rgba(26, 22, 20, 0.07)',
@@ -83,7 +83,7 @@ const fonts = {
 // Shared constants that don't vary by theme. Reference these in components
 // instead of hardcoding px values.
 
-export const tokens = {
+const tokens = {
     // Border radius
     radius: {
         sm: '6px',
@@ -183,5 +183,3 @@ export function useTheme() {
     if (!context) throw new Error('useTheme must be used within a ThemeProvider')
     return context
 }
-
-export { lightColors, darkColors, fonts }

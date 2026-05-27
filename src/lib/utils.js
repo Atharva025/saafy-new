@@ -68,14 +68,14 @@ export function generateId() {
 }
 
 // Get the highest quality image from an image array
-// Note: formatSongs in api.js remaps image arrays so [0] = highest quality (500x500)
+// Note: formatSongs in api.js maps image arrays so [2] = highest quality (500x500)
 export function getLastImage(imageArray) {
   if (!imageArray || !Array.isArray(imageArray) || imageArray.length === 0) {
     return '/placeholder-album.jpg'
   }
 
-  // Index [0] is highest quality after formatSongs remapping
-  const best = imageArray[0]
+  // Index [2] is highest quality in 0,1,2 standard order
+  const best = imageArray[2] || imageArray[1] || imageArray[0]
   return best?.link || best?.url || '/placeholder-album.jpg'
 }
 

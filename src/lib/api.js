@@ -300,9 +300,9 @@ const formatSongs = (songs) => {
                     url: song.album?.url || null
                 },
                 image: song.image ? [
-                    { link: song.image[2]?.url || song.image[2]?.link || '' },
+                    { link: song.image[0]?.url || song.image[0]?.link || '' },
                     { link: song.image[1]?.url || song.image[1]?.link || '' },
-                    { link: song.image[0]?.url || song.image[0]?.link || '' }
+                    { link: song.image[2]?.url || song.image[2]?.link || '' }
                 ] : [{ link: '' }, { link: '' }, { link: '' }],
                 duration: Number(song.duration) || 0,
                 download_url: downloadUrl,

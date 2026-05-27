@@ -3,6 +3,19 @@ import { usePlayer } from '@/context/PlayerContext'
 import { useTheme } from '@/context/ThemeContext'
 import { extractDominantColor, generateGradient } from '@/utils/colorExtractor'
 import { adjustColorForTheme } from '@/lib/utils'
+import { 
+    Shuffle, 
+    Repeat, 
+    Repeat1, 
+    SkipBack, 
+    SkipForward, 
+    Play, 
+    Pause, 
+    Volume2, 
+    Volume1, 
+    VolumeX, 
+    Music 
+} from 'lucide-react'
 
 export default function BasicPlayer() {
     const { colors, fonts, isDark } = useTheme()
@@ -17,6 +30,10 @@ export default function BasicPlayer() {
         handlePrevious,
         seekTo,
         setVolume,
+        shuffleMode,
+        repeatMode,
+        toggleShuffle,
+        toggleRepeat,
     } = usePlayer()
 
     const [isHovered, setIsHovered] = useState(false)
@@ -25,12 +42,16 @@ export default function BasicPlayer() {
     const [dominantColor, setDominantColor] = useState(null)
     const [gradientBg, setGradientBg] = useState(null)
     const [progressHovered, setProgressHovered] = useState(false)
+    const [hoverTime, setHoverTime] = useState(0)
+    const [hoverXPercent, setHoverXPercent] = useState(0)
+    const [artHovered, setArtHovered] = useState(false)
 
     // Extract color from album art
     useEffect(() => {
         // Use highest quality image for color extraction
-        const imageUrl = currentSong?.image?.[0]?.link || currentSong?.image?.[0]?.url ||
-            currentSong?.image?.[1]?.link || currentSong?.image?.[1]?.url
+        const imageUrl = currentSong?.image?.[2]?.link || currentSong?.image?.[2]?.url ||
+            currentSong?.image?.[1]?.link || currentSong?.image?.[1]?.url ||
+            currentSong?.image?.[0]?.link || currentSong?.image?.[0]?.url
         if (!imageUrl) {
             setDominantColor(null)
             setGradientBg(null)
@@ -59,6 +80,13 @@ export default function BasicPlayer() {
         seekTo(percent * duration)
     }
 
+    const handleProgressMouseMove = (e) => {
+        const rect = e.currentTarget.getBoundingClientRect()
+        const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+        setHoverXPercent(percent * 100)
+        setHoverTime(percent * duration)
+    }
+
     const handleVolumeClick = (e) => {
         const rect = e.currentTarget.getBoundingClientRect()
         if (isMobile) {
@@ -74,9 +102,9 @@ export default function BasicPlayer() {
 
     const progressPercent = duration ? (progress / duration) * 100 : 0
     // Use highest quality image available - check both .link and .url
-    const imageUrl = currentSong?.image?.[0]?.link || currentSong?.image?.[0]?.url ||
+    const imageUrl = currentSong?.image?.[2]?.link || currentSong?.image?.[2]?.url ||
         currentSong?.image?.[1]?.link || currentSong?.image?.[1]?.url ||
-        currentSong?.image?.[2]?.link || currentSong?.image?.[2]?.url ||
+        currentSong?.image?.[0]?.link || currentSong?.image?.[0]?.url ||
         currentSong?.imageUrl || ''
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
     const isTinyScreen = typeof window !== 'undefined' && window.innerWidth < 380
@@ -96,39 +124,34 @@ export default function BasicPlayer() {
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
-            {/* Dynamic gradient background */}
-            {gradientBg && (
+            <div 
+                className="ske-textured ske-float"
+                style={{
+                    background: isDark
+                        ? 'var(--color-overlay-deep)'
+                        : 'var(--color-overlay-deep)',
+                    backdropFilter: 'blur(20px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                    borderRadius: 'clamp(14px, 3vw, 18px)',
+                    border: isHovered && dominantColor
+                        ? `1px solid ${adjustColorForTheme(dominantColor, isDark)?.rgba(0.28) || 'var(--color-accent-border)'}`
+                        : `1px solid var(--color-border)`,
+                    overflow: 'hidden',
+                    transition: 'box-shadow 250ms ease-out, background 0.3s ease, border-color 0.3s ease',
+                    position: 'relative',
+                }}
+            >
+                {/* Glass gloss shine reflection at the top */}
                 <div style={{
                     position: 'absolute',
-                    inset: '-40px',
-                    background: gradientBg.mesh,
-                    opacity: isPlaying ? 0.8 : 0.5,
-                    filter: 'blur(60px)',
-                    transition: 'opacity 0.5s ease',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '40%',
+                    background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 100%)',
                     pointerEvents: 'none',
-                    zIndex: -1,
+                    zIndex: 1,
                 }} />
-            )}
-
-            <div style={{
-                background: isDark
-                    ? 'rgba(15, 13, 11, 0.88)'
-                    : 'rgba(252, 250, 247, 0.90)',
-                backdropFilter: 'blur(24px) saturate(200%)',
-                WebkitBackdropFilter: 'blur(24px) saturate(200%)',
-                borderRadius: 'clamp(14px, 3vw, 18px)',
-                boxShadow: isHovered
-                    ? isDark
-                        ? `8px 10px 30px var(--ske-shadow), -4px -4px 16px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow), 0 20px 60px rgba(0,0,0,0.5)`
-                        : `6px 8px 24px var(--ske-shadow), -4px -4px 14px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow), 0 16px 48px rgba(26,22,20,0.2)`
-                    : isDark
-                        ? `4px 5px 16px var(--ske-shadow), -2px -2px 8px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight), inset 0 -1px 1px var(--ske-inner-shadow)`
-                        : `3px 4px 12px var(--ske-shadow), -2px -2px 7px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight), inset 0 -1px 1px var(--ske-inner-shadow)`,
-                border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.80)'}`,
-                overflow: 'hidden',
-                transition: 'box-shadow 250ms ease-out, background 0.3s ease',
-                position: 'relative',
-            }}>
                 {/* Main Content Row */}
                 <div style={{
                     display: 'flex',
@@ -138,18 +161,35 @@ export default function BasicPlayer() {
                     flexWrap: 'nowrap',
                 }}>
                     {/* Album Art */}
-                    <div style={{
-                        width: isTinyScreen ? '36px' : 'clamp(40px, 9vw, 48px)',
-                        height: isTinyScreen ? '36px' : 'clamp(40px, 9vw, 48px)',
-                        borderRadius: 'clamp(6px, 2vw, 8px)',
-                        overflow: 'hidden',
-                        flexShrink: 0,
-                        background: colors.paperDark,
-                        position: 'relative',
-                    }}>
+                    <div 
+                        onMouseEnter={() => setArtHovered(true)}
+                        onMouseLeave={() => setArtHovered(false)}
+                        className="ske-art"
+                        style={{
+                            width: isTinyScreen ? '36px' : 'clamp(40px, 9vw, 48px)',
+                            height: isTinyScreen ? '36px' : 'clamp(40px, 9vw, 48px)',
+                            borderRadius: 'clamp(6px, 2vw, 8px)',
+                            overflow: 'hidden',
+                            flexShrink: 0,
+                            background: colors.paperDark,
+                            position: 'relative',
+                            transition: 'box-shadow 0.4s ease, transform 0.4s ease',
+                            transform: artHovered ? 'scale(1.05)' : 'scale(1)',
+                        }}
+                    >
                         {currentSong && imageUrl ? (
                             <>
-                                <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <img 
+                                    src={imageUrl} 
+                                    alt="" 
+                                    style={{ 
+                                        width: '100%', 
+                                        height: '100%', 
+                                        objectFit: 'cover',
+                                        transform: artHovered ? 'scale(1.12)' : 'scale(1)',
+                                        transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                                    }} 
+                                />
                             </>
                         ) : (
                             <div style={{
@@ -159,9 +199,7 @@ export default function BasicPlayer() {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                             }}>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill={colors.inkLight}>
-                                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-                                </svg>
+                                <Music size={20} color={colors.inkLight} />
                             </div>
                         )}
                     </div>
@@ -175,16 +213,19 @@ export default function BasicPlayer() {
                     }}>
                         {currentSong ? (
                             <>
-                                <div style={{
-                                    fontFamily: fonts.primary,
-                                    fontWeight: 600,
-                                    fontSize: isTinyScreen ? '0.7rem' : 'clamp(0.72rem, 2vw, 0.85rem)',
-                                    color: colors.ink,
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    lineHeight: 1.3,
-                                }}>
+                                <div 
+                                    className="ske-text-raised"
+                                    style={{
+                                        fontFamily: fonts.primary,
+                                        fontWeight: 600,
+                                        fontSize: isTinyScreen ? '0.7rem' : 'clamp(0.72rem, 2vw, 0.85rem)',
+                                        color: colors.ink,
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        lineHeight: 1.3,
+                                    }}
+                                >
                                     {currentSong.name}
                                 </div>
                                 <div style={{
@@ -213,7 +254,7 @@ export default function BasicPlayer() {
                                                     style={{
                                                         width: '2px',
                                                         height: `${h * 100}%`,
-                                                        background: colors.accent,
+                                                        background: dominantColor ? adjustColorForTheme(dominantColor, isDark)?.rgb || colors.accent : colors.accent,
                                                         borderRadius: '1px',
                                                         animation: `barBounce 0.6s ease-in-out ${i * 0.15}s infinite alternate`,
                                                         transformOrigin: 'bottom',
@@ -238,31 +279,36 @@ export default function BasicPlayer() {
                     <div style={{ flex: isMobile ? 0 : 1 }} />
 
                     {/* Controls */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: isTinyScreen ? '2px' : 'clamp(2px, 1vw, 4px)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isTinyScreen ? '4px' : '8px' }}>
                         {/* Shuffle - Hidden on very small screens */}
                         {!isMobile && (
                             <button
+                                onClick={toggleShuffle}
+                                className={`icon-btn ${shuffleMode ? 'active' : ''}`}
                                 style={{
-                                    width: 'clamp(28px, 7vw, 30px)',
-                                    height: 'clamp(28px, 7vw, 30px)',
-                                    borderRadius: '50%',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    cursor: 'pointer',
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '8px',
                                     display: 'flex',
+                                    flexDirection: 'column',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    color: colors.inkLight,
+                                    position: 'relative',
                                 }}
-                                title="Shuffle"
+                                title={shuffleMode ? "Shuffle: On" : "Shuffle: Off"}
                             >
-                                <svg width="clamp(12px, 3vw, 14px)" height="clamp(12px, 3vw, 14px)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <polyline points="16 3 21 3 21 8" />
-                                    <line x1="4" y1="20" x2="21" y2="3" />
-                                    <polyline points="21 16 21 21 16 21" />
-                                    <line x1="15" y1="15" x2="21" y2="21" />
-                                    <line x1="4" y1="4" x2="9" y2="9" />
-                                </svg>
+                                <Shuffle size={14} />
+                                {shuffleMode && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '2px',
+                                        width: '3px',
+                                        height: '3px',
+                                        borderRadius: '50%',
+                                        background: 'currentColor',
+                                        boxShadow: '0 0 4px currentColor',
+                                    }} />
+                                )}
                             </button>
                         )}
 
@@ -270,89 +316,48 @@ export default function BasicPlayer() {
                         <button
                             onClick={handlePrevious}
                             disabled={!currentSong}
+                            className="icon-btn"
                             style={{
-                                width: isTinyScreen ? '28px' : 'clamp(30px, 7vw, 32px)',
-                                height: isTinyScreen ? '28px' : 'clamp(30px, 7vw, 32px)',
-                                borderRadius: '50%',
-                                background: colors.paperDark,
-                                backgroundImage: 'var(--background-image-ske-button)',
-                                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.70)'}`,
-                                cursor: currentSong ? 'pointer' : 'default',
-                                opacity: currentSong ? 1 : 0.4,
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '8px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                color: colors.ink,
-                                boxShadow: 'var(--shadow-ske-xs)',
-                                transition: 'box-shadow 80ms ease-out, transform 80ms ease-out',
                             }}
+                            title="Previous"
                         >
-                            <svg width={isTinyScreen ? '11px' : 'clamp(12px, 3vw, 14px)'} height={isTinyScreen ? '11px' : 'clamp(12px, 3vw, 14px)'} viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6l-8.5 6z" />
-                            </svg>
+                            <SkipBack size={14} fill="currentColor" />
                         </button>
 
                         {/* Play/Pause */}
                         <button
                             onClick={togglePlay}
                             disabled={!currentSong}
+                            className="ske-raised"
                             style={{
-                                width: isTinyScreen ? '38px' : 'clamp(42px, 10vw, 46px)',
-                                height: isTinyScreen ? '38px' : 'clamp(42px, 10vw, 46px)',
+                                width: '38px',
+                                height: '38px',
                                 borderRadius: '50%',
-                                background: currentSong
-                                    ? (dominantColor
-                                        ? adjustColorForTheme(dominantColor, isDark)?.rgb || colors.accent
-                                        : colors.accent)
-                                    : colors.paperDark,
-                                backgroundImage: 'var(--background-image-ske-button)',
-                                border: `1px solid ${currentSong ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)'}`,
-                                cursor: currentSong ? 'pointer' : 'default',
+                                background: isPlaying 
+                                    ? 'var(--color-accent)' 
+                                    : 'var(--color-paper-dark)',
+                                color: isPlaying 
+                                    ? 'var(--color-paper)' 
+                                    : 'var(--color-ink)',
+                                border: '1px solid var(--color-border)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                boxShadow: currentSong
-                                    ? `4px 5px 10px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow), 0 4px 16px ${colors.accent}45`
-                                    : 'var(--shadow-ske-sm)',
-                                position: 'relative',
-                                transition: 'box-shadow 150ms var(--ease-premium), transform 150ms var(--ease-premium)',
-                                animation: isPlaying ? 'playBreathe 2s ease-in-out infinite' : 'none',
-                                '--accent-glow-color': dominantColor
-                                    ? adjustColorForTheme(dominantColor, isDark)?.rgba(0.28) || `${colors.accent}30`
-                                    : `${colors.accent}30`,
-                                '--accent-glow-color-strong': dominantColor
-                                    ? adjustColorForTheme(dominantColor, isDark)?.rgba(0.55) || `${colors.accent}55`
-                                    : `${colors.accent}55`,
+                                transition: 'all 0.2s ease',
+                                cursor: currentSong ? 'pointer' : 'default',
                             }}
-                            onMouseDown={e => {
-                                if (!currentSong) return
-                                e.currentTarget.style.boxShadow = 'var(--shadow-ske-pressed)'
-                                e.currentTarget.style.transform = 'translateY(1px)'
-                            }}
-                            onMouseUp={e => {
-                                e.currentTarget.style.transform = 'translateY(0)'
-                                e.currentTarget.style.boxShadow = currentSong
-                                    ? `4px 5px 10px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow), 0 4px 16px ${colors.accent}45`
-                                    : 'var(--shadow-ske-sm)'
-                            }}
+                            title={isPlaying ? "Pause" : "Play"}
                         >
-                            {isPlaying && (
-                                <div style={{
-                                    position: 'absolute',
-                                    inset: '-5px',
-                                    borderRadius: '50%',
-                                    border: `2px solid ${dominantColor ? (adjustColorForTheme(dominantColor, isDark)?.rgba(0.5) || dominantColor.rgba(0.5)) : colors.accent}`,
-                                    animation: 'progressRing 2s ease-in-out infinite',
-                                }} />
-                            )}
                             {isPlaying ? (
-                                <svg width={isTinyScreen ? '13px' : '16px'} height={isTinyScreen ? '13px' : '16px'} viewBox="0 0 24 24" fill={isDark ? colors.paper : '#fff'} style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}>
-                                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                                </svg>
+                                <Pause size={16} fill="currentColor" color="currentColor" />
                             ) : (
-                                <svg width={isTinyScreen ? '13px' : '16px'} height={isTinyScreen ? '13px' : '16px'} viewBox="0 0 24 24" fill={currentSong ? (isDark ? colors.paper : '#fff') : colors.inkLight} style={{ marginLeft: '2px', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}>
-                                    <path d="M8 5v14l11-7L8 5z" />
-                                </svg>
+                                <Play size={16} fill="currentColor" color="currentColor" style={{ marginLeft: '2px' }} />
                             )}
                         </button>
 
@@ -360,51 +365,53 @@ export default function BasicPlayer() {
                         <button
                             onClick={handleNext}
                             disabled={!currentSong}
+                            className="icon-btn"
                             style={{
-                                width: isTinyScreen ? '28px' : '32px',
-                                height: isTinyScreen ? '28px' : '32px',
-                                borderRadius: '50%',
-                                background: colors.paperDark,
-                                backgroundImage: 'var(--background-image-ske-button)',
-                                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.70)'}`,
-                                cursor: currentSong ? 'pointer' : 'default',
-                                opacity: currentSong ? 1 : 0.4,
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '8px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                color: colors.ink,
-                                boxShadow: 'var(--shadow-ske-xs)',
-                                transition: 'box-shadow 80ms ease-out, transform 80ms ease-out',
                             }}
+                            title="Next"
                         >
-                            <svg width={isTinyScreen ? '11px' : '14px'} height={isTinyScreen ? '11px' : '14px'} viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M6 18l8.5-6L6 6v12zm10-12v12h2V6h-2z" />
-                            </svg>
+                            <SkipForward size={14} fill="currentColor" />
                         </button>
 
                         {/* Repeat - Hide on tiny screens */}
                         {!isTinyScreen && (
                             <button
+                                onClick={toggleRepeat}
+                                className={`icon-btn ${repeatMode !== 'none' ? 'active' : ''}`}
                                 style={{
-                                    width: '30px',
-                                    height: '30px',
-                                    borderRadius: '50%',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    cursor: 'pointer',
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '8px',
                                     display: 'flex',
+                                    flexDirection: 'column',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    color: colors.inkLight,
+                                    position: 'relative',
                                 }}
-                                title="Repeat"
+                                title={`Repeat: ${repeatMode}`}
                             >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <polyline points="17 1 21 5 17 9" />
-                                    <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-                                    <polyline points="7 23 3 19 7 15" />
-                                    <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-                                </svg>
+                                {repeatMode === 'one' ? (
+                                    <Repeat1 size={14} />
+                                ) : (
+                                    <Repeat size={14} />
+                                )}
+                                {repeatMode !== 'none' && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '2px',
+                                        width: '3px',
+                                        height: '3px',
+                                        borderRadius: '50%',
+                                        background: 'currentColor',
+                                        boxShadow: '0 0 4px currentColor',
+                                    }} />
+                                )}
                             </button>
                         )}
                     </div>
@@ -428,19 +435,19 @@ export default function BasicPlayer() {
                         {/* Vertical slider for mobile - appears upward */}
                         {isMobile && volumeExpanded && (
                             <div
+                                className="ske-textured ske-float"
                                 style={{
                                     position: 'absolute',
                                     bottom: '100%',
                                     left: '50%',
                                     transform: 'translateX(-50%)',
                                     marginBottom: '8px',
-                                    padding: '12px',
-                                    background: isDark ? 'rgba(30,30,30,0.95)' : 'rgba(250,250,250,0.95)',
-                                    backdropFilter: 'blur(12px)',
-                                    borderRadius: '12px',
-                                    boxShadow: isDark
-                                        ? '0 4px 16px rgba(0,0,0,0.4)'
-                                        : '0 4px 16px rgba(0,0,0,0.15)',
+                                    padding: '14px 10px',
+                                    borderRadius: '14px',
+                                    border: `1px solid var(--color-border)`,
+                                    background: 'var(--color-overlay-deep)',
+                                    backdropFilter: 'blur(20px)',
+                                    WebkitBackdropFilter: 'blur(20px)',
                                     zIndex: 1000,
                                 }}
                             >
@@ -448,44 +455,49 @@ export default function BasicPlayer() {
                                     onClick={handleVolumeClick}
                                     style={{
                                         position: 'relative',
-                                        width: '32px',
-                                        height: '100px',
+                                        width: '24px',
+                                        height: '90px',
                                         cursor: 'pointer',
+                                        display: 'flex',
+                                        justifyContent: 'center',
                                     }}
                                 >
                                     {/* Track background */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        left: '50%',
-                                        transform: 'translateX(-50%)',
-                                        width: '4px',
-                                        height: '100%',
-                                        background: colors.paperDarker,
-                                        borderRadius: '2px',
-                                    }} />
+                                    <div 
+                                        className="ske-recessed"
+                                        style={{
+                                            position: 'absolute',
+                                            width: '6px',
+                                            height: '100%',
+                                            borderRadius: '3px',
+                                        }} 
+                                    />
                                     {/* Track fill */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        left: '50%',
-                                        bottom: 0,
-                                        transform: 'translateX(-50%)',
-                                        width: '4px',
-                                        height: `${volume * 100}%`,
-                                        background: colors.accent,
-                                        borderRadius: '2px',
-                                    }} />
+                                    <div 
+                                        className="ske-progress-fill"
+                                        style={{
+                                            position: 'absolute',
+                                            bottom: 0,
+                                            width: '6px',
+                                            height: `${volume * 100}%`,
+                                            background: 'var(--color-accent)',
+                                            borderRadius: '3px',
+                                        }} 
+                                    />
                                     {/* Thumb */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        left: '50%',
-                                        bottom: `${volume * 100}%`,
-                                        transform: 'translate(-50%, 50%)',
-                                        width: '14px',
-                                        height: '14px',
-                                        borderRadius: '50%',
-                                        background: colors.accent,
-                                        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                                    }} />
+                                    <div 
+                                        className="ske-raised-xs"
+                                        style={{
+                                            position: 'absolute',
+                                            bottom: `${volume * 100}%`,
+                                            transform: 'translateY(50%)',
+                                            width: '14px',
+                                            height: '14px',
+                                            borderRadius: '50%',
+                                            background: 'var(--color-paper-dark)',
+                                            border: '1px solid var(--color-border)',
+                                        }} 
+                                    />
                                 </div>
                             </div>
                         )}
@@ -499,7 +511,7 @@ export default function BasicPlayer() {
                                     height: '24px',
                                     cursor: 'pointer',
                                     overflow: 'hidden',
-                                    transition: 'width 0.2s ease',
+                                    transition: 'width 0.25s cubic-bezier(0.16, 1, 0.3, 1), padding 0.25s ease',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'flex-end',
@@ -509,41 +521,50 @@ export default function BasicPlayer() {
                                 <div style={{
                                     position: 'relative',
                                     width: '70px',
-                                    height: '4px',
+                                    height: '6px',
+                                    transition: 'height 0.2s ease',
                                 }}>
                                     {/* Track background */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        width: '100%',
-                                        height: '100%',
-                                        background: colors.paperDarker,
-                                        borderRadius: '2px',
-                                    }} />
+                                    <div 
+                                        className="ske-recessed"
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            height: '100%',
+                                            borderRadius: '3px',
+                                        }} 
+                                    />
                                     {/* Track fill */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        width: `${volume * 100}%`,
-                                        height: '100%',
-                                        background: colors.accent,
-                                        borderRadius: '2px',
-                                    }} />
+                                    <div 
+                                        className="ske-progress-fill"
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: `${volume * 100}%`,
+                                            height: '100%',
+                                            background: 'var(--color-accent)',
+                                            borderRadius: '3px',
+                                        }} 
+                                    />
                                     {/* Thumb */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '50%',
-                                        left: `${volume * 100}%`,
-                                        transform: volumeHovered ? 'translate(-50%, -50%) scale(1.2)' : 'translate(-50%, -50%) scale(1)',
-                                        width: '10px',
-                                        height: '10px',
-                                        borderRadius: '50%',
-                                        background: colors.accent,
-                                        boxShadow: volumeHovered ? `0 2px 6px ${colors.accent}60` : '0 2px 4px rgba(0,0,0,0.3)',
-                                        transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease',
-                                    }} />
+                                    <div 
+                                        className="ske-raised-xs"
+                                        style={{
+                                            position: 'absolute',
+                                            top: '50%',
+                                            left: `${volume * 100}%`,
+                                            transform: volumeHovered ? 'translate(-50%, -50%) scale(1.2)' : 'translate(-50%, -50%) scale(0)',
+                                            width: '10px',
+                                            height: '10px',
+                                            borderRadius: '50%',
+                                            background: 'var(--color-paper-dark)',
+                                            border: '1px solid var(--color-border)',
+                                            transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                                        }} 
+                                    />
                                 </div>
                             </div>
                         )}
@@ -554,32 +575,25 @@ export default function BasicPlayer() {
                                 if (isMobile) {
                                     setVolumeExpanded(!volumeExpanded)
                                 } else {
-                                    setVolume(volume > 0 ? 0 : 1)
+                                    setVolume(volume > 0 ? 0 : 0.7)
                                 }
                             }}
+                            className={`icon-btn ${isMobile && volumeExpanded ? 'active' : ''}`}
                             style={{
-                                padding: '6px',
-                                background: 'none',
-                                border: 'none',
-                                cursor: 'pointer',
-                                color: isMobile && volumeExpanded ? colors.accent : colors.inkMuted,
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '8px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                transition: 'color 0.2s ease',
                             }}
                         >
                             {volume === 0 ? (
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                                    <line x1="23" y1="9" x2="17" y2="15" />
-                                    <line x1="17" y1="9" x2="23" y2="15" />
-                                </svg>
+                                <VolumeX size={18} />
+                            ) : volume < 0.5 ? (
+                                <Volume1 size={18} />
                             ) : (
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                                </svg>
+                                <Volume2 size={18} />
                             )}
                         </button>
                     </div>
@@ -602,44 +616,76 @@ export default function BasicPlayer() {
                                 onClick={handleProgressClick}
                                 onMouseEnter={() => setProgressHovered(true)}
                                 onMouseLeave={() => setProgressHovered(false)}
+                                onMouseMove={handleProgressMouseMove}
+                                className="ske-recessed"
                                 style={{
                                     flex: 1,
                                     height: progressHovered
                                         ? (isTinyScreen ? '6px' : '7px')
                                         : (isTinyScreen ? '4px' : '5px'),
-                                    background: colors.paperDarker,
-                                    backgroundImage: 'var(--background-image-ske-recessed)',
-                                    borderRadius: '4px',
+                                    borderRadius: '3px',
                                     cursor: 'pointer',
                                     position: 'relative',
-                                    boxShadow: 'var(--shadow-ske-inset-sm)',
                                     transition: 'height 200ms cubic-bezier(0.16, 1, 0.3, 1)',
                                 }}
                             >
-                                <div style={{
-                                    height: '100%',
-                                    width: `${progressPercent}%`,
-                                    background: `linear-gradient(to right, ${colors.accent}cc, ${colors.accent})`,
-                                    borderRadius: '4px',
-                                    transition: 'width 0.1s linear',
-                                    boxShadow: 'inset 0 1px 2px var(--ske-inner-shadow), 0 1px 0 var(--ske-inner-highlight)',
-                                }} />
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '50%',
-                                    left: `${progressPercent}%`,
-                                    transform: progressHovered ? 'translate(-50%, -50%) scale(1.3)' : 'translate(-50%, -50%) scale(1)',
-                                    width: '12px',
-                                    height: isTinyScreen ? '10px' : '12px',
-                                    borderRadius: '50%',
-                                    background: colors.paper,
-                                    backgroundImage: 'var(--background-image-ske-button)',
-                                    border: `2px solid ${colors.accent}`,
-                                    boxShadow: progressHovered
-                                        ? `0 0 0 3px ${colors.accent}30, 0 3px 8px rgba(0,0,0,0.25)`
-                                        : `var(--shadow-ske-xs), 0 0 0 1px ${colors.accent}40`,
-                                    transition: 'transform 200ms var(--ease-spring), box-shadow 200ms ease',
-                                }} />
+                                {/* Tooltip Time Badge */}
+                                {progressHovered && duration > 0 && (
+                                    <div
+                                        className="ske-textured ske-float"
+                                        style={{
+                                            position: 'absolute',
+                                            bottom: '100%',
+                                            left: `${hoverXPercent}%`,
+                                            transform: 'translate(-50%, -10px)',
+                                            background: 'var(--color-overlay-deep)',
+                                            border: `1px solid var(--color-accent-border)`,
+                                            backdropFilter: 'blur(10px)',
+                                            WebkitBackdropFilter: 'blur(10px)',
+                                            padding: '4px 8px',
+                                            borderRadius: '6px',
+                                            fontFamily: fonts.mono,
+                                            fontSize: '0.65rem',
+                                            fontWeight: 600,
+                                            color: colors.ink,
+                                            whiteSpace: 'nowrap',
+                                            pointerEvents: 'none',
+                                            zIndex: 1000,
+                                            animation: 'fadeIn 0.15s ease-out',
+                                        }}
+                                    >
+                                        {formatTime(hoverTime)}
+                                    </div>
+                                )}
+
+                                {/* Progress Fill */}
+                                <div 
+                                    className="ske-progress-fill"
+                                    style={{
+                                        height: '100%',
+                                        width: `${progressPercent}%`,
+                                        background: 'var(--color-accent)',
+                                        borderRadius: '3px',
+                                        transition: 'width 0.1s linear',
+                                    }} 
+                                />
+
+                                {/* Progress Thumb Handle */}
+                                <div 
+                                    className="ske-raised-xs"
+                                    style={{
+                                        position: 'absolute',
+                                        top: '50%',
+                                        left: `${progressPercent}%`,
+                                        transform: progressHovered ? 'translate(-50%, -50%) scale(1.3)' : 'translate(-50%, -50%) scale(1)',
+                                        width: '12px',
+                                        height: isTinyScreen ? '10px' : '12px',
+                                        borderRadius: '50%',
+                                        background: 'var(--color-paper-dark)',
+                                        border: '1px solid var(--color-border)',
+                                        transition: 'transform 200ms var(--ease-spring)',
+                                    }} 
+                                />
                             </div>
                             <span style={{
                                 fontFamily: fonts.mono,
@@ -655,37 +701,13 @@ export default function BasicPlayer() {
             </div>
 
             <style>{`
-                @keyframes breathe {
-                    0%, 100% {
-                        opacity: 0.6;
-                    }
-                    50% {
-                        opacity: 0.9;
-                    }
-                }
-                @keyframes progressRing {
-                    0% {
-                        transform: rotate(0deg) scale(1);
-                        opacity: 1;
-                    }
-                    100% {
-                        transform: rotate(360deg) scale(1.2);
-                        opacity: 0;
-                    }
-                }
-                @keyframes playBreathe {
-                    0%, 100% {
-                        box-shadow: 4px 5px 10px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow), 0 4px 14px var(--accent-glow-color, rgba(196,92,62,0.3));
-                        transform: scale(1);
-                    }
-                    50% {
-                        box-shadow: 4px 5px 14px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow), 0 6px 24px var(--accent-glow-color-strong, rgba(196,92,62,0.55));
-                        transform: scale(1.05);
-                    }
-                }
                 @keyframes barBounce {
                     from { transform: scaleY(0.35); opacity: 0.7; }
                     to   { transform: scaleY(1);    opacity: 1; }
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to   { opacity: 1; }
                 }
             `}</style>
         </div>

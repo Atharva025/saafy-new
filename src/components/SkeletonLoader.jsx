@@ -1,16 +1,27 @@
 import { useTheme } from '@/context/ThemeContext'
 
-export default function SkeletonLoader({ type = 'card', count = 1 }) {
-    const { colors, isDark } = useTheme()
+// GPU-accelerated light reflection sweep overlay component
+function ShimmerOverlay({ isDark }) {
+    return (
+        <div
+            style={{
+                position: 'absolute',
+                inset: 0,
+                width: '200%',
+                height: '100%',
+                background: isDark
+                    ? 'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 100%)'
+                    : 'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 250, 240, 0.45) 50%, rgba(255, 255, 255, 0) 100%)',
+                animation: 'shimmerSweep 1.8s infinite ease-in-out',
+                pointerEvents: 'none',
+                zIndex: 2,
+            }}
+        />
+    )
+}
 
-    const shimmerStyle = {
-        background: `linear-gradient(110deg, 
-      ${colors.paperDark}00 0%, 
-      ${isDark ? `${colors.accent}15` : `${colors.accent}10`} 40%,
-      ${colors.paperDark}00 80%)`,
-        backgroundSize: '200% 100%',
-        animation: 'shimmer 2s ease-in-out infinite',
-    }
+export default function SkeletonLoader({ type = 'card', count = 1 }) {
+    const { isDark } = useTheme()
 
     if (type === 'card') {
         return (
@@ -18,77 +29,69 @@ export default function SkeletonLoader({ type = 'card', count = 1 }) {
                 {Array.from({ length: count }).map((_, i) => (
                     <div
                         key={i}
-                    style={{
+                        className="ske-card ske-textured"
+                        style={{
                             width: 'clamp(140px, 35vw, 160px)',
-                            background: colors.paperDark,
-                            backgroundImage: 'var(--background-image-ske-surface)',
                             borderRadius: '14px',
                             overflow: 'hidden',
                             position: 'relative',
-                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.75)'}`,
-                            boxShadow: `2px 3px 8px var(--ske-shadow), -1px -1px 5px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight), inset 0 -1px 1px var(--ske-inner-shadow)`,
+                            border: `1px solid var(--color-border)`,
+                            background: 'var(--color-paper-dark)',
                         }}
                     >
-                        {/* Image placeholder */}
-                        <div style={{
-                            width: '100%',
-                            paddingBottom: '100%',
-                            background: colors.paperDark,
-                            position: 'relative',
-                            overflow: 'hidden',
-                        }}>
-                            <div style={{
-                                position: 'absolute',
-                                inset: 0,
-                                ...shimmerStyle,
-                            }} />
+                        {/* Image well */}
+                        <div 
+                            className="ske-recessed"
+                            style={{
+                                width: '100%',
+                                paddingBottom: '100%',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                background: 'var(--color-paper-darker)',
+                            }}
+                        >
+                            <ShimmerOverlay isDark={isDark} />
                         </div>
 
                         {/* Text placeholders */}
                         <div style={{ padding: '12px' }}>
-                            <div style={{
-                                height: '16px',
-                                background: colors.paperDark,
-                                borderRadius: '4px',
-                                marginBottom: '8px',
-                                width: '80%',
-                                position: 'relative',
-                                overflow: 'hidden',
-                            }}>
-                                <div style={{
-                                    position: 'absolute',
-                                    inset: 0,
-                                    ...shimmerStyle,
-                                }} />
+                            <div 
+                                className="ske-recessed"
+                                style={{
+                                    height: '14px',
+                                    borderRadius: '4px',
+                                    marginBottom: '8px',
+                                    width: '85%',
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    background: 'var(--color-paper-darker)',
+                                }}
+                            >
+                                <ShimmerOverlay isDark={isDark} />
                             </div>
-                            <div style={{
-                                height: '12px',
-                                background: colors.paperDark,
-                                borderRadius: '4px',
-                                width: '60%',
-                                position: 'relative',
-                                overflow: 'hidden',
-                            }}>
-                                <div style={{
-                                    position: 'absolute',
-                                    inset: 0,
-                                    ...shimmerStyle,
-                                }} />
+                            <div 
+                                className="ske-recessed"
+                                style={{
+                                    height: '10px',
+                                    borderRadius: '4px',
+                                    width: '55%',
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    background: 'var(--color-paper-darker)',
+                                }}
+                            >
+                                <ShimmerOverlay isDark={isDark} />
                             </div>
                         </div>
                     </div>
                 ))}
 
                 <style>{`
-          @keyframes shimmer {
-            0% {
-              background-position: -200% 0;
-            }
-            100% {
-              background-position: 200% 0;
-            }
-          }
-        `}</style>
+                    @keyframes shimmerSweep {
+                        0% { transform: translate3d(-100%, 0, 0) skewX(-20deg); }
+                        100% { transform: translate3d(100%, 0, 0) skewX(-20deg); }
+                    }
+                `}</style>
             </>
         )
     }
@@ -99,200 +102,181 @@ export default function SkeletonLoader({ type = 'card', count = 1 }) {
                 {Array.from({ length: count }).map((_, i) => (
                     <div
                         key={i}
+                        className="ske-card ske-textured"
                         style={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: '12px',
                             padding: '12px',
-                            background: colors.paperDark,
-                            backgroundImage: 'var(--background-image-ske-surface)',
                             borderRadius: '10px',
                             marginBottom: '8px',
-                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.70)'}`,
-                            boxShadow: `1px 2px 5px var(--ske-shadow), -1px -1px 3px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight)`,
+                            border: `1px solid var(--color-border)`,
+                            background: 'var(--color-paper-dark)',
                         }}
                     >
-                        {/* Image placeholder */}
-                        <div style={{
-                            width: '48px',
-                            height: '48px',
-                            background: colors.paperDarker,
-                            backgroundImage: 'var(--background-image-ske-recessed)',
-                            borderRadius: '8px',
-                            flexShrink: 0,
-                            position: 'relative',
-                            overflow: 'hidden',
-                            boxShadow: 'var(--shadow-ske-inset-sm)',
-                            border: `1px solid ${isDark ? 'rgba(0,0,0,0.15)' : 'rgba(26,22,20,0.08)'}`,
-                        }}>
-                            <div style={{
-                                position: 'absolute',
-                                inset: 0,
-                                ...shimmerStyle,
-                            }} />
+                        {/* Image well */}
+                        <div 
+                            className="ske-recessed"
+                            style={{
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '8px',
+                                flexShrink: 0,
+                                position: 'relative',
+                                overflow: 'hidden',
+                                background: 'var(--color-paper-darker)',
+                            }}
+                        >
+                            <ShimmerOverlay isDark={isDark} />
                         </div>
 
                         {/* Text placeholders */}
                         <div style={{ flex: 1 }}>
-                            <div style={{
-                                height: '14px',
-                                background: colors.rule,
-                                borderRadius: '4px',
-                                marginBottom: '8px',
-                                width: '70%',
-                                position: 'relative',
-                                overflow: 'hidden',
-                            }}>
-                                <div style={{
-                                    position: 'absolute',
-                                    inset: 0,
-                                    ...shimmerStyle,
-                                }} />
+                            <div 
+                                className="ske-recessed"
+                                style={{
+                                    height: '12px',
+                                    borderRadius: '4px',
+                                    marginBottom: '8px',
+                                    width: '70%',
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    background: 'var(--color-paper-darker)',
+                                }}
+                            >
+                                <ShimmerOverlay isDark={isDark} />
                             </div>
-                            <div style={{
-                                height: '12px',
-                                background: colors.rule,
-                                borderRadius: '4px',
-                                width: '50%',
-                                position: 'relative',
-                                overflow: 'hidden',
-                            }}>
-                                <div style={{
-                                    position: 'absolute',
-                                    inset: 0,
-                                    ...shimmerStyle,
-                                }} />
+                            <div 
+                                className="ske-recessed"
+                                style={{
+                                    height: '10px',
+                                    borderRadius: '4px',
+                                    width: '45%',
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    background: 'var(--color-paper-darker)',
+                                }}
+                            >
+                                <ShimmerOverlay isDark={isDark} />
                             </div>
                         </div>
 
-                        {/* Duration placeholder */}
-                        <div style={{
-                            width: '40px',
-                            height: '12px',
-                            background: colors.rule,
-                            borderRadius: '4px',
-                            position: 'relative',
-                            overflow: 'hidden',
-                        }}>
-                            <div style={{
-                                position: 'absolute',
-                                inset: 0,
-                                ...shimmerStyle,
-                            }} />
+                        {/* Duration well */}
+                        <div 
+                            className="ske-recessed"
+                            style={{
+                                width: '40px',
+                                height: '12px',
+                                borderRadius: '4px',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                background: 'var(--color-paper-darker)',
+                            }}
+                        >
+                            <ShimmerOverlay isDark={isDark} />
                         </div>
                     </div>
                 ))}
 
                 <style>{`
-          @keyframes shimmer {
-            0% {
-              background-position: -200% 0;
-            }
-            100% {
-              background-position: 200% 0;
-            }
-          }
-        `}</style>
+                    @keyframes shimmerSweep {
+                        0% { transform: translate3d(-100%, 0, 0) skewX(-20deg); }
+                        100% { transform: translate3d(100%, 0, 0) skewX(-20deg); }
+                    }
+                `}</style>
             </>
         )
     }
 
     if (type === 'player') {
         return (
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '16px',
-                padding: '16px',
-                background: colors.paperDark,
-                backgroundImage: 'var(--background-image-ske-surface)',
-                borderRadius: '16px',
-                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.75)'}`,
-                boxShadow: `3px 4px 10px var(--ske-shadow), -2px -2px 7px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight), inset 0 -1px 1px var(--ske-inner-shadow)`,
-            }}>
-                {/* Album art */}
-                <div style={{
-                    width: '56px',
-                    height: '56px',
-                    background: colors.rule,
-                    borderRadius: '8px',
-                    flexShrink: 0,
-                    position: 'relative',
-                    overflow: 'hidden',
-                }}>
-                    <div style={{
-                        position: 'absolute',
-                        inset: 0,
-                        ...shimmerStyle,
-                    }} />
+            <div 
+                className="ske-textured ske-float"
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    padding: '16px',
+                    borderRadius: '16px',
+                    border: `1px solid var(--color-border)`,
+                    background: 'var(--color-overlay-deep)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                }}
+            >
+                {/* Album art well */}
+                <div 
+                    className="ske-recessed"
+                    style={{
+                        width: '56px',
+                        height: '56px',
+                        borderRadius: '8px',
+                        flexShrink: 0,
+                        position: 'relative',
+                        overflow: 'hidden',
+                        background: 'var(--color-paper-darker)',
+                    }}
+                >
+                    <ShimmerOverlay isDark={isDark} />
                 </div>
 
                 {/* Info */}
                 <div style={{ flex: 1 }}>
-                    <div style={{
-                        height: '16px',
-                        background: colors.rule,
-                        borderRadius: '4px',
-                        marginBottom: '8px',
-                        width: '60%',
-                        position: 'relative',
-                        overflow: 'hidden',
-                    }}>
-                        <div style={{
-                            position: 'absolute',
-                            inset: 0,
-                            ...shimmerStyle,
-                        }} />
+                    <div 
+                        className="ske-recessed"
+                        style={{
+                            height: '14px',
+                            borderRadius: '4px',
+                            marginBottom: '8px',
+                            width: '60%',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            background: 'var(--color-paper-darker)',
+                        }}
+                    >
+                        <ShimmerOverlay isDark={isDark} />
                     </div>
-                    <div style={{
-                        height: '12px',
-                        background: colors.rule,
-                        borderRadius: '4px',
-                        width: '40%',
-                        position: 'relative',
-                        overflow: 'hidden',
-                    }}>
-                        <div style={{
-                            position: 'absolute',
-                            inset: 0,
-                            ...shimmerStyle,
-                        }} />
+                    <div 
+                        className="ske-recessed"
+                        style={{
+                            height: '10px',
+                            borderRadius: '4px',
+                            width: '40%',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            background: 'var(--color-paper-darker)',
+                        }}
+                    >
+                        <ShimmerOverlay isDark={isDark} />
                     </div>
                 </div>
 
                 {/* Controls */}
                 <div style={{ display: 'flex', gap: '8px' }}>
-                    {[44, 44, 44].map((size, i) => (
+                    {[38, 38, 38].map((size, i) => (
                         <div
                             key={i}
+                            className="ske-recessed"
                             style={{
                                 width: `${size}px`,
                                 height: `${size}px`,
-                                background: colors.rule,
                                 borderRadius: '50%',
                                 position: 'relative',
                                 overflow: 'hidden',
+                                background: 'var(--color-paper-darker)',
                             }}
                         >
-                            <div style={{
-                                position: 'absolute',
-                                inset: 0,
-                                ...shimmerStyle,
-                            }} />
+                            <ShimmerOverlay isDark={isDark} />
                         </div>
                     ))}
                 </div>
 
                 <style>{`
-          @keyframes shimmer {
-            0% {
-              background-position: -200% 0;
-            }
-            100% {
-              background-position: 200% 0;
-            }
-          }
-        `}</style>
+                    @keyframes shimmerSweep {
+                        0% { transform: translate3d(-100%, 0, 0) skewX(-20deg); }
+                        100% { transform: translate3d(100%, 0, 0) skewX(-20deg); }
+                    }
+                `}</style>
             </div>
         )
     }

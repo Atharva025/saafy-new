@@ -206,7 +206,7 @@ export default function QueuePanel({ isOpen, onClose }) {
                                     boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
                                 }}>
                                     <img 
-                                        src={currentSong.image?.[0]?.link || currentSong.image?.[1]?.link || ''} 
+                                        src={currentSong.image?.[2]?.link || currentSong.image?.[1]?.link || currentSong.image?.[0]?.link || ''} 
                                         alt="" 
                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                                     />
@@ -302,8 +302,9 @@ export default function QueuePanel({ isOpen, onClose }) {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                 {queue.map((song, index) => {
                                     // Use highest quality image available
-                                    const imageUrl = song.image?.[0]?.link || song.image?.[0]?.url ||
+                                    const imageUrl = song.image?.[2]?.link || song.image?.[2]?.url ||
                                         song.image?.[1]?.link || song.image?.[1]?.url ||
+                                        song.image?.[0]?.link || song.image?.[0]?.url ||
                                         song.imageUrl || ''
                                     
                                     const isBeingDragged = index === draggedIndex

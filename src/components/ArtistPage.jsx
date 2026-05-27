@@ -2,35 +2,20 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getArtist, getArtistSongs } from '@/lib/api'
 import { usePlayer } from '@/context/PlayerContext'
+import { useTheme } from '@/context/ThemeContext'
 import BasicPlayer from './BasicPlayer'
-
-// Design System
-const colors = {
-    paper: '#FAF7F2',
-    paperDark: '#F0EBE3',
-    paperDarker: '#E5DFD7',
-    ink: '#1A1614',
-    inkMuted: '#6B635B',
-    inkLight: '#9C948B',
-    accent: '#C45C3E',
-    accentHover: '#A94E34',
-    rule: '#E5DFD7',
-}
-
-const fonts = {
-    display: "'Syne', sans-serif",
-    primary: "'Sora', sans-serif",
-    mono: "'Space Grotesk', monospace",
-}
 
 export default function ArtistPage() {
     const { id } = useParams()
     const navigate = useNavigate()
     const { playSong, currentSong, isPlaying } = usePlayer()
+    const { colors, fonts, isDark } = useTheme()
+    
     const [artist, setArtist] = useState(null)
     const [songs, setSongs] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [hoveredIndex, setHoveredIndex] = useState(null)
 
     useEffect(() => {
         const fetchArtist = async () => {
@@ -90,6 +75,7 @@ export default function ArtistPage() {
                 <div style={{ fontFamily: fonts.mono, color: colors.inkMuted }}>{error}</div>
                 <button
                     onClick={() => navigate('/')}
+                    className="ske-raised"
                     style={{
                         padding: '12px 24px',
                         fontFamily: fonts.mono,
@@ -100,6 +86,7 @@ export default function ArtistPage() {
                         color: colors.paper,
                         border: 'none',
                         cursor: 'pointer',
+                        borderRadius: '10px',
                     }}
                 >
                     Go Back
@@ -109,23 +96,28 @@ export default function ArtistPage() {
     }
 
     // Use highest quality artist image available
-    const artistImage = artist?.image?.[0]?.link || artist?.image?.[0]?.url ||
+    const artistImage = artist?.image?.[2]?.link || artist?.image?.[2]?.url ||
         artist?.image?.[1]?.link || artist?.image?.[1]?.url ||
-        artist?.image?.[2]?.link || artist?.image?.[2]?.url || ''
+        artist?.image?.[0]?.link || artist?.image?.[0]?.url || ''
 
     return (
         <div style={{
             minHeight: '100vh',
             background: colors.paper,
             paddingBottom: '120px',
+            transition: 'background 0.3s ease',
         }}>
             {/* Header */}
             <header style={{
                 position: 'sticky',
                 top: 0,
                 zIndex: 50,
-                background: colors.paper,
-                borderBottom: `1px solid ${colors.rule}`,
+                background: isDark ? 'rgba(26, 22, 20, 0.88)' : 'rgba(250, 247, 242, 0.88)',
+                backdropFilter: 'blur(12px) saturate(140%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+                borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+                boxShadow: `0 2px 8px var(--ske-shadow), 0 1px 0 var(--ske-inner-highlight), inset 0 1px 0 var(--ske-highlight)`,
+                transition: 'all 0.3s ease',
             }}>
                 <div style={{
                     maxWidth: '1000px',
@@ -137,6 +129,7 @@ export default function ArtistPage() {
                 }}>
                     <button
                         onClick={() => navigate('/')}
+                        className="ske-raised"
                         style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -147,16 +140,11 @@ export default function ArtistPage() {
                             letterSpacing: '0.05em',
                             color: colors.inkMuted,
                             background: colors.paperDark,
-                            backgroundImage: 'linear-gradient(145deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
-                            border: `1px solid rgba(255,255,255,0.60)`,
+                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.60)'}`,
                             borderRadius: '10px',
                             padding: '8px 14px',
                             cursor: 'pointer',
-                            boxShadow: `2px 3px 6px rgba(26,22,20,0.12), -1px -1px 4px rgba(255,255,255,0.80), inset 0 1px 0 rgba(255,255,255,0.80)`,
-                            transition: 'box-shadow 80ms ease-out, transform 80ms ease-out',
                         }}
-                        onMouseDown={(e) => { e.currentTarget.style.boxShadow = 'inset 2px 3px 6px rgba(26,22,20,0.15), inset -1px -1px 3px rgba(255,255,255,0.60)'; e.currentTarget.style.transform = 'translateY(1px)' }}
-                        onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `2px 3px 6px rgba(26,22,20,0.12), -1px -1px 4px rgba(255,255,255,0.80), inset 0 1px 0 rgba(255,255,255,0.80)` }}
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -185,33 +173,40 @@ export default function ArtistPage() {
                     display: 'flex',
                     alignItems: 'flex-end',
                     gap: '40px',
+                    flexWrap: 'wrap',
                 }}>
                     {artistImage ? (
                         <img
                             src={artistImage}
                             alt={artist?.name}
+                            className="ske-art"
                             style={{
                                 width: '200px',
                                 height: '200px',
                                 objectFit: 'cover',
                                 borderRadius: '16px',
-                                border: `1px solid rgba(255,255,255,0.60)`,
-                                boxShadow: `6px 8px 20px rgba(26,22,20,0.22), -3px -3px 10px rgba(255,255,255,0.75), inset 0 1px 1px rgba(255,255,255,0.80), inset 0 -1px 2px rgba(26,22,20,0.10)`,
+                                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.60)'}`,
+                                boxShadow: `var(--shadow-ske-md)`,
                             }}
                         />
                     ) : (
-                        <div style={{
-                            width: '200px',
-                            height: '200px',
-                            background: colors.ink,
-                            borderRadius: '16px',
-                            border: `1px solid rgba(255,255,255,0.60)`,
-                            boxShadow: `6px 8px 20px rgba(26,22,20,0.22), -3px -3px 10px rgba(255,255,255,0.75)`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}>
-                            <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: colors.accent }} />
+                        <div 
+                            className="ske-recessed"
+                            style={{
+                                width: '200px',
+                                height: '200px',
+                                background: colors.paperDarker,
+                                borderRadius: '16px',
+                                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.60)'}`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}
+                        >
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={colors.inkMuted} strokeWidth="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
                         </div>
                     )}
                     <div>
@@ -250,8 +245,8 @@ export default function ArtistPage() {
             </div>
 
             {/* Divider */}
-            <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 32px' }}>
-                <div style={{ height: '1px', background: colors.rule, marginBottom: '48px' }} />
+            <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 32px', marginBottom: '48px' }}>
+                <hr className="ske-groove" />
             </div>
 
             {/* Songs */}
@@ -293,45 +288,36 @@ export default function ArtistPage() {
                     <div>
                         {songs.map((song, index) => {
                             const isCurrentSong = currentSong?.id === song.id
-                            // Use highest quality image available - check both .link and .url
-                            const imageUrl = song.image?.[0]?.link || song.image?.[0]?.url ||
+                            const imageUrl = song.image?.[2]?.link || song.image?.[2]?.url ||
                                 song.image?.[1]?.link || song.image?.[1]?.url ||
-                                song.image?.[2]?.link || song.image?.[2]?.url ||
+                                song.image?.[0]?.link || song.image?.[0]?.url ||
                                 song.imageUrl || ''
 
                             return (
                                 <div
                                     key={song.id}
                                     onClick={() => handlePlay(song)}
+                                    onMouseEnter={() => setHoveredIndex(index)}
+                                    onMouseLeave={() => setHoveredIndex(null)}
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '16px',
                                         padding: '14px 16px',
                                         cursor: 'pointer',
-                                        background: isCurrentSong ? 'rgba(196,92,62,0.06)' : 'transparent',
-                                        backgroundImage: isCurrentSong ? 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, transparent 100%)' : 'none',
+                                        background: isCurrentSong
+                                            ? (isDark ? 'rgba(224,115,86,0.07)' : 'rgba(196,92,62,0.05)')
+                                            : hoveredIndex === index ? colors.paperDark : 'transparent',
+                                        backgroundImage: (isCurrentSong || hoveredIndex === index) ? 'var(--background-image-ske-surface)' : 'none',
                                         borderRadius: '10px',
                                         borderLeft: isCurrentSong ? `3px solid ${colors.accent}` : '3px solid transparent',
                                         boxShadow: isCurrentSong
-                                            ? `inset 1px 2px 5px rgba(26,22,20,0.10), inset -1px -1px 3px rgba(255,255,255,0.60)`
-                                            : 'none',
+                                            ? `inset 1px 2px 5px var(--ske-inner-shadow), inset -1px -1px 3px var(--ske-inner-highlight)`
+                                            : hoveredIndex === index
+                                                ? `1px 2px 6px var(--ske-shadow), -1px -1px 4px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight)`
+                                                : 'none',
                                         transition: 'background 0.12s ease, box-shadow 100ms ease-out',
                                         marginBottom: '2px',
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        if (!isCurrentSong) {
-                                            e.currentTarget.style.background = colors.paperDark
-                                            e.currentTarget.style.backgroundImage = 'linear-gradient(145deg, rgba(255,255,255,0.06) 0%, transparent 100%)'
-                                            e.currentTarget.style.boxShadow = `1px 2px 6px rgba(26,22,20,0.12), -1px -1px 4px rgba(255,255,255,0.75), inset 0 1px 0 rgba(255,255,255,0.70)`
-                                        }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        if (!isCurrentSong) {
-                                            e.currentTarget.style.background = 'transparent'
-                                            e.currentTarget.style.backgroundImage = 'none'
-                                            e.currentTarget.style.boxShadow = 'none'
-                                        }
                                     }}
                                 >
                                     <div style={{
@@ -349,22 +335,28 @@ export default function ArtistPage() {
                                     </div>
 
                                     {imageUrl ? (
-                                        <img src={imageUrl} alt="" style={{
-                                            width: '48px',
-                                            height: '48px',
-                                            objectFit: 'cover',
-                                            borderRadius: '8px',
-                                            boxShadow: `1px 2px 5px rgba(26,22,20,0.14), -1px -1px 3px rgba(255,255,255,0.75), inset 0 1px 0 rgba(255,255,255,0.60)`,
-                                        }} />
+                                        <img 
+                                            src={imageUrl} 
+                                            alt="" 
+                                            className="ske-art"
+                                            style={{
+                                                width: '48px',
+                                                height: '48px',
+                                                objectFit: 'cover',
+                                                borderRadius: '8px',
+                                                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                                                transform: hoveredIndex === index ? 'scale(1.05)' : 'scale(1)',
+                                            }} 
+                                        />
                                     ) : (
                                         <div style={{
                                             width: '48px',
                                             height: '48px',
                                             background: colors.paperDark,
-                                            backgroundImage: 'linear-gradient(145deg, rgba(255,255,255,0.04) 0%, transparent 100%)',
+                                            backgroundImage: 'var(--background-image-ske-recessed)',
                                             borderRadius: '8px',
-                                            border: `1px solid rgba(255,255,255,0.50)`,
-                                            boxShadow: `inset 1px 2px 4px rgba(26,22,20,0.10), inset -1px -1px 2px rgba(255,255,255,0.60)`,
+                                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.50)'}`,
+                                            boxShadow: 'var(--shadow-ske-inset-sm)',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
@@ -412,7 +404,7 @@ export default function ArtistPage() {
                 )}
             </div>
 
-            <BasicPlayer colors={colors} fonts={fonts} />
+            <BasicPlayer />
         </div>
     )
 }

@@ -27,9 +27,21 @@ export default function BasicSearch({ onSelectSong }) {
     const [isExpanded, setIsExpanded] = useState(false)
     const [placeholderIndex, setPlaceholderIndex] = useState(0)
     const [isAnimating, setIsAnimating] = useState(false)
+    const [isHovered, setIsHovered] = useState(false)
     const inputRef = useRef(null)
     const containerRef = useRef(null)
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
+
+    useEffect(() => {
+        const handleKeyDownGlobal = (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault()
+                inputRef.current?.focus()
+            }
+        }
+        window.addEventListener('keydown', handleKeyDownGlobal)
+        return () => window.removeEventListener('keydown', handleKeyDownGlobal)
+    }, [])
 
     useEffect(() => {
         if (query) return
@@ -167,6 +179,8 @@ export default function BasicSearch({ onSelectSong }) {
             >
                 <form onSubmit={handleSearch}>
                     <div
+                        onMouseEnter={() => setIsHovered(true)}
+                        onMouseLeave={() => setIsHovered(false)}
                         style={{
                             position: 'relative',
                             background: colors.paperDark,
@@ -174,13 +188,17 @@ export default function BasicSearch({ onSelectSong }) {
                             borderRadius: '14px',
                             border: isFocused
                                 ? `1.5px solid ${colors.accent}`
-                                : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.70)'}`,
+                                : isHovered
+                                    ? `1.5px solid ${colors.accent}60`
+                                    : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.70)'}`,
                             boxShadow: isFocused
                                 ? `var(--shadow-ske-focus)`
-                                : isExpanded
-                                    ? `inset 2px 3px 10px var(--ske-shadow), inset -1px -1px 5px var(--ske-highlight), 0 12px 36px var(--ske-shadow)`
-                                    : `inset 1px 2px 6px var(--ske-inner-shadow), inset -1px -1px 3px var(--ske-inner-highlight)`,
-                            transition: 'box-shadow 150ms ease-out, border-color 150ms ease-out, border-radius 0.3s ease',
+                                : isHovered
+                                    ? `inset 1px 2px 6px var(--ske-inner-shadow), 0 2px 8px ${colors.accent}12`
+                                    : isExpanded
+                                        ? `inset 2px 3px 10px var(--ske-shadow), inset -1px -1px 5px var(--ske-highlight), 0 12px 36px var(--ske-shadow)`
+                                        : `inset 1px 2px 6px var(--ske-inner-shadow), inset -1px -1px 3px var(--ske-inner-highlight)`,
+                            transition: 'all 200ms cubic-bezier(0.16, 1, 0.3, 1)',
                         }}
                     >
                         <div style={{
@@ -196,9 +214,9 @@ export default function BasicSearch({ onSelectSong }) {
                                 height={isExpanded ? "20" : "18"}
                                 viewBox="0 0 24 24"
                                 fill="none"
-                                stroke={isFocused ? colors.ink : colors.inkMuted}
+                                stroke={isFocused ? colors.accent : (isHovered ? colors.ink : colors.inkMuted)}
                                 strokeWidth="2.5"
-                                style={{ flexShrink: 0, transition: 'all 0.3s' }}
+                                style={{ flexShrink: 0, transition: 'all 0.3s', transform: isFocused ? 'scale(1.08)' : 'scale(1)' }}
                             >
                                 <circle cx="11" cy="11" r="8" />
                                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -329,7 +347,29 @@ export default function BasicSearch({ onSelectSong }) {
                                         <line x1="6" y1="6" x2="18" y2="18" />
                                     </svg>
                                 </button>
-                            ) : null}
+                            ) : (
+                                !isFocused && !isMobile && (
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '2px',
+                                        padding: '3px 6px',
+                                        borderRadius: '5px',
+                                        background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+                                        fontFamily: fonts.mono,
+                                        fontSize: '0.62rem',
+                                        fontWeight: 700,
+                                        color: colors.inkLight,
+                                        userSelect: 'none',
+                                        boxShadow: isDark ? '0 1px 1px rgba(0,0,0,0.2)' : '0 1px 1px rgba(0,0,0,0.03)',
+                                        pointerEvents: 'none',
+                                    }}>
+                                        <span style={{ fontSize: '0.55rem', opacity: 0.8 }}>Ctrl</span>
+                                        <span>K</span>
+                                    </div>
+                                )
+                            )}
                         </div>
                     </div>
                 </form>
@@ -358,9 +398,9 @@ export default function BasicSearch({ onSelectSong }) {
                         }}>
                             {suggestions.map((song, index) => {
                                 // Use highest quality image available - check both .link and .url
-                                const imageUrl = song.image?.[0]?.link || song.image?.[0]?.url ||
+                                const imageUrl = song.image?.[2]?.link || song.image?.[2]?.url ||
                                     song.image?.[1]?.link || song.image?.[1]?.url ||
-                                    song.image?.[2]?.link || song.image?.[2]?.url ||
+                                    song.image?.[0]?.link || song.image?.[0]?.url ||
                                     song.imageUrl || ''
                                 const isSelected = index === selectedIndex
 
@@ -377,7 +417,8 @@ export default function BasicSearch({ onSelectSong }) {
                                             borderRadius: '8px',
                                             cursor: 'pointer',
                                             background: isSelected ? colors.paperDark : 'transparent',
-                                            transition: 'background 0.1s',
+                                            transform: isSelected ? 'translateX(4px)' : 'translateX(0)',
+                                            transition: 'background 0.2s, transform 0.25s var(--ease-spring)',
                                         }}
                                     >
                                         <div style={{

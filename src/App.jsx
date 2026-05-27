@@ -16,6 +16,7 @@ import LocalMusicPlayer from '@/components/LocalMusicPlayer'
 import { getAllDiscoveryContent, getForYouMix, getAllThemedContent, refreshDiscovery } from '@/lib/discovery'
 import { encryptedGetItem, encryptedSetItem } from '@/lib/encryption'
 import { validateSong } from '@/lib/security'
+import { Sparkles, Flame, Languages, Globe, Music, Crown, Disc, Coffee, Heart, Dumbbell } from 'lucide-react'
 
 // Local Storage Keys
 const HISTORY_KEY = 'listening_history'
@@ -179,12 +180,59 @@ function HomePage() {
     backdropFilter: 'blur(4px)',
   })
 
+  const renderHeading = (index, title, subtitle) => (
+    <div style={{
+      display: 'flex',
+      alignItems: 'baseline',
+      gap: '12px',
+      marginBottom: isMobile ? '12px' : 'clamp(14px, 3.5vw, 22px)',
+      borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
+      paddingBottom: '8px',
+    }}>
+      <span style={{
+        fontFamily: fonts.mono,
+        fontSize: '0.72rem',
+        fontWeight: 600,
+        color: colors.accent,
+        letterSpacing: '0.1em',
+        opacity: 0.8,
+      }}>
+        {index}
+      </span>
+      <h2 style={{
+        fontFamily: fonts.display,
+        fontSize: isMobile ? 'clamp(1.15rem, 5.5vw, 1.35rem)' : 'clamp(1.3rem, 3.5vw, 1.55rem)',
+        fontWeight: 800,
+        color: colors.ink,
+        margin: 0,
+        letterSpacing: '-0.02em',
+      }}>
+        {title}
+      </h2>
+      {!isMobile && subtitle && (
+        <span style={{
+          fontFamily: fonts.mono,
+          fontSize: '0.65rem',
+          color: colors.inkLight,
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          marginLeft: 'auto',
+        }}>
+          {subtitle}
+        </span>
+      )}
+    </div>
+  )
+
   return (
     <div style={{
       minHeight: '100vh',
       background: colors.paper,
       transition: 'background 0.3s ease',
     }}>
+      {/* Background Ambient Glow Orbs */}
+      <div className="glow-orb glow-orb-1" style={{ opacity: isDark ? 0.3 : 0.4 }} />
+      <div className="glow-orb glow-orb-2" style={{ opacity: isDark ? 0.22 : 0.32 }} />
       {/* Header */}
       <header style={{
         position: 'sticky',
@@ -929,9 +977,9 @@ function HomePage() {
                 </div>
               ) : (
                 listeningHistory.map((song, idx) => {
-                  const imageUrl = song.image?.[2]?.link || song.image?.[2]?.url ||
+                  const imageUrl = song.image?.[0]?.link || song.image?.[0]?.url ||
                     song.image?.[1]?.link || song.image?.[1]?.url ||
-                    song.image?.[0]?.link || song.image?.[0]?.url || ''
+                    song.image?.[2]?.link || song.image?.[2]?.url || ''
                   return (
                     <div
                       key={song.id || idx}
@@ -988,470 +1036,336 @@ function HomePage() {
           </div>
         </>
       )}
+      {/* Quick scroll navigation category tab ribbon */}
+      {!isSearching && (
+        <nav className="category-nav-ribbon">
+          {[
+            { id: 'section-for-you', label: 'For You', icon: Sparkles },
+            { id: 'section-trending', label: 'Trending', icon: Flame, condition: themed.trending?.songs && themed.trending.songs.length > 0 },
+            { id: 'section-hindi', label: 'Hindi', icon: Languages },
+            { id: 'section-english', label: 'English', icon: Globe },
+            { id: 'section-punjabi', label: 'Punjabi', icon: Music },
+            { id: 'section-marathi', label: 'Marathi', icon: Crown, condition: discovery.marathi?.songs && discovery.marathi.songs.length > 0 },
+            { id: 'section-party', label: 'Party', icon: Disc, condition: themed.party?.songs && themed.party.songs.length > 0 },
+            { id: 'section-chill', label: 'Chill', icon: Coffee, condition: themed.chill?.songs && themed.chill.songs.length > 0 },
+            { id: 'section-romantic', label: 'Romantic', icon: Heart, condition: themed.romantic?.songs && themed.romantic.songs.length > 0 },
+            { id: 'section-workout', label: 'Workout', icon: Dumbbell, condition: themed.workout?.songs && themed.workout.songs.length > 0 },
+          ].map((item) => {
+            if (item.condition === false) return null;
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                className="mobile-nav-tab"
+                onClick={() => {
+                  const el = document.getElementById(item.id);
+                  if (el) {
+                    const headerOffset = 125;
+                    const elementPosition = el.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                  }
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Icon size={12} strokeWidth={2.5} style={{ flexShrink: 0 }} />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      )}
+
       <main className="main-content" style={{
         maxWidth: '1400px',
         margin: '0 auto',
-        padding: 'clamp(16px, 4vw, 32px)',
+        padding: 'clamp(12px, 3.5vw, 32px)',
         paddingBottom: 'clamp(120px, 25vw, 160px)',
       }} id="main-content">
-        {isSearching ? (
-          <section>
-            <div style={{
-              display: 'flex',
-              alignItems: 'baseline',
-              justifyContent: 'space-between',
-              marginBottom: '32px',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px' }}>
-                <h2 style={{
-                  fontFamily: fonts.display,
-                  fontSize: '2rem',
-                  fontWeight: 700,
-                  color: colors.ink,
-                }}>
-                  Results
-                </h2>
-                <span style={{
-                  fontFamily: fonts.mono,
-                  fontSize: '0.75rem',
-                  color: colors.inkLight,
-                  textTransform: 'uppercase',
-                }}>
-                  {searchResults.length} tracks
-                </span>
-              </div>
-              <button
-                onClick={handleClearSearch}
-                style={{
-                  fontFamily: fonts.mono,
-                  fontSize: '0.8rem',
-                  color: colors.accent,
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  textTransform: 'uppercase',
-                }}
-              >
-                ← Back
-              </button>
-            </div>
-            <SongList songs={searchResults} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
-          </section>
-        ) : (
-          <div>
-            {/* For You */}
-            <section style={getStaggerStyle(0, isMobile ? '20px' : 'clamp(28px, 6vw, 56px)')}>
-
-              {/* ── Section header ── */}
-              <div style={{ marginBottom: isMobile ? '12px' : 'clamp(14px, 3.5vw, 24px)' }}>
-
-                {/* Row 1: pill + compact Play All (mobile) */}
+            {isSearching ? (
+              <section>
                 <div style={{
                   display: 'flex',
-                  alignItems: 'center',
+                  alignItems: 'baseline',
                   justifyContent: 'space-between',
-                  marginBottom: isMobile ? '6px' : '8px',
+                  marginBottom: '32px',
                 }}>
-                  {/* Badge pill */}
-                  <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    padding: '3px 10px',
-                    borderRadius: '20px',
-                    background: isDark ? 'rgba(224,115,86,0.14)' : 'rgba(196,92,62,0.08)',
-                    border: `1px solid ${isDark ? 'rgba(224,115,86,0.25)' : 'rgba(196,92,62,0.15)'}`,
-                  }}>
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill={colors.accent}>
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                    </svg>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px' }}>
+                    <h2 style={{
+                      fontFamily: fonts.display,
+                      fontSize: '2rem',
+                      fontWeight: 700,
+                      color: colors.ink,
+                    }}>
+                      Results
+                    </h2>
                     <span style={{
                       fontFamily: fonts.mono,
-                      fontSize: '0.6rem',
-                      fontWeight: 600,
-                      color: colors.accent,
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                    }}>Curated for you</span>
-                  </div>
-
-                  {/* Compact Play All — mobile only, sits next to pill */}
-                  {isMobile && (
-                    <button
-                      onClick={handleShuffleAll}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '5px',
-                        padding: '6px 12px',
-                        borderRadius: '8px',
-                        background: colors.accent,
-                        border: 'none',
-                        color: '#fff',
-                        cursor: 'pointer',
-                        fontFamily: fonts.mono,
-                        fontSize: '0.62rem',
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.06em',
-                        boxShadow: `0 3px 12px ${colors.accent}40`,
-                        flexShrink: 0,
-                      }}
-                    >
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="16 3 21 3 21 8" />
-                        <line x1="4" y1="20" x2="21" y2="3" />
-                        <polyline points="21 16 21 21 16 21" />
-                        <line x1="15" y1="15" x2="21" y2="21" />
-                        <line x1="4" y1="4" x2="9" y2="9" />
-                      </svg>
-                      Play All
-                    </button>
-                  )}
-                </div>
-
-                {/* Row 2: title + (desktop) Play All */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'space-between',
-                  gap: '12px',
-                }}>
-                  <div>
-                    <h1 style={{
-                      fontFamily: fonts.display,
-                      fontSize: isMobile ? 'clamp(1.5rem, 7.5vw, 1.9rem)' : 'clamp(1.5rem, 5vw, 2.2rem)',
-                      fontWeight: 800,
-                      color: colors.ink,
-                      margin: 0,
-                      letterSpacing: '-0.02em',
-                      lineHeight: 1.1,
-                    }}>
-                      {currentSong && recommendations.length > 0 ? 'Recommended for You' : 'For You'}
-                    </h1>
-                    <div style={{
-                      fontFamily: fonts.mono,
-                      fontSize: 'clamp(0.62rem, 1.8vw, 0.75rem)',
+                      fontSize: '0.75rem',
                       color: colors.inkLight,
-                      marginTop: '5px',
+                      textTransform: 'uppercase',
                     }}>
-                      {currentSong && recommendations.length > 0
-                        ? `Based on "${currentSong.name || currentSong.title}"`
-                        : 'Curated mix · Fresh discoveries'}
+                      {searchResults.length} tracks
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleClearSearch}
+                    style={{
+                      fontFamily: fonts.mono,
+                      fontSize: '0.8rem',
+                      color: colors.accent,
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    ← Back
+                  </button>
+                </div>
+                <SongList songs={searchResults} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
+              </section>
+            ) : (
+              <div>
+                {/* For You */}
+                <section id="section-for-you" style={getStaggerStyle(0, isMobile ? '20px' : 'clamp(28px, 6vw, 56px)')}>
+
+                  {/* ── Section header ── */}
+                  <div style={{ marginBottom: isMobile ? '12px' : 'clamp(14px, 3.5vw, 24px)' }}>
+
+                    {/* Row 1: pill + compact Play All (mobile) */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: isMobile ? '6px' : '8px',
+                    }}>
+                      {/* Badge pill */}
+                      <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '3px 10px',
+                        borderRadius: '20px',
+                        background: isDark ? 'rgba(224,115,86,0.14)' : 'rgba(196,92,62,0.08)',
+                        border: `1px solid ${isDark ? 'rgba(224,115,86,0.25)' : 'rgba(196,92,62,0.15)'}`,
+                      }}>
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill={colors.accent}>
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                        </svg>
+                        <span style={{
+                          fontFamily: fonts.mono,
+                          fontSize: '0.6rem',
+                          fontWeight: 600,
+                          color: colors.accent,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                        }}>Curated for you</span>
+                      </div>
+
+                    </div>
+
+                    {/* Row 2: title */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                      gap: '12px',
+                    }}>
+                      <div>
+                        <h1 style={{
+                          fontFamily: fonts.display,
+                          fontSize: isMobile ? 'clamp(1.5rem, 7.5vw, 1.9rem)' : 'clamp(1.5rem, 5vw, 2.2rem)',
+                          fontWeight: 800,
+                          color: colors.ink,
+                          margin: 0,
+                          letterSpacing: '-0.02em',
+                          lineHeight: 1.1,
+                        }}>
+                          {currentSong && recommendations.length > 0 ? 'Recommended for You' : 'For You'}
+                        </h1>
+                        <div style={{
+                          fontFamily: fonts.mono,
+                          fontSize: 'clamp(0.62rem, 1.8vw, 0.75rem)',
+                          color: colors.inkLight,
+                          marginTop: '5px',
+                        }}>
+                          {currentSong && recommendations.length > 0
+                            ? `Based on "${currentSong.name || currentSong.title}"`
+                            : 'Curated mix · Fresh discoveries'}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Large Play All — desktop only */}
-                  {!isMobile && (
-                    <button
-                      onClick={handleShuffleAll}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '7px',
-                        padding: '11px 20px',
-                        borderRadius: '10px',
-                        background: colors.accent,
-                        border: 'none',
-                        color: '#fff',
-                        cursor: 'pointer',
-                        fontFamily: fonts.mono,
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.07em',
-                        boxShadow: `0 4px 16px ${colors.accent}35`,
-                        flexShrink: 0,
-                        whiteSpace: 'nowrap',
-                        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${colors.accent}50` }}
-                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 4px 16px ${colors.accent}35` }}
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="16 3 21 3 21 8" />
-                        <line x1="4" y1="20" x2="21" y2="3" />
-                        <polyline points="21 16 21 21 16 21" />
-                        <line x1="15" y1="15" x2="21" y2="21" />
-                        <line x1="4" y1="4" x2="9" y2="9" />
-                      </svg>
-                      Play All
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Featured cards container */}
-              <div style={{
-                borderRadius: isMobile ? '14px' : '18px',
-                padding: isMobile ? '10px' : 'clamp(10px, 2.5vw, 16px)',
-                background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.018)',
-                border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
-              }}>
-                <DiscoverSection
-                  songs={currentSong && recommendations.length > 0 ? recommendations : forYou.songs}
-                  loading={currentSong && recommendations.length > 0 ? recommendationsLoading : forYou.loading}
-                  featured
-                  onPlaySong={handlePlaySong}
-                  onAddToQueue={addToQueue}
-                />
-              </div>
-            </section>
-
-            {/* Discovery Sections - Show Recommendations OR Default Categories */}
-            {currentSong && recommendations.length > 0 ? (
-              // RECOMMENDATIONS MODE - Show multiple varied sections
-              <>
-                {/* Section 1: First batch of recommendations */}
-                <section style={getStaggerStyle(1)}>
-                  <h2 className="section-heading" style={{
-                    fontFamily: fonts.display,
-                    fontSize: isMobile ? 'clamp(1.1rem, 5.5vw, 1.3rem)' : 'clamp(1.2rem, 4vw, 1.5rem)',
-                    fontWeight: 700,
-                    color: colors.ink,
-                    marginBottom: isMobile ? '12px' : 'clamp(8px, 2vw, 12px)',
+                  {/* Featured cards container */}
+                  <div style={{
+                    borderRadius: isMobile ? '14px' : '18px',
+                    padding: isMobile ? '10px' : 'clamp(10px, 2.5vw, 16px)',
+                    background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.018)',
+                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
+                    boxShadow: isDark ? 'inset 0 1px 1px rgba(255,255,255,0.05)' : 'inset 0 1px 1px rgba(0,0,0,0.02)',
                   }}>
-                    Similar to &ldquo;{currentSong.name || currentSong.title}&rdquo;
-                  </h2>
-                  {!isMobile && (
-                    <p style={{
-                      fontFamily: fonts.mono,
-                      fontSize: 'clamp(0.65rem, 1.5vw, 0.7rem)',
-                      color: colors.inkLight,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      marginBottom: 'clamp(16px, 4vw, 20px)',
-                    }}>Top Recommendations</p>
-                  )}
-                  <DiscoverSection
-                    songs={recommendations.slice(0, 8)}
-                    loading={recommendationsLoading}
-                    onPlaySong={handlePlaySong}
-                    onAddToQueue={addToQueue}
-                  />
+                    <DiscoverSection
+                      songs={currentSong && recommendations.length > 0 ? recommendations : forYou.songs}
+                      loading={currentSong && recommendations.length > 0 ? recommendationsLoading : forYou.loading}
+                      featured
+                      onPlaySong={handlePlaySong}
+                      onAddToQueue={addToQueue}
+                    />
+                  </div>
                 </section>
 
-                {/* Section 2: More recommendations if available */}
-                {recommendations.length > 8 && (
-                  <section style={getStaggerStyle(2)}>
-                    <h2 style={{
-                      fontFamily: fonts.display,
-                      fontSize: isMobile ? 'clamp(1.1rem, 5.5vw, 1.3rem)' : 'clamp(1.2rem, 4vw, 1.5rem)',
-                      fontWeight: 700,
-                      color: colors.ink,
-                      marginBottom: isMobile ? '12px' : 'clamp(8px, 2vw, 12px)',
-                    }}>
-                      More Like This
-                    </h2>
-                    {!isMobile && (
-                      <p style={{
-                        fontFamily: fonts.mono,
-                        fontSize: 'clamp(0.65rem, 1.5vw, 0.7rem)',
-                        color: colors.inkLight,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        marginBottom: 'clamp(16px, 4vw, 20px)',
-                      }}>You might also like</p>
+                {/* Discovery Sections - Show Recommendations OR Default Categories */}
+                {currentSong && recommendations.length > 0 ? (
+                  // RECOMMENDATIONS MODE - Show multiple varied sections
+                  <>
+                    {/* Section 1: First batch of recommendations */}
+                    <section id="section-recommendations" style={getStaggerStyle(1)}>
+                      {renderHeading("01", `Similar to "${currentSong.name || currentSong.title}"`, "Top Recommendations")}
+                      <DiscoverSection
+                        songs={recommendations.slice(0, 8)}
+                        loading={recommendationsLoading}
+                        onPlaySong={handlePlaySong}
+                        onAddToQueue={addToQueue}
+                      />
+                    </section>
+
+                    {/* Section 2: More recommendations if available */}
+                    {recommendations.length > 8 && (
+                      <section style={getStaggerStyle(2)}>
+                        {renderHeading("02", "More Like This", "You might also like")}
+                        <DiscoverSection
+                          songs={recommendations.slice(8, 16)}
+                          loading={recommendationsLoading}
+                          onPlaySong={handlePlaySong}
+                          onAddToQueue={addToQueue}
+                        />
+                      </section>
                     )}
-                    <DiscoverSection
-                      songs={recommendations.slice(8, 16)}
-                      loading={recommendationsLoading}
-                      onPlaySong={handlePlaySong}
-                      onAddToQueue={addToQueue}
-                    />
-                  </section>
-                )}
 
-                {/* Add themed content to fill the page when in recommendations mode */}
-                {themed.party?.songs && themed.party.songs.length > 0 && (
-                  <section style={getStaggerStyle(3)}>
-                    <h2 style={{
-                      fontFamily: fonts.display,
-                      fontSize: isMobile ? 'clamp(1.1rem, 5.5vw, 1.3rem)' : 'clamp(1.2rem, 4vw, 1.5rem)',
-                      fontWeight: 700, color: colors.ink,
-                      marginBottom: isMobile ? '12px' : 'clamp(8px, 2vw, 12px)',
-                    }}>{themed.party.title}</h2>
-                    <DiscoverSection
-                      songs={themed.party.songs}
-                      loading={loading}
-                      onPlaySong={handlePlaySong}
-                      onAddToQueue={addToQueue}
-                    />
-                  </section>
-                )}
-
-                {themed.chill?.songs && themed.chill.songs.length > 0 && (
-                  <section style={getStaggerStyle(4)}>
-                    <h2 style={{
-                      fontFamily: fonts.display,
-                      fontSize: isMobile ? 'clamp(1.1rem, 5.5vw, 1.3rem)' : 'clamp(1.2rem, 4vw, 1.5rem)',
-                      fontWeight: 700, color: colors.ink,
-                      marginBottom: isMobile ? '12px' : 'clamp(8px, 2vw, 12px)',
-                    }}>{themed.chill.title}</h2>
-                    <DiscoverSection
-                      songs={themed.chill.songs}
-                      loading={loading}
-                      onPlaySong={handlePlaySong}
-                      onAddToQueue={addToQueue}
-                    />
-                  </section>
-                )}
-              </>
-            ) : (
-              // DEFAULT MODE - Show varied content with language and themed categories
-              <>
-                {/* Trending Now */}
-                {themed.trending?.songs && themed.trending.songs.length > 0 && (
-                  <section style={getStaggerStyle(1)}>
-                    <h2 style={{
-                      fontFamily: fonts.display,
-                      fontSize: isMobile ? 'clamp(1.1rem, 5.5vw, 1.3rem)' : 'clamp(1.2rem, 4vw, 1.5rem)',
-                      fontWeight: 700,
-                      color: colors.ink,
-                      marginBottom: isMobile ? '12px' : 'clamp(8px, 2vw, 12px)',
-                    }}>
-                      {themed.trending.title}
-                    </h2>
-                    {!isMobile && (
-                      <p style={{
-                        fontFamily: fonts.mono,
-                        fontSize: 'clamp(0.65rem, 1.5vw, 0.7rem)',
-                        color: colors.inkLight,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        marginBottom: 'clamp(16px, 4vw, 20px)',
-                      }}>What&apos;s hot right now</p>
+                    {/* Add themed content to fill the page when in recommendations mode */}
+                    {themed.party?.songs && themed.party.songs.length > 0 && (
+                      <section id="section-party" style={getStaggerStyle(3)}>
+                        {renderHeading("03", themed.party.title, "Get the vibe started")}
+                        <DiscoverSection
+                          songs={themed.party.songs}
+                          loading={loading}
+                          onPlaySong={handlePlaySong}
+                          onAddToQueue={addToQueue}
+                        />
+                      </section>
                     )}
-                    <DiscoverSection
-                      songs={themed.trending.songs}
-                      loading={loading}
-                      onPlaySong={handlePlaySong}
-                      onAddToQueue={addToQueue}
-                    />
-                  </section>
+
+                    {themed.chill?.songs && themed.chill.songs.length > 0 && (
+                      <section id="section-chill" style={getStaggerStyle(4)}>
+                        {renderHeading("04", themed.chill.title, "Relax and unwind")}
+                        <DiscoverSection
+                          songs={themed.chill.songs}
+                          loading={loading}
+                          onPlaySong={handlePlaySong}
+                          onAddToQueue={addToQueue}
+                        />
+                      </section>
+                    )}
+                  </>
+                ) : (
+                  // DEFAULT MODE - Show varied content with language and themed categories
+                  <>
+                    {/* Trending Now */}
+                    {themed.trending?.songs && themed.trending.songs.length > 0 && (
+                      <section id="section-trending" style={getStaggerStyle(1)}>
+                        {renderHeading("02", themed.trending.title, "What's hot right now")}
+                        <DiscoverSection
+                          songs={themed.trending.songs}
+                          loading={loading}
+                          onPlaySong={handlePlaySong}
+                          onAddToQueue={addToQueue}
+                        />
+                      </section>
+                    )}
+
+                    {/* Hindi */}
+                    <section id="section-hindi" style={getStaggerStyle(2)}>
+                      {renderHeading("03", "Hindi", "Indian top hits")}
+                      <DiscoverSection songs={discovery.hindi?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
+                    </section>
+
+                    {/* Party Hits */}
+                    {themed.party?.songs && themed.party.songs.length > 0 && (
+                      <section id="section-party" style={getStaggerStyle(3)}>
+                        {renderHeading("04", themed.party.title, "Get the vibe started")}
+                        <DiscoverSection
+                          songs={themed.party.songs}
+                          loading={loading}
+                          onPlaySong={handlePlaySong}
+                          onAddToQueue={addToQueue}
+                        />
+                      </section>
+                    )}
+
+                    {/* English */}
+                    <section id="section-english" style={getStaggerStyle(4)}>
+                      {renderHeading("05", "English", "International top chart")}
+                      <DiscoverSection songs={discovery.english?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
+                    </section>
+
+                    {/* Chill Vibes */}
+                    {themed.chill?.songs && themed.chill.songs.length > 0 && (
+                      <section id="section-chill" style={getStaggerStyle(5)}>
+                        {renderHeading("06", themed.chill.title, "Relax and unwind")}
+                        <DiscoverSection
+                          songs={themed.chill.songs}
+                          loading={loading}
+                          onPlaySong={handlePlaySong}
+                          onAddToQueue={addToQueue}
+                        />
+                      </section>
+                    )}
+
+                    {/* Punjabi */}
+                    <section id="section-punjabi" style={getStaggerStyle(6)}>
+                      {renderHeading("07", "Punjabi", "High energy beats")}
+                      <DiscoverSection songs={discovery.punjabi?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
+                    </section>
+
+                    {/* Romantic */}
+                    {themed.romantic?.songs && themed.romantic.songs.length > 0 && (
+                      <section id="section-romantic" style={getStaggerStyle(7)}>
+                        {renderHeading("08", themed.romantic.title, "Melodies for your heart")}
+                        <DiscoverSection
+                          songs={themed.romantic.songs}
+                          loading={loading}
+                          onPlaySong={handlePlaySong}
+                          onAddToQueue={addToQueue}
+                        />
+                      </section>
+                    )}
+
+                    {/* Marathi */}
+                    {discovery.marathi?.songs && discovery.marathi.songs.length > 0 && (
+                      <section id="section-marathi" style={getStaggerStyle(8)}>
+                        {renderHeading("09", "Marathi", "Regional favorites")}
+                        <DiscoverSection songs={discovery.marathi.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
+                      </section>
+                    )}
+
+                    {/* Workout Energy */}
+                    {themed.workout?.songs && themed.workout.songs.length > 0 && (
+                      <section id="section-workout" style={getStaggerStyle(9)}>
+                        {renderHeading("10", themed.workout.title, "Power up your session")}
+                        <DiscoverSection
+                          songs={themed.workout.songs}
+                          loading={loading}
+                          onPlaySong={handlePlaySong}
+                          onAddToQueue={addToQueue}
+                        />
+                      </section>
+                    )}
+                  </>
                 )}
-
-                {/* Hindi */}
-                <section style={getStaggerStyle(2)}>
-                  <h2 style={{
-                    fontFamily: fonts.display,
-                    fontSize: isMobile ? 'clamp(1.1rem, 5.5vw, 1.3rem)' : 'clamp(1.2rem, 4vw, 1.5rem)',
-                    fontWeight: 700,
-                    color: colors.ink,
-                    marginBottom: isMobile ? '12px' : 'clamp(16px, 4vw, 20px)',
-                  }}>Hindi</h2>
-                  <DiscoverSection songs={discovery.hindi?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
-                </section>
-
-                {/* Party Hits */}
-                {themed.party?.songs && themed.party.songs.length > 0 && (
-                  <section style={getStaggerStyle(3)}>
-                    <h2 style={{
-                      fontFamily: fonts.display,
-                      fontSize: isMobile ? 'clamp(1.1rem, 5.5vw, 1.3rem)' : 'clamp(1.2rem, 4vw, 1.5rem)',
-                      fontWeight: 700, color: colors.ink,
-                      marginBottom: isMobile ? '12px' : 'clamp(8px, 2vw, 12px)',
-                    }}>{themed.party.title}</h2>
-                    <DiscoverSection
-                      songs={themed.party.songs}
-                      loading={loading}
-                      onPlaySong={handlePlaySong}
-                      onAddToQueue={addToQueue}
-                    />
-                  </section>
-                )}
-
-                {/* English */}
-                <section style={getStaggerStyle(4)}>
-                  <h2 style={{
-                    fontFamily: fonts.display,
-                    fontSize: isMobile ? 'clamp(1.1rem, 5.5vw, 1.3rem)' : 'clamp(1.2rem, 4vw, 1.5rem)',
-                    fontWeight: 700,
-                    color: colors.ink,
-                    marginBottom: isMobile ? '12px' : 'clamp(16px, 4vw, 20px)',
-                  }}>English</h2>
-                  <DiscoverSection songs={discovery.english?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
-                </section>
-
-                {/* Chill Vibes */}
-                {themed.chill?.songs && themed.chill.songs.length > 0 && (
-                  <section style={getStaggerStyle(5)}>
-                    <h2 style={{
-                      fontFamily: fonts.display,
-                      fontSize: isMobile ? 'clamp(1.1rem, 5.5vw, 1.3rem)' : 'clamp(1.2rem, 4vw, 1.5rem)',
-                      fontWeight: 700, color: colors.ink,
-                      marginBottom: isMobile ? '12px' : 'clamp(8px, 2vw, 12px)',
-                    }}>{themed.chill.title}</h2>
-                    <DiscoverSection
-                      songs={themed.chill.songs}
-                      loading={loading}
-                      onPlaySong={handlePlaySong}
-                      onAddToQueue={addToQueue}
-                    />
-                  </section>
-                )}
-
-                {/* Punjabi */}
-                <section style={getStaggerStyle(6)}>
-                  <h2 style={{
-                    fontFamily: fonts.display,
-                    fontSize: isMobile ? 'clamp(1.1rem, 5.5vw, 1.3rem)' : 'clamp(1.2rem, 4vw, 1.5rem)',
-                    fontWeight: 700,
-                    color: colors.ink,
-                    marginBottom: isMobile ? '12px' : 'clamp(16px, 4vw, 20px)',
-                  }}>Punjabi</h2>
-                  <DiscoverSection songs={discovery.punjabi?.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
-                </section>
-
-                {/* Romantic */}
-                {themed.romantic?.songs && themed.romantic.songs.length > 0 && (
-                  <section style={getStaggerStyle(7)}>
-                    <h2 style={{
-                      fontFamily: fonts.display,
-                      fontSize: isMobile ? 'clamp(1.1rem, 5.5vw, 1.3rem)' : 'clamp(1.2rem, 4vw, 1.5rem)',
-                      fontWeight: 700, color: colors.ink,
-                      marginBottom: isMobile ? '12px' : 'clamp(8px, 2vw, 12px)',
-                    }}>{themed.romantic.title}</h2>
-                    <DiscoverSection
-                      songs={themed.romantic.songs}
-                      loading={loading}
-                      onPlaySong={handlePlaySong}
-                      onAddToQueue={addToQueue}
-                    />
-                  </section>
-                )}
-
-                {/* Marathi */}
-                {discovery.marathi?.songs && discovery.marathi.songs.length > 0 && (
-                  <section style={getStaggerStyle(8)}>
-                    <h2 style={{
-                      fontFamily: fonts.display,
-                      fontSize: isMobile ? 'clamp(1.1rem, 5.5vw, 1.3rem)' : 'clamp(1.2rem, 4vw, 1.5rem)',
-                      fontWeight: 700,
-                      color: colors.ink,
-                      marginBottom: isMobile ? '12px' : 'clamp(16px, 4vw, 20px)',
-                    }}>Marathi</h2>
-                    <DiscoverSection songs={discovery.marathi.songs} loading={loading} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
-                  </section>
-                )}
-
-                {/* Workout Energy */}
-                {themed.workout?.songs && themed.workout.songs.length > 0 && (
-                  <section style={getStaggerStyle(9)}>
-                    <h2 style={{
-                      fontFamily: fonts.display,
-                      fontSize: isMobile ? 'clamp(1.1rem, 5.5vw, 1.3rem)' : 'clamp(1.2rem, 4vw, 1.5rem)',
-                      fontWeight: 700, color: colors.ink,
-                      marginBottom: isMobile ? '12px' : 'clamp(8px, 2vw, 12px)',
-                    }}>{themed.workout.title}</h2>
-                    <DiscoverSection
-                      songs={themed.workout.songs}
-                      loading={loading}
-                      onPlaySong={handlePlaySong}
-                      onAddToQueue={addToQueue}
-                    />
-                  </section>
-                )}
-              </>
+              </div>
             )}
-          </div>
-        )}
       </main>
 
       <BasicPlayer />

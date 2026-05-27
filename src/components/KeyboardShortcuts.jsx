@@ -80,15 +80,13 @@ export default function KeyboardShortcuts() {
                 }}
             >
                 <div
+                    className="ske-float ske-textured"
                     style={{
-                        background: isDark ? 'rgba(26, 22, 20, 0.95)' : 'rgba(250, 247, 242, 0.95)',
+                        background: isDark ? 'rgba(26, 22, 20, 0.94)' : 'rgba(250, 247, 242, 0.94)',
                         backdropFilter: 'blur(16px)',
-                        border: `1px solid ${colors.rule}`,
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.75)'}`,
                         borderRadius: '14px',
                         padding: '16px 20px',
-                        boxShadow: isDark
-                            ? '0 12px 32px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.3)'
-                            : '0 12px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.08)',
                         minWidth: '240px',
                     }}
                 >
@@ -112,6 +110,7 @@ export default function KeyboardShortcuts() {
                             label="Play / Pause"
                             colors={colors}
                             fonts={fonts}
+                            isDark={isDark}
                             isActive={lastKey === 'space'}
                         />
                         <ShortcutRow
@@ -119,6 +118,7 @@ export default function KeyboardShortcuts() {
                             label="Play / Pause"
                             colors={colors}
                             fonts={fonts}
+                            isDark={isDark}
                             isActive={lastKey === 'k'}
                         />
                         <ShortcutRow
@@ -126,6 +126,7 @@ export default function KeyboardShortcuts() {
                             label="Next Track"
                             colors={colors}
                             fonts={fonts}
+                            isDark={isDark}
                             isActive={lastKey === 'next'}
                         />
                         <ShortcutRow
@@ -133,6 +134,7 @@ export default function KeyboardShortcuts() {
                             label="Previous Track"
                             colors={colors}
                             fonts={fonts}
+                            isDark={isDark}
                             isActive={lastKey === 'prev'}
                         />
                         <ShortcutRow
@@ -140,6 +142,7 @@ export default function KeyboardShortcuts() {
                             label="Toggle Hints"
                             colors={colors}
                             fonts={fonts}
+                            isDark={isDark}
                         />
                     </div>
 
@@ -176,6 +179,7 @@ export default function KeyboardShortcuts() {
             {!isVisible && (
                 <button
                     onClick={() => setIsVisible(true)}
+                    className="ske-raised-xs"
                     style={{
                         position: 'fixed',
                         bottom: '120px',
@@ -184,25 +188,19 @@ export default function KeyboardShortcuts() {
                         width: '40px',
                         height: '40px',
                         borderRadius: '12px',
-                        background: isDark ? 'rgba(26, 22, 20, 0.8)' : 'rgba(250, 247, 242, 0.8)',
-                        backdropFilter: 'blur(8px)',
-                        border: `1px solid ${colors.rule}`,
+                        background: colors.paperDark,
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.70)'}`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        transition: 'all 0.2s',
                         color: colors.inkMuted,
                     }}
                     onMouseEnter={(e) => {
-                        e.currentTarget.style.background = colors.paperDark
                         e.currentTarget.style.color = colors.accent
-                        e.currentTarget.style.transform = 'scale(1.05)'
                     }}
                     onMouseLeave={(e) => {
-                        e.currentTarget.style.background = isDark ? 'rgba(26, 22, 20, 0.8)' : 'rgba(250, 247, 242, 0.8)'
                         e.currentTarget.style.color = colors.inkMuted
-                        e.currentTarget.style.transform = 'scale(1)'
                     }}
                     title="Keyboard shortcuts"
                 >
@@ -213,7 +211,7 @@ export default function KeyboardShortcuts() {
     )
 }
 
-function ShortcutRow({ keys, label, colors, fonts, isActive }) {
+function ShortcutRow({ keys, label, colors, fonts, isActive, isDark }) {
     return (
         <div
             style={{
@@ -230,10 +228,12 @@ function ShortcutRow({ keys, label, colors, fonts, isActive }) {
                 {keys.map((key, i) => (
                     <kbd
                         key={i}
+                        className="ske-text-raised"
                         style={{
                             padding: '4px 8px',
-                            background: isActive ? `${colors.accent}20` : colors.paperDark,
-                            border: `1px solid ${isActive ? colors.accent : colors.rule}`,
+                            background: isActive ? `${colors.accent}22` : colors.paperDark,
+                            border: `1px solid ${isActive ? colors.accent : (isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.85)')}`,
+                            borderBottom: isActive ? `3px solid ${colors.accent}` : `3px solid ${isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.12)'}`,
                             borderRadius: '6px',
                             fontFamily: fonts.mono,
                             fontSize: '0.7rem',
@@ -241,7 +241,9 @@ function ShortcutRow({ keys, label, colors, fonts, isActive }) {
                             color: isActive ? colors.accent : colors.ink,
                             minWidth: '28px',
                             textAlign: 'center',
-                            boxShadow: isActive ? `0 0 12px ${colors.accent}30` : 'none',
+                            boxShadow: isActive 
+                                ? `0 2px 8px ${colors.accent}32` 
+                                : `0 2px 4px var(--ske-shadow), inset 0 1px 0 var(--ske-inner-highlight)`,
                             transition: 'all 0.2s',
                         }}
                     >
