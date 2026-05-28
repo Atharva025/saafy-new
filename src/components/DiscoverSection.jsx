@@ -88,24 +88,31 @@ function NowPlayingBars({ color = '#fff', size = 14 }) {
 }
 
 // ─── Queue button (Translucent Glassmorphic) ───────────────────────────────
-function QueueBtn({ song, onAddToQueue, success, size = 28 }) {
+function QueueBtn({ song, onAddToQueue, size = 28 }) {
+    const [added, setAdded] = useState(false)
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
+
+    const handleClick = (e) => {
+        e.stopPropagation()
+        if (added) return
+        onAddToQueue(song)
+        setAdded(true)
+        setTimeout(() => setAdded(false), 2000)
+    }
+
     return (
         <button
-            onClick={(e) => {
-                e.stopPropagation()
-                onAddToQueue(song)
-                success(`Added "${song.name}" to queue`, { duration: 2000 })
-            }}
-            title="Add to queue"
-            aria-label="Add to queue"
-            className="ske-raised"
+            onClick={handleClick}
+            title={added ? "Added to queue" : "Add to queue"}
+            aria-label={added ? "Added to queue" : "Add to queue"}
+            className="icon-btn"
             style={{
                 width: `${size}px`,
                 height: `${size}px`,
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.96)',
-                border: '1px solid rgba(255, 255, 255, 0.7)',
+                borderRadius: '8px',
+                background: added ? 'rgba(16, 185, 129, 0.95)' : 'var(--color-overlay)',
+                border: added ? '1px solid rgba(16, 185, 129, 0.7)' : '1px solid var(--color-border)',
+                color: added ? '#ffffff' : 'var(--color-ink-muted)',
                 padding: 0,
                 minWidth: 0,
                 minHeight: 0,
@@ -116,10 +123,8 @@ function QueueBtn({ song, onAddToQueue, success, size = 28 }) {
                 justifyContent: 'center',
                 flexShrink: 0,
                 position: 'relative',
-                transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
             {/* Invisible touch target expander for mobile accessibility */}
             <span style={{
@@ -130,48 +135,101 @@ function QueueBtn({ song, onAddToQueue, success, size = 28 }) {
                 bottom: '-12px',
                 cursor: 'pointer',
             }} />
-            <svg width={size * 0.44} height={size * 0.44} viewBox="0 0 24 24" fill="none" stroke="#1A1614" strokeWidth="2.5">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
+            {added ? (
+                <svg width={size * 0.46} height={size * 0.46} viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                </svg>
+            ) : (
+                <svg width={size * 0.46} height={size * 0.46} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+            )}
         </button>
     )
 }
 
 // ─── Play button (Frosted Glass or Solid Accent) ─────────────────────────────
 function PlayCircle({ isActive, isPlaying, accentColor, size = 42, hovered }) {
-    const bg = isActive && isPlaying ? accentColor : 'rgba(255, 255, 255, 0.95)'
-    const iconColor = isActive && isPlaying ? '#fff' : '#1A1614'
+    const bg = isActive && isPlaying ? accentColor : 'var(--color-paper-dark)'
+    const iconColor = isActive && isPlaying ? '#ffffff' : 'var(--color-ink)'
+    const borderColor = isActive && isPlaying ? accentColor : 'var(--color-border)'
+    const bgImage = isActive && isPlaying ? 'none' : 'var(--background-image-ske-button)'
+    const shadow = isActive && isPlaying ? 'var(--shadow-ske-inset-sm)' : 'var(--shadow-ske-xs)'
+    
     return (
         <div
-            className="ske-raised"
+            className={`icon-btn ${isActive && isPlaying ? 'active' : ''}`}
             style={{
                 width: `${size}px`,
                 height: `${size}px`,
-                borderRadius: '50%',
+                borderRadius: '10px',
                 background: bg,
+                backgroundImage: bgImage,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 transform: hovered ? 'scale(1.1) translateY(-1px)' : 'scale(0.85)',
                 opacity: hovered || (isActive && isPlaying) ? 1 : 0,
-                transition: 'transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 250ms ease, background 250ms ease',
+                transition: 'transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 250ms ease, background 250ms ease, border-color 250ms ease, box-shadow 250ms ease',
                 flexShrink: 0,
-                border: '1px solid rgba(255, 255, 255, 0.6)',
-                boxShadow: hovered ? `0 8px 20px ${accentColor}35` : 'none',
+                border: `1px solid ${borderColor}`,
+                boxShadow: hovered ? (isActive && isPlaying ? shadow : `0 8px 20px ${accentColor}35, ${shadow}`) : shadow,
+                color: iconColor,
             }}>
             {isActive && isPlaying ? (
-                <svg width={size * 0.38} height={size * 0.38} viewBox="0 0 24 24" fill={iconColor}>
+                <svg width={size * 0.38} height={size * 0.38} viewBox="0 0 24 24" fill="currentColor">
                     <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
                 </svg>
             ) : (
-                <svg width={size * 0.38} height={size * 0.38} viewBox="0 0 24 24" fill={iconColor} style={{ marginLeft: '2px' }}>
+                <svg width={size * 0.38} height={size * 0.38} viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: '2px' }}>
                     <path d="M8 5v14l11-7L8 5z" />
                 </svg>
             )}
         </div>
     )
 }
+
+// ─── Grid Play circle (Premium circular frosted button) ──────────────────────
+function GridPlayCircle({ isActive, isPlaying, accentColor, size = 36, hovered }) {
+    const bg = isActive && isPlaying ? accentColor : 'var(--color-overlay)'
+    const iconColor = isActive && isPlaying ? '#ffffff' : 'var(--color-ink)'
+    const borderColor = isActive && isPlaying ? accentColor : 'var(--color-border)'
+    
+    return (
+        <div
+            className={`grid-play-circle ${isActive && isPlaying ? 'active' : ''}`}
+            style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                borderRadius: '50%',
+                background: bg,
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                border: `1px solid ${borderColor}`,
+                boxShadow: '0 6px 16px rgba(0,0,0,0.22), var(--shadow-ske-xs)',
+                color: iconColor,
+                transform: hovered ? 'scale(1.1) translateY(-1px)' : 'scale(1)',
+                transition: 'all 250ms cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+        >
+            {isActive && isPlaying ? (
+                <svg width={size * 0.4} height={size * 0.4} viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                </svg>
+            ) : (
+                <svg width={size * 0.4} height={size * 0.4} viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: '2.5px' }}>
+                    <path d="M8 5v14l11-7L8 5z" />
+                </svg>
+            )}
+        </div>
+    )
+}
+
 
 // ─── Hero Card (Frosted Asymmetric Glass Capsule) ──────────────────────────
 function HeroCard({ song, onPlay, onAddToQueue, currentSong, isPlaying, colors, fonts, success }) {
@@ -592,15 +650,181 @@ function MobileCompactCard({ song, index, onPlay, onAddToQueue, currentSong, isP
 }
 
 // ─── Scroll Card (Premium Sleeve Pull-out Design) ───────────────────────────
-function ScrollCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying, colors, fonts, success }) {
+function ScrollCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying, colors, fonts, success, layout }) {
     const [hovered, setHovered] = useState(false)
     const isActive = currentSong?.id === song.id
     const imageUrl = getImageUrl(song)
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
 
+    if (layout === 'grid') {
+        return (
+            <div
+                className="grid-card-tile"
+                onMouseEnter={() => setHovered(true)}
+                onMouseLeave={() => setHovered(false)}
+                onClick={() => onPlay(song)}
+                role="button"
+                tabIndex={0}
+                aria-label={`Play ${song.name}`}
+                onKeyDown={e => e.key === 'Enter' && onPlay(song)}
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    padding: '12px',
+                    borderRadius: '20px',
+                    background: hovered ? colors.paperDarker : colors.paperDark,
+                    backgroundImage: 'var(--background-image-ske-surface)',
+                    border: isActive 
+                        ? `1.5px solid ${colors.accent}` 
+                        : hovered 
+                            ? `1px solid ${colors.border}` 
+                            : '1px solid transparent',
+                    boxShadow: isActive
+                        ? `0 12px 28px ${colors.accent}20, var(--shadow-ske-sm)`
+                        : hovered
+                            ? 'var(--shadow-ske-md), 0 10px 20px rgba(0, 0, 0, 0.06)'
+                            : 'var(--shadow-ske-xs)',
+                    transform: hovered ? 'translateY(-6px)' : 'translateY(0)',
+                    transition: 'all 350ms cubic-bezier(0.16, 1, 0.3, 1)',
+                    cursor: 'pointer',
+                    animation: 'cardFadeIn 0.4s ease-out both',
+                    animationDelay: `${index * 0.04}s`,
+                }}
+            >
+                {/* Artwork Sleeve */}
+                <div style={{
+                    position: 'relative',
+                    width: '100%',
+                    paddingBottom: '100%',
+                    borderRadius: '14px',
+                    overflow: 'hidden',
+                    background: colors.paperDarker,
+                    border: `1px solid ${colors.border}`,
+                    boxShadow: 'var(--shadow-ske-inset-sm)',
+                }}>
+                    {imageUrl ? (
+                        <img
+                            src={imageUrl}
+                            alt={song.name}
+                            loading="lazy"
+                            style={{
+                                position: 'absolute',
+                                inset: 0,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                transform: hovered ? 'scale(1.04)' : 'scale(1)',
+                                transition: 'transform 500ms cubic-bezier(0.16, 1, 0.3, 1)',
+                            }}
+                        />
+                    ) : (
+                        <div style={{
+                            position: 'absolute',
+                            inset: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}>
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill={colors.inkLight}>
+                                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                            </svg>
+                        </div>
+                    )}
+
+                    {/* Floating Queue Button (top-right) */}
+                    {onAddToQueue && !isActive && (
+                        <div style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            zIndex: 10,
+                            opacity: hovered || isMobile ? 1 : 0,
+                            transform: hovered || isMobile ? 'translateY(0) scale(1)' : 'translateY(-4px) scale(0.95)',
+                            transition: 'opacity 250ms ease, transform 250ms cubic-bezier(0.16, 1, 0.3, 1)',
+                        }}
+                        onClick={e => e.stopPropagation()} // Prevent clicking queue from playing the track
+                        >
+                            <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={28} />
+                        </div>
+                    )}
+
+                    {/* Floating circular frosted/accent play button (bottom-right) */}
+                    <div style={{
+                        position: 'absolute',
+                        bottom: '8px',
+                        right: '8px',
+                        zIndex: 10,
+                        opacity: hovered || (isActive && isPlaying) || isMobile ? 1 : 0,
+                        transform: hovered || (isActive && isPlaying) || isMobile ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.9)',
+                        transition: 'opacity 250ms ease, transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    }}>
+                        <GridPlayCircle 
+                            isActive={isActive} 
+                            isPlaying={isPlaying} 
+                            accentColor={colors.accent} 
+                            size={36} 
+                            hovered={hovered} 
+                        />
+                    </div>
+
+                    {/* Bouncing EQ overlay (bottom-left) when active & playing */}
+                    {isActive && isPlaying && (
+                        <div style={{
+                            position: 'absolute',
+                            bottom: '8px',
+                            left: '8px',
+                            zIndex: 10,
+                            background: 'rgba(0,0,0,0.65)',
+                            backdropFilter: 'blur(8px)',
+                            WebkitBackdropFilter: 'blur(8px)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            padding: '6px 8px',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}>
+                            <NowPlayingBars color={colors.accent} size={9} />
+                        </div>
+                    )}
+                </div>
+
+                {/* Metadata block below */}
+                <div style={{ padding: '8px 2px 2px 2px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                    <div style={{
+                        fontFamily: fonts.primary,
+                        fontWeight: 700,
+                        fontSize: '0.875rem',
+                        color: isActive ? colors.accent : colors.ink,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        transition: 'color 0.22s ease',
+                        lineHeight: 1.3,
+                    }}>
+                        {song.name || song.title}
+                    </div>
+                    <div style={{
+                        fontFamily: fonts.mono,
+                        fontSize: '0.72rem',
+                        color: colors.inkMuted,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        letterSpacing: '0.02em',
+                        textTransform: 'uppercase',
+                    }}>
+                        {song.primaryArtists || 'Unknown Artist'}
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div
-            className="scroll-snap-item"
+            className={layout === 'grid' ? 'grid-card' : 'scroll-snap-item'}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             onClick={() => onPlay(song)}
@@ -609,10 +833,10 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying,
             aria-label={`Play ${song.name}`}
             onKeyDown={e => e.key === 'Enter' && onPlay(song)}
             style={{
-                flexShrink: 0,
-                width: 'clamp(124px, 37vw, 176px)',
+                flexShrink: layout === 'grid' ? 1 : 0,
+                width: layout === 'grid' ? '100%' : 'clamp(124px, 37vw, 176px)',
                 cursor: 'pointer',
-                scrollSnapAlign: 'start',
+                scrollSnapAlign: layout === 'grid' ? 'none' : 'start',
                 display: 'flex',
                 flexDirection: 'column',
                 animation: 'cardFadeIn 0.4s ease-out both',
@@ -737,17 +961,31 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, currentSong, isPlaying,
 }
 
 // ─── DiscoverSection Export ──────────────────────────────────────────────────
-export default function DiscoverSection({ songs, loading, featured = false, onPlaySong, onAddToQueue }) {
+export default function DiscoverSection({ songs, loading, featured = false, layout, onPlaySong, onAddToQueue }) {
     const { colors, fonts } = useTheme()
     const { currentSong, isPlaying } = usePlayer()
     const { success } = useToast()
     const scrollRef = useRef(null)
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
 
     const handleScroll = (direction) => {
         if (scrollRef.current) {
             const scrollAmount = direction === 'left' ? -400 : 400
             scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
         }
+    }
+
+    if (loading && layout === 'grid') {
+        return (
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(130px, 15vw, 170px), 1fr))',
+                gap: isMobile ? '16px 12px' : '28px 20px',
+                padding: '4px 0',
+            }}>
+                <SkeletonLoader type="card" count={12} />
+            </div>
+        )
     }
 
     if (loading && featured) {
@@ -769,17 +1007,39 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
     if (!songs || songs.length === 0) return null
 
     const handlePlay = (song) => { if (onPlaySong) onPlaySong(song) }
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
-
     const sharedProps = { onPlay: handlePlay, onAddToQueue, currentSong, isPlaying, colors, fonts, success }
+
+    if (layout === 'grid') {
+        const animStyle = `
+            @keyframes cardFadeIn {
+                from { opacity: 0; transform: translateY(24px) scale(0.97); }
+                to   { opacity: 1; transform: translateY(0) scale(1); }
+            }
+        `
+        return (
+            <>
+                <style>{animStyle}</style>
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(130px, 15vw, 170px), 1fr))',
+                    gap: isMobile ? '16px 12px' : '28px 20px',
+                    padding: '4px 0',
+                }}>
+                    {songs.map((song, index) => (
+                        <ScrollCard key={song.id} song={song} index={index} layout="grid" {...sharedProps} />
+                    ))}
+                </div>
+            </>
+        )
+    }
 
     // ─── Asymmetric Editorial Grid (Featured Section) ───────────────────────
     if (featured && songs.length >= 5) {
         const [hero, ...rest] = songs.slice(0, 5)
         const animStyle = `
             @keyframes cardFadeIn {
-                from { opacity: 0; transform: translateY(18px); }
-                to   { opacity: 1; transform: translateY(0); }
+                from { opacity: 0; transform: translateY(24px) scale(0.97); }
+                to   { opacity: 1; transform: translateY(0) scale(1); }
             }
         `
 
@@ -850,8 +1110,8 @@ export default function DiscoverSection({ songs, loading, featured = false, onPl
         <div className="carousel-wrapper">
             <style>{`
                 @keyframes cardFadeIn {
-                    from { opacity: 0; transform: translateY(18px); }
-                    to   { opacity: 1; transform: translateY(0); }
+                    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+                    to   { opacity: 1; transform: translateY(0) scale(1); }
                 }
             `}</style>
 

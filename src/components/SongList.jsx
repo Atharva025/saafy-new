@@ -5,9 +5,10 @@ import { useToast } from '@/context/ToastContext'
 
 export default function SongList({ songs, onPlaySong, onAddToQueue }) {
     const { colors, fonts, isDark } = useTheme()
-    const { playSong, addToQueue, currentSong, isPlaying } = usePlayer()
+    const { playSong, addToQueue, currentSong, isPlaying, togglePlay } = usePlayer()
     const { success } = useToast()
     const [hoveredIndex, setHoveredIndex] = useState(null)
+    const [addedSongs, setAddedSongs] = useState({})
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
 
     if (!songs || songs.length === 0) {
@@ -76,39 +77,65 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
                             position: 'relative',
                         }}
                     >
-                        {/* Track Number */}
-                        <div style={{
-                            width: 'clamp(28px, 7vw, 32px)',
-                            textAlign: 'center',
-                            fontFamily: fonts.mono,
-                            fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
-                            color: colors.inkLight,
-                        }}>
-                            {isCurrentSong && isPlaying ? (
-                                <div style={{ display: 'flex', justifyContent: 'center', gap: '2px' }}>
-                                    <span style={{
-                                        width: '3px',
-                                        height: '12px',
-                                        background: colors.accent,
-                                        animation: 'pulse 0.6s infinite alternate',
-                                    }} />
-                                    <span style={{
-                                        width: '3px',
-                                        height: '16px',
-                                        background: colors.accent,
-                                        animation: 'pulse 0.6s infinite alternate 0.1s',
-                                    }} />
-                                    <span style={{
-                                        width: '3px',
-                                        height: '10px',
-                                        background: colors.accent,
-                                        animation: 'pulse 0.6s infinite alternate 0.2s',
-                                    }} />
-                                </div>
+                        {/* Track Number / Play Overlay */}
+                        <div 
+                            style={{
+                                width: 'clamp(28px, 7vw, 32px)',
+                                textAlign: 'center',
+                                fontFamily: fonts.mono,
+                                fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
+                                color: isCurrentSong ? colors.accent : colors.inkLight,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                            }}
+                            onClick={(e) => {
+                                if (hoveredIndex === index) {
+                                    e.stopPropagation() // Prevent triggering the entire row click
+                                    if (isCurrentSong) {
+                                        togglePlay()
+                                    } else {
+                                        handlePlay(song)
+                                    }
+                                }
+                            }}
+                        >
+                            {hoveredIndex === index ? (
+                                isCurrentSong && isPlaying ? (
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ color: colors.accent }}>
+                                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                                    </svg>
+                                ) : (
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ color: isCurrentSong ? colors.accent : colors.ink, marginLeft: '2.5px' }}>
+                                        <path d="M8 5v14l11-7z" />
+                                    </svg>
+                                )
                             ) : (
-                                String(index + 1).padStart(2, '0')
+                                isCurrentSong && isPlaying ? (
+                                    <div style={{ display: 'flex', justifyContent: 'center', gap: '2px', alignItems: 'flex-end', height: '14px' }}>
+                                        {[0.6, 1, 0.45].map((h, i) => (
+                                            <div
+                                                key={i}
+                                                style={{
+                                                    width: '2.5px',
+                                                    height: `${h * 100}%`,
+                                                    background: colors.accent,
+                                                    borderRadius: '1px',
+                                                    animation: `pulse 0.6s ease-in-out ${i * 0.15}s infinite alternate`,
+                                                    transformOrigin: 'bottom',
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <span style={{ color: isCurrentSong ? colors.accent : 'inherit' }}>
+                                        {String(index + 1).padStart(2, '0')}
+                                    </span>
+                                )
                             )}
                         </div>
+
 
                         {/* Album Art */}
                         {imageUrl ? (
@@ -182,67 +209,150 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
                             {formatDuration(song.duration)}
                         </div>
 
-                        {/* Add to Queue Button */}
-                        {(hoveredIndex === index || isMobile) && (onAddToQueue || addToQueue) && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    if (onAddToQueue) {
-                                        onAddToQueue(song)
-                                    } else {
-                                        addToQueue(song)
-                                    }
-                                    success(`Added "${song.name}" to queue`, { duration: 2000 })
-                                }}
-                                style={{
-                                    width: isMobile ? '24px' : '32px',
-                                    height: isMobile ? '24px' : '32px',
-                                    borderRadius: isMobile ? '6px' : '8px',
-                                    background: colors.paperDarker,
-                                    backgroundImage: 'var(--background-image-ske-button)',
-                                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'}`,
-                                    padding: 0,
-                                    minWidth: 0,
-                                    minHeight: 0,
-                                    boxSizing: 'border-box',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: colors.inkMuted,
-                                    boxShadow: 'var(--shadow-ske-xs)',
-                                    transition: 'box-shadow 80ms ease-out, transform 80ms ease-out, background 0.1s',
-                                    position: 'relative',
-                                }}
-                                onMouseDown={(e) => { e.stopPropagation(); e.currentTarget.style.boxShadow = 'var(--shadow-ske-pressed)'; e.currentTarget.style.transform = 'translateY(1px)' }}
-                                onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-ske-xs)' }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = colors.accent
-                                    e.currentTarget.style.color = '#fff'
-                                    e.currentTarget.style.borderColor = colors.accent
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = colors.paperDarker
-                                    e.currentTarget.style.color = colors.inkMuted
-                                    e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'
-                                }}
-                                title="Add to Queue"
-                            >
-                                {/* Invisible touch expander for better mobile accessibility */}
-                                <span style={{
-                                    position: 'absolute',
-                                    top: '-10px',
-                                    left: '-10px',
-                                    right: '-10px',
-                                    bottom: '-10px',
-                                    cursor: 'pointer',
-                                }} />
-                                <svg width="clamp(14px, 3.5vw, 16px)" height="clamp(14px, 3.5vw, 16px)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                    <line x1="12" y1="5" x2="12" y2="19" />
-                                    <line x1="5" y1="12" x2="19" y2="12" />
-                                </svg>
-                            </button>
-                        )}
+                        {/* Actions container */}
+                        <div 
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px', 
+                                marginLeft: 'auto', 
+                                flexShrink: 0 
+                            }}
+                        >
+                            {/* Play Button */}
+                            {(onPlaySong || playSong) && (
+                                <button
+                                    onClick={() => handlePlay(song)}
+                                    className="icon-btn"
+                                    style={{
+                                        width: isMobile ? '24px' : '32px',
+                                        height: isMobile ? '24px' : '32px',
+                                        borderRadius: isMobile ? '6px' : '8px',
+                                        background: isCurrentSong && isPlaying ? 'var(--color-accent)' : colors.paperDarker,
+                                        backgroundImage: isCurrentSong && isPlaying ? 'none' : 'var(--background-image-ske-button)',
+                                        border: isCurrentSong && isPlaying ? '1px solid var(--color-accent)' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'}`,
+                                        padding: 0,
+                                        minWidth: 0,
+                                        minHeight: 0,
+                                        boxSizing: 'border-box',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: isCurrentSong && isPlaying ? '#fff' : colors.inkMuted,
+                                        boxShadow: 'var(--shadow-ske-xs)',
+                                        transition: 'box-shadow 80ms ease-out, transform 80ms ease-out, background 0.1s, border-color 0.1s',
+                                        position: 'relative',
+                                    }}
+                                    onMouseDown={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-ske-pressed)'; e.currentTarget.style.transform = 'translateY(1px)' }}
+                                    onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-ske-xs)' }}
+                                    onMouseEnter={(e) => {
+                                        if (isCurrentSong && isPlaying) return
+                                        e.currentTarget.style.background = colors.accent
+                                        e.currentTarget.style.color = '#fff'
+                                        e.currentTarget.style.borderColor = colors.accent
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (isCurrentSong && isPlaying) return
+                                        e.currentTarget.style.background = colors.paperDarker
+                                        e.currentTarget.style.color = colors.inkMuted
+                                        e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'
+                                    }}
+                                    title={isCurrentSong && isPlaying ? "Pause" : "Play Now"}
+                                >
+                                    <span style={{
+                                        position: 'absolute',
+                                        top: '-10px',
+                                        left: '-10px',
+                                        right: '-10px',
+                                        bottom: '-10px',
+                                        cursor: 'pointer',
+                                    }} />
+                                    {isCurrentSong && isPlaying ? (
+                                        <svg width="clamp(12px, 3vw, 14px)" height="clamp(12px, 3vw, 14px)" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                                        </svg>
+                                    ) : (
+                                        <svg width="clamp(12px, 3vw, 14px)" height="clamp(12px, 3vw, 14px)" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: '1px' }}>
+                                            <path d="M8 5v14l11-7L8 5z" />
+                                        </svg>
+                                    )}
+                                </button>
+                            )}
+
+                            {/* Add to Queue Button */}
+                            {(onAddToQueue || addToQueue) && (
+                                <button
+                                    onClick={() => {
+                                        if (addedSongs[song.id]) return
+                                        if (onAddToQueue) {
+                                            onAddToQueue(song)
+                                        } else {
+                                            addToQueue(song)
+                                        }
+                                        setAddedSongs(prev => ({ ...prev, [song.id]: true }))
+                                        setTimeout(() => {
+                                            setAddedSongs(prev => ({ ...prev, [song.id]: false }))
+                                        }, 2000)
+                                    }}
+                                    style={{
+                                        width: isMobile ? '24px' : '32px',
+                                        height: isMobile ? '24px' : '32px',
+                                        borderRadius: isMobile ? '6px' : '8px',
+                                        background: addedSongs[song.id] ? 'rgba(16, 185, 129, 0.95)' : colors.paperDarker,
+                                        backgroundImage: addedSongs[song.id] ? 'none' : 'var(--background-image-ske-button)',
+                                        border: addedSongs[song.id] ? '1px solid rgba(16, 185, 129, 0.7)' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'}`,
+                                        padding: 0,
+                                        minWidth: 0,
+                                        minHeight: 0,
+                                        boxSizing: 'border-box',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: addedSongs[song.id] ? '#fff' : colors.inkMuted,
+                                        boxShadow: 'var(--shadow-ske-xs)',
+                                        transition: 'box-shadow 80ms ease-out, transform 80ms ease-out, background 0.1s, border-color 0.1s',
+                                        position: 'relative',
+                                    }}
+                                    onMouseDown={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-ske-pressed)'; e.currentTarget.style.transform = 'translateY(1px)' }}
+                                    onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-ske-xs)' }}
+                                    onMouseEnter={(e) => {
+                                        if (addedSongs[song.id]) return
+                                        e.currentTarget.style.background = colors.accent
+                                        e.currentTarget.style.color = '#fff'
+                                        e.currentTarget.style.borderColor = colors.accent
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (addedSongs[song.id]) return
+                                        e.currentTarget.style.background = colors.paperDarker
+                                        e.currentTarget.style.color = colors.inkMuted
+                                        e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'
+                                    }}
+                                    title="Add to Queue"
+                                >
+                                    <span style={{
+                                        position: 'absolute',
+                                        top: '-10px',
+                                        left: '-10px',
+                                        right: '-10px',
+                                        bottom: '-10px',
+                                        cursor: 'pointer',
+                                    }} />
+                                    {addedSongs[song.id] ? (
+                                        <svg width="clamp(12px, 3vw, 14px)" height="clamp(12px, 3vw, 14px)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="20 6 9 17 4 12" />
+                                        </svg>
+                                    ) : (
+                                        <svg width="clamp(12px, 3vw, 14px)" height="clamp(12px, 3vw, 14px)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                            <line x1="12" y1="5" x2="12" y2="19" />
+                                            <line x1="5" y1="12" x2="19" y2="12" />
+                                        </svg>
+                                    )}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 )
             })}

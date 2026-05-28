@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { searchSongs } from '@/lib/api'
 import { debounce } from '@/lib/security'
 import { useTheme } from '@/context/ThemeContext'
+import { usePlayer } from '@/context/PlayerContext'
 
 // Rotating placeholder phrases
 const placeholders = [
@@ -15,8 +16,189 @@ const placeholders = [
     "Explore music beyond your comfort zone...",
 ]
 
-export default function BasicSearch({ onSelectSong }) {
+
+
+// ─── Vibe Name Mapper (Poetic Emotional Trails) ──────────────────────────────
+const getEmotionalTrailForSong = (song) => {
+    if (!song) return "Late Night Synths"
+    
+    const title = (song.name || song.title || "").toLowerCase()
+    const artist = (song.primaryArtists || song.singers || "").toLowerCase()
+    const lang = (song.language || "").toLowerCase()
+    
+    // Check artist matches
+    if (artist.includes("arijit") || artist.includes("jubin") || artist.includes("atif") || artist.includes("shreya")) {
+        return "Arijit Romance"
+    }
+    if (artist.includes("honey") || artist.includes("badshah") || artist.includes("diljit") || artist.includes("raftaar") || artist.includes("king")) {
+        return "Party Monster"
+    }
+    if (artist.includes("sidhu") || artist.includes("dhillon") || artist.includes("aujla") || artist.includes("shubh")) {
+        return "Punjabi Beats"
+    }
+    
+    // Check title / keyword / language matches
+    if (title.includes("party") || title.includes("dance") || title.includes("club") || title.includes("makhna")) {
+        return "Party Monster"
+    }
+    if (title.includes("sad") || title.includes("judai") || title.includes("lofi") || title.includes("alone") || title.includes("synths") || title.includes("night")) {
+        return "Late Night Synths"
+    }
+    if (title.includes("monsoon") || title.includes("rain") || title.includes("baaris") || title.includes("sawan") || title.includes("acoustics")) {
+        return "Monsoon Vibes"
+    }
+    if (lang === "marathi") {
+        return "Marathi Soul"
+    }
+    if (lang === "punjabi") {
+        return "Punjabi Beats"
+    }
+    
+    // Fallbacks
+    if (lang === "english") {
+        return "Late Night Synths"
+    }
+    if (lang === "hindi") {
+        return "Bollywood Melodies"
+    }
+    
+    return "Late Night Synths"
+}
+
+// ─── Relative Time Calculator ───────────────────────────────────────────────
+const getRelativeTime = (playedAt) => {
+    if (!playedAt) return "Recently"
+    const diffMs = Date.now() - playedAt
+    const diffMins = Math.floor(diffMs / 60000)
+    
+    if (diffMins < 1) return "Just now"
+    if (diffMins < 60) return `${diffMins}m ago`
+    
+    const diffHours = Math.floor(diffMins / 60)
+    if (diffHours < 24) return `${diffHours}h ago`
+    
+    const diffDays = Math.floor(diffHours / 24)
+    if (diffDays === 1) return "Yesterday"
+    return `${diffDays}d ago`
+}
+
+// ─── Trail Row Component (Premium Minimal List Row) ─────────────────────────
+function TrailRow({ song, index, vibeTitle, timeString, onPlay, colors, fonts, isDark }) {
+    const [hovered, setHovered] = useState(false)
+    
+    const imageUrl = song.image?.[0]?.link || song.image?.[0]?.url ||
+        song.image?.[1]?.link || song.image?.[1]?.url ||
+        song.image?.[2]?.link || song.image?.[2]?.url ||
+        song.imageUrl || ''
+
+    return (
+        <div
+            onClick={() => onPlay(song)}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 14px',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                background: hovered ? (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)') : 'transparent',
+                transition: 'background-color 0.2s ease',
+                marginBottom: '4px',
+                position: 'relative',
+            }}
+        >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0 }}>
+                {/* Tiny Album Art */}
+                <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    background: colors.paperDarker,
+                    border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)'}`,
+                    boxShadow: 'var(--shadow-ske-xs)',
+                    flexShrink: 0,
+                }}>
+                    {imageUrl ? (
+                        <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill={colors.inkLight}>
+                                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                            </svg>
+                        </div>
+                    )}
+                </div>
+
+                {/* Title and details info */}
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <div style={{
+                        fontFamily: fonts.primary,
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        color: colors.ink,
+                        letterSpacing: '-0.01em',
+                    }}>
+                        {vibeTitle}
+                    </div>
+                    <div style={{
+                        fontFamily: fonts.mono,
+                        fontSize: '0.72rem',
+                        color: colors.inkMuted,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                    }}>
+                        {song.name} <span style={{ opacity: 0.65 }}>· {song.primaryArtists}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Timestamp/Play arrow */}
+            <div style={{ marginLeft: '12px', flexShrink: 0 }}>
+                {hovered ? (
+                    <button
+                        className="ske-raised"
+                        style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            background: 'var(--color-paper-dark)',
+                            color: 'var(--color-ink)',
+                            border: '1px solid var(--color-border)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: 'var(--shadow-ske-xs)',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            padding: 0,
+                        }}
+                        title="Play"
+                    >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: '1.5px' }}>
+                            <path d="M8 5v14l11-7L8 5z" />
+                        </svg>
+                    </button>
+                ) : (
+                    <span style={{
+                        fontFamily: fonts.mono,
+                        fontSize: '0.72rem',
+                        color: colors.inkLight,
+                    }}>
+                        {timeString}
+                    </span>
+                )}
+            </div>
+        </div>
+    )
+}
+
+export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearching, featuredSongs = [], listeningHistory = [] }) {
     const { colors, fonts, isDark } = useTheme()
+    const { addToQueue } = usePlayer()
 
     const [query, setQuery] = useState('')
     const [suggestions, setSuggestions] = useState([])
@@ -28,9 +210,18 @@ export default function BasicSearch({ onSelectSong }) {
     const [placeholderIndex, setPlaceholderIndex] = useState(0)
     const [isAnimating, setIsAnimating] = useState(false)
     const [isHovered, setIsHovered] = useState(false)
+    const [addedSongs, setAddedSongs] = useState({})
     const inputRef = useRef(null)
     const containerRef = useRef(null)
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
+
+    const handleAddToQueue = (song) => {
+        addToQueue(song)
+        setAddedSongs(prev => ({ ...prev, [song.id]: true }))
+        setTimeout(() => {
+            setAddedSongs(prev => ({ ...prev, [song.id]: false }))
+        }, 2000)
+    }
 
     useEffect(() => {
         const handleKeyDownGlobal = (e) => {
@@ -120,12 +311,23 @@ export default function BasicSearch({ onSelectSong }) {
         setIsExpanded(false)
     }
 
-    const handleSearch = (e) => {
+    const handleSearch = async (e) => {
         e.preventDefault()
-        if (selectedIndex >= 0 && suggestions[selectedIndex]) {
-            handleSelectSong(suggestions[selectedIndex])
-        } else if (suggestions.length > 0) {
-            handleSelectSong(suggestions[0])
+        if (!query.trim()) return
+        setLoading(true)
+        try {
+            const response = await searchSongs(query, 0, 20)
+            if (response.success && response.data?.results) {
+                setSearchResults?.(response.data.results)
+                setIsSearching?.(true)
+                setShowSuggestions(false)
+                setIsExpanded(false)
+                inputRef.current?.blur()
+            }
+        } catch (error) {
+            console.error('Search error:', error)
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -185,12 +387,12 @@ export default function BasicSearch({ onSelectSong }) {
                             position: 'relative',
                             background: colors.paperDark,
                             backgroundImage: 'var(--background-image-ske-recessed)',
-                            borderRadius: '14px',
+                            borderRadius: isExpanded ? '28px' : '22px',
                             border: isFocused
                                 ? `1.5px solid ${colors.accent}`
                                 : isHovered
-                                    ? `1.5px solid ${colors.accent}60`
-                                    : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.70)'}`,
+                                    ? `1.5px solid ${isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'}`
+                                    : `1px solid var(--color-border)`,
                             boxShadow: isFocused
                                 ? `var(--shadow-ske-focus)`
                                 : isHovered
@@ -352,17 +554,18 @@ export default function BasicSearch({ onSelectSong }) {
                                     <div style={{
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '2px',
-                                        padding: '3px 6px',
-                                        borderRadius: '5px',
-                                        background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+                                        gap: '3px',
+                                        padding: '3px 7px',
+                                        borderRadius: '6px',
+                                        background: 'var(--color-paper-dark)',
+                                        backgroundImage: 'var(--background-image-ske-button)',
+                                        border: '1px solid var(--color-border)',
                                         fontFamily: fonts.mono,
                                         fontSize: '0.62rem',
                                         fontWeight: 700,
-                                        color: colors.inkLight,
+                                        color: colors.inkMuted,
                                         userSelect: 'none',
-                                        boxShadow: isDark ? '0 1px 1px rgba(0,0,0,0.2)' : '0 1px 1px rgba(0,0,0,0.03)',
+                                        boxShadow: 'var(--shadow-ske-xs)',
                                         pointerEvents: 'none',
                                     }}>
                                         <span style={{ fontSize: '0.55rem', opacity: 0.8 }}>Ctrl</span>
@@ -380,13 +583,12 @@ export default function BasicSearch({ onSelectSong }) {
                         top: 'calc(100% + 10px)',
                         left: 0,
                         right: 0,
-                        background: colors.paper,
-                        backgroundImage: 'var(--background-image-ske-surface)',
-                        borderRadius: '14px',
-                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.80)'}`,
-                        boxShadow: isDark
-                            ? `6px 8px 28px var(--ske-shadow), -4px -4px 14px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow)`
-                            : `4px 6px 20px var(--ske-shadow), -3px -3px 10px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 2px var(--ske-inner-shadow)`,
+                        background: 'var(--color-overlay-deep)',
+                        backdropFilter: 'blur(20px) saturate(180%)',
+                        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                        borderRadius: 'clamp(14px, 3vw, 18px)',
+                        border: '1px solid var(--color-border)',
+                        boxShadow: 'var(--shadow-ske-lg)',
                         overflow: 'hidden',
                         zIndex: 100,
                         animation: 'dropIn 0.15s cubic-bezier(0.25,0.46,0.45,0.94)',
@@ -473,14 +675,170 @@ export default function BasicSearch({ onSelectSong }) {
                                             </div>
                                         </div>
 
-                                        {isSelected && (
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill={colors.accent}>
-                                                <path d="M8 5v14l11-7L8 5z" />
-                                            </svg>
-                                        )}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto', flexShrink: 0 }}>
+                                            {/* Add to Queue Button */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleAddToQueue(song)
+                                                }}
+                                                className="icon-btn"
+                                                style={{
+                                                    width: isExpanded ? '30px' : '26px',
+                                                    height: isExpanded ? '30px' : '26px',
+                                                    borderRadius: '8px',
+                                                    background: addedSongs[song.id] ? 'rgba(16, 185, 129, 0.95)' : colors.paperDarker,
+                                                    backgroundImage: addedSongs[song.id] ? 'none' : 'var(--background-image-ske-button)',
+                                                    border: addedSongs[song.id] ? '1px solid rgba(16, 185, 129, 0.7)' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'}`,
+                                                    color: addedSongs[song.id] ? '#ffffff' : colors.inkMuted,
+                                                    padding: 0,
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    boxShadow: 'var(--shadow-ske-xs)',
+                                                    transition: 'all 0.15s ease',
+                                                    flexShrink: 0,
+                                                }}
+                                                title="Add to Queue"
+                                            >
+                                                {addedSongs[song.id] ? (
+                                                    <svg width={isExpanded ? 14 : 12} height={isExpanded ? 14 : 12} viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                        <polyline points="20 6 9 17 4 12" />
+                                                    </svg>
+                                                ) : (
+                                                    <svg width={isExpanded ? 14 : 12} height={isExpanded ? 14 : 12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                                        <line x1="12" y1="5" x2="12" y2="19" />
+                                                        <line x1="5" y1="12" x2="19" y2="12" />
+                                                    </svg>
+                                                )}
+                                            </button>
+
+                                            {/* Play Button */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleSelectSong(song)
+                                                }}
+                                                className="ske-raised"
+                                                style={{
+                                                    width: isExpanded ? '30px' : '26px',
+                                                    height: isExpanded ? '30px' : '26px',
+                                                    borderRadius: '50%',
+                                                    background: isSelected ? 'var(--color-accent)' : 'var(--color-paper-dark)',
+                                                    color: isSelected ? '#ffffff' : 'var(--color-ink)',
+                                                    border: '1px solid var(--color-border)',
+                                                    padding: 0,
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    boxShadow: 'var(--shadow-ske-xs)',
+                                                    transition: 'all 0.15s ease',
+                                                    flexShrink: 0,
+                                                }}
+                                                title="Play Now"
+                                            >
+                                                <svg width={isExpanded ? 14 : 12} height={isExpanded ? 14 : 12} viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: '1px' }}>
+                                                    <path d="M8 5v14l11-7L8 5z" />
+                                                </svg>
+                                            </button>
+                                        </div>
                                     </div>
                                 )
                             })}
+                        </div>
+                    </div>
+                )}
+
+                {isExpanded && !query && (
+                    <div style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 10px)',
+                        left: 0,
+                        right: 0,
+                        background: 'var(--color-overlay-deep)',
+                        backdropFilter: 'blur(20px) saturate(180%)',
+                        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                        borderRadius: 'clamp(14px, 3vw, 18px)',
+                        border: '1px solid var(--color-border)',
+                        boxShadow: 'var(--shadow-ske-lg)',
+                        overflow: 'hidden',
+                        zIndex: 100,
+                        padding: '20px',
+                        animation: 'dropIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                    }}>
+                        <div style={{
+                            fontFamily: fonts.primary,
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.14em',
+                            color: colors.inkLight,
+                            marginBottom: '16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            paddingLeft: '4px'
+                        }}>
+                            <span>You were exploring...</span>
+                            
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            {(() => {
+                                const defaultFallbacks = [
+                                    {
+                                        id: 'fallback_1',
+                                        name: 'Late Night Drive',
+                                        primaryArtists: 'Kavinsky',
+                                        image: [{ link: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=150&h=150&fit=crop' }],
+                                        playedAt: Date.now() - 3600000 * 2 // 2 hours ago
+                                    },
+                                    {
+                                        id: 'fallback_2',
+                                        name: 'Tum Hi Ho',
+                                        primaryArtists: 'Arijit Singh',
+                                        image: [{ link: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=150&h=150&fit=crop' }],
+                                        playedAt: Date.now() - 3600000 * 5 // 5 hours ago
+                                    },
+                                    {
+                                        id: 'fallback_3',
+                                        name: 'Elevated',
+                                        primaryArtists: 'Shubh',
+                                        image: [{ link: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=150&h=150&fit=crop' }],
+                                        playedAt: Date.now() - 3600000 * 8 // 8 hours ago
+                                    },
+                                    {
+                                        id: 'fallback_4',
+                                        name: 'Baarishein',
+                                        primaryArtists: 'Anuv Jain',
+                                        image: [{ link: 'https://images.unsplash.com/photo-1487180142328-0c4e37023af5?w=150&h=150&fit=crop' }],
+                                        playedAt: Date.now() - 3600000 * 24 // 1 day ago
+                                    }
+                                ]
+                                const items = (listeningHistory && listeningHistory.length > 0)
+                                    ? listeningHistory.slice(0, 4)
+                                    : defaultFallbacks
+
+                                return items.map((song, index) => {
+                                    const vibeTitle = getEmotionalTrailForSong(song)
+                                    const timeString = getRelativeTime(song.playedAt)
+                                    return (
+                                        <TrailRow
+                                            key={song.id || index}
+                                            song={song}
+                                            index={index}
+                                            vibeTitle={vibeTitle}
+                                            timeString={timeString}
+                                            onPlay={handleSelectSong}
+                                            colors={colors}
+                                            fonts={fonts}
+                                            isDark={isDark}
+                                        />
+                                    )
+                                })
+                            })()}
                         </div>
                     </div>
                 )}
@@ -496,6 +854,10 @@ export default function BasicSearch({ onSelectSong }) {
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
+        }
+        @keyframes subtleBounce {
+          from { transform: scaleY(0.35); opacity: 0.6; }
+          to   { transform: scaleY(1); opacity: 1; }
         }
       `}</style>
             </div>

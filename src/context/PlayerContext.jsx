@@ -3,6 +3,8 @@ import { getSong, addSongToRecommender, getRecommendations } from '@/lib/api'
 import { getForYouMix } from '@/lib/discovery'
 import { addToSessionPlayedSongs, hasBeenPlayedInSession } from '@/utils/sessionStorage'
 import { updateTray, registerMediaControlHandler } from '@/lib/electron'
+import { extractDominantColor } from '@/utils/colorExtractor'
+
 
 // ============================================================================
 // PRODUCTION-SAFE LOGGER
@@ -89,15 +91,15 @@ const playerReducer = (state, action) => {
         }
 
         case 'ADD_TO_QUEUE': {
-            // Add song after current song (Spotify behavior)
+            // Append song to the end of the queue
             const song = action.payload
             if (state.queue.find(s => s.id === song.id)) {
                 return state // Already in queue
             }
             return {
                 ...state,
-                queue: [song, ...state.queue],
-                originalQueue: state.shuffleMode ? [...state.originalQueue, song] : [song, ...state.queue]
+                queue: [...state.queue, song],
+                originalQueue: state.shuffleMode ? [...state.originalQueue, song] : [...state.queue, song]
             }
         }
 
@@ -279,6 +281,39 @@ export function PlayerProvider({ children }) {
     const [recommendations, setRecommendations] = useState([])
     const [recommendationsLoading, setRecommendationsLoading] = useState(false)
     const [currentRecommendedSongId, setCurrentRecommendedSongId] = useState(null)
+
+    // Dominant color extraction for dynamic backdrop color sync
+    const [dominantColor, setDominantColor] = useState(null)
+
+    useEffect(() => {
+        const song = state.currentSong
+        if (!song) {
+            setDominantColor(null)
+            return
+        }
+
+        const imageUrl = song.image?.[2]?.link || song.image?.[2]?.url ||
+                         song.image?.[1]?.link || song.image?.[1]?.url ||
+                         song.image?.[0]?.link || song.image?.[0]?.url ||
+                         song.imageUrl || ''
+                         
+        if (!imageUrl) {
+            setDominantColor(null)
+            return
+        }
+
+        let active = true
+        extractDominantColor(imageUrl).then(color => {
+            if (active) {
+                setDominantColor(color)
+            }
+        })
+
+        return () => {
+            active = false
+        }
+    }, [state.currentSong])
+
 
     /**
      * Normalize song image to consistent array format
@@ -901,8 +936,10 @@ export function PlayerProvider({ children }) {
         recommendations,
         recommendationsLoading,
         currentRecommendedSongId,
-        fetchRecommendations
+        fetchRecommendations,
+        dominantColor
     }
+
 
     return (
         <PlayerContext.Provider value={value}>

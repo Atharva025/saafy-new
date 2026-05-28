@@ -370,3 +370,70 @@ export function getLanguageDisplayName(language) {
 export function getAvailableLanguages() {
     return Object.keys(DISCOVERY_POOLS)
 }
+
+/**
+ * Fetch fresh songs for a specific category key (language or theme)
+ * with a randomized query and page index to ensure new content is returned
+ */
+export async function getFreshSongsForCategory(categoryKey, limit = 16) {
+    const isLanguage = DISCOVERY_POOLS[categoryKey] !== undefined
+    const pool = isLanguage ? DISCOVERY_POOLS[categoryKey] : THEMED_POOLS[categoryKey]
+
+    if (!pool) {
+        return { success: false, songs: [], error: 'Unknown category' }
+    }
+
+    // Pick a random query from the queries array
+    const randomIndex = Math.floor(Math.random() * pool.queries.length)
+    const query = pool.queries[randomIndex]
+
+    // Use a random page index (0 to 3) for variety
+    const page = Math.floor(Math.random() * 4)
+
+    try {
+        const response = await searchSongs(query, page, limit)
+        if (response.success && response.data?.results) {
+            // Shuffle the songs randomly for extra freshness
+            const shuffled = [...response.data.results].sort(() => Math.random() - 0.5)
+            return {
+                success: true,
+                songs: shuffled,
+                title: pool.displayName,
+                query: query,
+                page: page
+            }
+        }
+        return { success: false, songs: [], error: 'No results returned' }
+    } catch (error) {
+        return { success: false, songs: [], error: error.message }
+    }
+}
+
+/**
+ * Fetch more songs for a specific query and page index (for "Load More" pagination)
+ */
+export async function getMoreSongsForCategory(categoryKey, query, page, limit = 16) {
+    const isLanguage = DISCOVERY_POOLS[categoryKey] !== undefined
+    const pool = isLanguage ? DISCOVERY_POOLS[categoryKey] : THEMED_POOLS[categoryKey]
+
+    if (!pool) {
+        return { success: false, songs: [], error: 'Unknown category' }
+    }
+
+    try {
+        const response = await searchSongs(query, page, limit)
+        if (response.success && response.data?.results) {
+            // Shuffle the songs randomly
+            const shuffled = [...response.data.results].sort(() => Math.random() - 0.5)
+            return {
+                success: true,
+                songs: shuffled
+            }
+        }
+        return { success: false, songs: [], error: 'No more results' }
+    } catch (error) {
+        return { success: false, songs: [], error: error.message }
+    }
+}
+
+

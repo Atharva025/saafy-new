@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { usePlayer } from '@/context/PlayerContext'
 import { useTheme } from '@/context/ThemeContext'
-import { extractDominantColor, generateGradient } from '@/utils/colorExtractor'
 import { adjustColorForTheme } from '@/lib/utils'
 import { 
     Shuffle, 
@@ -34,38 +33,17 @@ export default function BasicPlayer() {
         repeatMode,
         toggleShuffle,
         toggleRepeat,
+        dominantColor
     } = usePlayer()
 
     const [isHovered, setIsHovered] = useState(false)
     const [volumeHovered, setVolumeHovered] = useState(false)
     const [volumeExpanded, setVolumeExpanded] = useState(false)
-    const [dominantColor, setDominantColor] = useState(null)
-    const [gradientBg, setGradientBg] = useState(null)
     const [progressHovered, setProgressHovered] = useState(false)
     const [hoverTime, setHoverTime] = useState(0)
     const [hoverXPercent, setHoverXPercent] = useState(0)
     const [artHovered, setArtHovered] = useState(false)
 
-    // Extract color from album art
-    useEffect(() => {
-        // Use highest quality image for color extraction
-        const imageUrl = currentSong?.image?.[2]?.link || currentSong?.image?.[2]?.url ||
-            currentSong?.image?.[1]?.link || currentSong?.image?.[1]?.url ||
-            currentSong?.image?.[0]?.link || currentSong?.image?.[0]?.url
-        if (!imageUrl) {
-            setDominantColor(null)
-            setGradientBg(null)
-            return
-        }
-
-        extractDominantColor(imageUrl).then(color => {
-            if (color) {
-                setDominantColor(color)
-                const gradient = generateGradient(color, isDark)
-                setGradientBg(gradient)
-            }
-        })
-    }, [currentSong, isDark])
 
     const formatTime = (seconds) => {
         if (!seconds || isNaN(seconds)) return '0:00'

@@ -13,10 +13,10 @@ import QueuePanel from '@/components/QueuePanel'
 import SkeletonLoader from '@/components/SkeletonLoader'
 import Settings from '@/components/Settings'
 import LocalMusicPlayer from '@/components/LocalMusicPlayer'
-import { getAllDiscoveryContent, getForYouMix, getAllThemedContent, refreshDiscovery } from '@/lib/discovery'
+import { getAllDiscoveryContent, getForYouMix, getAllThemedContent, refreshDiscovery, getFreshSongsForCategory, getMoreSongsForCategory } from '@/lib/discovery'
 import { encryptedGetItem, encryptedSetItem } from '@/lib/encryption'
 import { validateSong } from '@/lib/security'
-import { Sparkles, Flame, Languages, Globe, Music, Crown, Disc, Coffee, Heart, Dumbbell } from 'lucide-react'
+import { Sparkles, TrendingUp, Languages, BookText, Drum, Landmark, PartyPopper, CloudMoon, Heart, Dumbbell } from 'lucide-react'
 
 // Local Storage Keys
 const HISTORY_KEY = 'listening_history'
@@ -34,14 +34,16 @@ const getListeningHistory = () => {
 const addToListeningHistory = (song) => {
   if (!song || !validateSong(song)) return
   const history = getListeningHistory()
+  const songWithTime = { ...song, playedAt: Date.now() }
   const filtered = history.filter(s => s.id !== song.id)
-  const updated = [song, ...filtered].slice(0, 10)
+  const updated = [songWithTime, ...filtered].slice(0, 10)
   encryptedSetItem(HISTORY_KEY, updated)
 }
 
 function HomePage() {
   const { isDark, colors, fonts, toggleTheme } = useTheme()
-  const { playSong, addToQueue, queue, recommendations, recommendationsLoading, currentSong } = usePlayer()
+  const { playSong, addToQueue, queue, recommendations, recommendationsLoading, currentSong, dominantColor } = usePlayer()
+
 
   // Computed once per render — consistent with BasicPlayer / BasicSearch patterns
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
@@ -57,6 +59,8 @@ function HomePage() {
 
   const [showHistory, setShowHistory] = useState(false)
   const [listeningHistory, setListeningHistory] = useState([])
+  const [activeCategory, setActiveCategory] = useState('section-for-you')
+  const [categoryContent, setCategoryContent] = useState({ songs: [], loading: false, loadingMore: false, title: '', query: '', page: 0, hasMore: true })
   const [showQueue, setShowQueue] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [scrolled, setScrolled] = useState(false)
@@ -127,6 +131,112 @@ function HomePage() {
     setListeningHistory(getListeningHistory())
   }
 
+  const loadCategorySongs = async (id, forceRefresh = false) => {
+    if (id === 'section-for-you') {
+      setActiveCategory('section-for-you')
+      return
+    }
+
+    const cleanKey = id.replace('section-', '')
+    
+    // Check if we already have loaded content and are not force-refreshing
+    if (!forceRefresh && activeCategory === id && categoryContent.songs.length > 0) {
+      return
+    }
+
+    setActiveCategory(id)
+    setCategoryContent(prev => ({ ...prev, loading: true, hasMore: true }))
+
+    try {
+      const result = await getFreshSongsForCategory(cleanKey, 16)
+      if (result.success) {
+        setCategoryContent({
+          songs: result.songs,
+          loading: false,
+          loadingMore: false,
+          title: result.title,
+          query: result.query,
+          page: result.page,
+          hasMore: result.songs.length >= 8
+        })
+      } else {
+        setCategoryContent({
+          songs: [],
+          loading: false,
+          loadingMore: false,
+          title: cleanKey.toUpperCase(),
+          query: '',
+          page: 0,
+          hasMore: false
+        })
+      }
+    } catch (error) {
+      setCategoryContent({
+        songs: [],
+        loading: false,
+        loadingMore: false,
+        title: cleanKey.toUpperCase(),
+        query: '',
+        page: 0,
+        hasMore: false
+      })
+    }
+  }
+
+  const handleCategoryClick = (id, forceRefresh = false) => {
+    const isAlreadyActive = activeCategory === id
+    loadCategorySongs(id, forceRefresh || isAlreadyActive)
+  }
+
+  const handleLoadMoreSongs = async () => {
+    if (categoryContent.loadingMore || !categoryContent.hasMore) return
+
+    const cleanKey = activeCategory.replace('section-', '')
+    const nextPage = categoryContent.page + 1
+
+    setCategoryContent(prev => ({ ...prev, loadingMore: true }))
+
+    try {
+      const result = await getMoreSongsForCategory(cleanKey, categoryContent.query, nextPage, 16)
+      if (result.success && result.songs.length > 0) {
+        // Filter out any songs that are already in the list
+        const existingIds = new Set(categoryContent.songs.map(s => s.id))
+        const newUniqueSongs = result.songs.filter(s => !existingIds.has(s.id))
+
+        if (newUniqueSongs.length > 0) {
+          setCategoryContent(prev => ({
+            ...prev,
+            songs: [...prev.songs, ...newUniqueSongs],
+            page: nextPage,
+            loadingMore: false,
+            hasMore: result.songs.length >= 8
+          }))
+        } else {
+          // If all fetched songs were duplicates, let's stop loading more to avoid endless loading loop
+          setCategoryContent(prev => ({
+            ...prev,
+            loadingMore: false,
+            hasMore: false
+          }))
+        }
+      } else {
+        setCategoryContent(prev => ({
+          ...prev,
+          loadingMore: false,
+          hasMore: false
+        }))
+      }
+    } catch (error) {
+      setCategoryContent(prev => ({
+        ...prev,
+        loadingMore: false,
+        hasMore: false
+      }))
+    }
+  }
+
+
+
   const handleShuffleAll = () => {
     const allSongs = [
       ...(forYou.songs || []),
@@ -164,20 +274,22 @@ function HomePage() {
   const iconBtnStyle = (isActive = false) => ({
     width: '38px',
     height: '38px',
-    borderRadius: '10px',
+    borderRadius: '11px',
     background: isActive
-      ? (isDark ? 'rgba(224,115,86,0.18)' : 'rgba(196,92,62,0.1)')
-      : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'),
+      ? (isDark ? 'rgba(224, 115, 86, 0.22)' : 'rgba(196, 92, 62, 0.12)')
+      : 'var(--color-paper-dark)',
+    backgroundImage: isActive ? 'none' : 'var(--background-image-ske-button)',
     border: isActive
-      ? `1px solid ${colors.accent}40`
-      : `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
+      ? `1.5px solid ${colors.accent}`
+      : `1px solid var(--color-border)`,
+    boxShadow: isActive ? 'var(--shadow-ske-inset-sm)' : 'var(--shadow-ske-xs)',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: isActive ? colors.accent : colors.inkMuted,
-    transition: 'all 0.15s ease',
-    backdropFilter: 'blur(4px)',
+    color: isActive ? colors.accent : colors.ink,
+    transition: 'all 200ms cubic-bezier(0.16, 1, 0.3, 1)',
+    position: 'relative',
   })
 
   const renderHeading = (index, title, subtitle) => (
@@ -224,15 +336,32 @@ function HomePage() {
     </div>
   )
 
+
   return (
     <div style={{
+
+
+
       minHeight: '100vh',
       background: colors.paper,
       transition: 'background 0.3s ease',
     }}>
-      {/* Background Ambient Glow Orbs */}
-      <div className="glow-orb glow-orb-1" style={{ opacity: isDark ? 0.3 : 0.4 }} />
-      <div className="glow-orb glow-orb-2" style={{ opacity: isDark ? 0.22 : 0.32 }} />
+      {/* Background Ambient Glow Orbs - dynamic matching Spotify/Apple Music */}
+      <div 
+        className="glow-orb glow-orb-1" 
+        style={{ 
+          opacity: isDark ? 0.35 : 0.45,
+          background: dominantColor ? dominantColor.rgba(isDark ? 0.16 : 0.10) : 'var(--color-accent-subtle)',
+        }} 
+      />
+      <div 
+        className="glow-orb glow-orb-2" 
+        style={{ 
+          opacity: isDark ? 0.25 : 0.35,
+          background: dominantColor ? dominantColor.rgba(isDark ? 0.12 : 0.08) : 'rgba(224, 115, 86, 0.08)',
+        }} 
+      />
+
       {/* Header */}
       <header style={{
         position: 'sticky',
@@ -264,7 +393,7 @@ function HomePage() {
           transition: 'padding 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
         }}>
           {/* Left - Logo + Greeting */}
-          <div className="header-left" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="header-left" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '14px' }}>
             <div style={{
               fontFamily: fonts.display,
               fontSize: 'clamp(1.05rem, 3.5vw, 1.25rem)',
@@ -273,44 +402,58 @@ function HomePage() {
               letterSpacing: '-0.03em',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-            }}>
+              gap: '8px',
+              cursor: 'pointer',
+              transition: 'transform 0.2s ease',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+            >
               <div style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '6px',
+                width: '26px',
+                height: '26px',
+                borderRadius: '8px',
                 background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
+                boxShadow: `0 4px 12px ${colors.accent}30, var(--shadow-ske-xs)`,
               }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff">
                   <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
                 </svg>
               </div>
               SAAFY
             </div>
 
-            <div className="header-divider" style={{ width: '1px', height: '22px', background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
+            <div className="header-divider" style={{
+              width: '1.5px',
+              height: '24px',
+              background: isDark
+                ? 'linear-gradient(to bottom, rgba(255,255,255,0.01), rgba(255,255,255,0.12), rgba(255,255,255,0.01))'
+                : 'linear-gradient(to bottom, rgba(0,0,0,0.01), rgba(0,0,0,0.08), rgba(0,0,0,0.01))'
+            }} />
 
-            <div className="header-greeting">
+            <div className="header-greeting" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <div style={{
                 fontFamily: fonts.primary,
                 fontSize: 'clamp(0.72rem, 1.8vw, 0.85rem)',
-                fontWeight: 600,
+                fontWeight: 650,
                 color: colors.ink,
                 lineHeight: 1.2,
+                letterSpacing: '-0.01em',
               }}>
                 {getGreeting()}
               </div>
               <div style={{
                 fontFamily: fonts.mono,
-                fontSize: 'clamp(0.58rem, 1.3vw, 0.62rem)',
+                fontSize: 'clamp(0.58rem, 1.3vw, 0.6rem)',
                 color: colors.inkLight,
                 textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                marginTop: '2px',
+                letterSpacing: '0.08em',
+                marginTop: '1px',
+                opacity: 0.85,
               }}>
                 {formatDate()}
               </div>
@@ -319,7 +462,7 @@ function HomePage() {
 
           {/* Center - Search */}
           <div className="header-search" style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: 0 }}>
-            <BasicSearch onSelectSong={handlePlaySong} />
+            <BasicSearch onSelectSong={handlePlaySong} setSearchResults={setSearchResults} setIsSearching={setIsSearching} featuredSongs={forYou.songs} listeningHistory={listeningHistory} />
           </div>
 
           {/* Desktop: Right - Actions (hidden on mobile) */}
@@ -535,12 +678,13 @@ function HomePage() {
               onClick={handleShuffleAll}
               style={{
                 ...iconBtnStyle(),
-                background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`,
-                color: '#fff',
-                border: 'none',
+                background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#e07356' : '#c45c3e'} 100%)`,
+                color: '#ffffff',
+                border: `1px solid ${colors.accent}b0`,
+                boxShadow: 'var(--shadow-ske-xs), inset 0 1px 0 rgba(255,255,255,0.15)',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.08)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.filter = 'none'; e.currentTarget.style.transform = 'translateY(0)' }}
               title="Shuffle All - Play Random"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -556,34 +700,18 @@ function HomePage() {
             <button
               onClick={handleRefresh}
               className="header-refresh-btn"
-              data-label="Refresh"
               style={{
-                padding: '8px 14px',
-                fontFamily: fonts.mono,
-                fontSize: '0.68rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                color: colors.inkMuted,
-                background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
-                borderRadius: '10px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                transition: 'all 0.15s ease',
-                whiteSpace: 'nowrap',
+                ...iconBtnStyle(),
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = colors.ink; e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = colors.inkMuted; e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
+              title="Refresh Content"
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="23 4 23 10 17 10" />
                 <polyline points="1 20 1 14 7 14" />
                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
               </svg>
-              <span className="header-refresh-label">Refresh</span>
             </button>
           </div>
 
@@ -1041,13 +1169,13 @@ function HomePage() {
         <nav className="category-nav-ribbon">
           {[
             { id: 'section-for-you', label: 'For You', icon: Sparkles },
-            { id: 'section-trending', label: 'Trending', icon: Flame, condition: themed.trending?.songs && themed.trending.songs.length > 0 },
+            { id: 'section-trending', label: 'Trending', icon: TrendingUp, condition: themed.trending?.songs && themed.trending.songs.length > 0 },
             { id: 'section-hindi', label: 'Hindi', icon: Languages },
-            { id: 'section-english', label: 'English', icon: Globe },
-            { id: 'section-punjabi', label: 'Punjabi', icon: Music },
-            { id: 'section-marathi', label: 'Marathi', icon: Crown, condition: discovery.marathi?.songs && discovery.marathi.songs.length > 0 },
-            { id: 'section-party', label: 'Party', icon: Disc, condition: themed.party?.songs && themed.party.songs.length > 0 },
-            { id: 'section-chill', label: 'Chill', icon: Coffee, condition: themed.chill?.songs && themed.chill.songs.length > 0 },
+            { id: 'section-english', label: 'English', icon: BookText },
+            { id: 'section-punjabi', label: 'Punjabi', icon: Drum },
+            { id: 'section-marathi', label: 'Marathi', icon: Landmark, condition: discovery.marathi?.songs && discovery.marathi.songs.length > 0 },
+            { id: 'section-party', label: 'Party', icon: PartyPopper, condition: themed.party?.songs && themed.party.songs.length > 0 },
+            { id: 'section-chill', label: 'Chill', icon: CloudMoon, condition: themed.chill?.songs && themed.chill.songs.length > 0 },
             { id: 'section-romantic', label: 'Romantic', icon: Heart, condition: themed.romantic?.songs && themed.romantic.songs.length > 0 },
             { id: 'section-workout', label: 'Workout', icon: Dumbbell, condition: themed.workout?.songs && themed.workout.songs.length > 0 },
           ].map((item) => {
@@ -1056,19 +1184,11 @@ function HomePage() {
             return (
               <button
                 key={item.id}
-                className="mobile-nav-tab"
-                onClick={() => {
-                  const el = document.getElementById(item.id);
-                  if (el) {
-                    const headerOffset = 125;
-                    const elementPosition = el.getBoundingClientRect().top;
-                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-                    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-                  }
-                }}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                className={`mobile-nav-tab ${activeCategory === item.id ? 'active' : ''}`}
+                onClick={() => handleCategoryClick(item.id)}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
               >
-                <Icon size={12} strokeWidth={2.5} style={{ flexShrink: 0 }} />
+                <Icon size={16} strokeWidth={1.75} style={{ flexShrink: 0 }} />
                 <span>{item.label}</span>
               </button>
             );
@@ -1124,6 +1244,252 @@ function HomePage() {
                   </button>
                 </div>
                 <SongList songs={searchResults} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
+              </section>
+            ) : activeCategory !== 'section-for-you' ? (
+              <section style={{ position: 'relative', animation: 'slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) both' }}>
+                <style>{`
+                  @keyframes badgePulse {
+                    0% { box-shadow: 0 0 0 0 ${colors.accent}40; }
+                    70% { box-shadow: 0 0 0 8px ${colors.accent}00; }
+                    100% { box-shadow: 0 0 0 0 ${colors.accent}00; }
+                  }
+                  .refresh-btn:hover svg {
+                    transform: rotate(180deg);
+                  }
+                  .load-more-btn:hover svg {
+                    transform: translateY(3px);
+                  }
+                  .load-more-btn:active, .refresh-btn:active {
+                    transform: scale(0.97) !important;
+                  }
+                `}</style>
+
+                {/* Soft ambient background glow matching page theme */}
+                <div style={{
+                  position: 'absolute',
+                  top: '120px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: '85%',
+                  height: '420px',
+                  background: dominantColor 
+                    ? `radial-gradient(circle, ${dominantColor.rgba(isDark ? 0.08 : 0.05)} 0%, transparent 70%)` 
+                    : `radial-gradient(circle, ${colors.accent}0a 0%, transparent 70%)`,
+                  pointerEvents: 'none',
+                  zIndex: 0,
+                  transition: 'background 0.8s ease',
+                }} />
+
+
+                {/* Category Premium Header Banner with Enhanced Glassmorphism */}
+                <div style={{
+                  background: isDark ? 'rgba(15, 15, 15, 0.45)' : 'rgba(255, 255, 255, 0.45)',
+                  backdropFilter: 'blur(30px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+                  borderRadius: '24px',
+                  padding: isMobile ? '24px 20px' : '32px 40px',
+                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+                  borderLeft: `5px solid ${colors.accent}`,
+                  boxShadow: `0 16px 40px rgba(0, 0, 0, ${isDark ? 0.22 : 0.05}), inset 0 1px 0 var(--ske-highlight)`,
+                  marginBottom: '32px',
+                  display: 'flex',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  alignItems: isMobile ? 'flex-start' : 'center',
+                  justifyContent: 'space-between',
+                  gap: '20px',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  zIndex: 1,
+                }}>
+                  {/* Subtle banner inner lighting glow */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '-50%',
+                    right: '-20%',
+                    width: '300px',
+                    height: '300px',
+                    background: `radial-gradient(circle, ${colors.accent}10 0%, transparent 70%)`,
+                    pointerEvents: 'none',
+                    zIndex: -1,
+                  }} />
+
+                  <div style={{ zIndex: 2 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                      <span 
+                        style={{
+                          fontFamily: fonts.mono,
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          color: colors.accent,
+                          letterSpacing: '0.12em',
+                          textTransform: 'uppercase',
+                          background: isDark ? 'rgba(224,115,86,0.15)' : 'rgba(196,92,62,0.1)',
+                          padding: '5px 12px',
+                          borderRadius: '12px',
+                          border: `1px solid ${colors.accent}35`,
+                          boxShadow: `0 0 12px ${colors.accent}20`,
+                          animation: 'badgePulse 2s infinite',
+                        }}
+                      >
+                        Category Mix
+                      </span>
+                    </div>
+                    <h1 style={{
+                      fontFamily: fonts.display,
+                      fontSize: isMobile ? '1.8rem' : '2.5rem',
+                      fontWeight: 800,
+                      color: colors.ink,
+                      margin: 0,
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.1,
+                    }}>
+                      {categoryContent.title || 'Loading category...'}
+                    </h1>
+                    {categoryContent.query && (
+                      <p style={{
+                        fontFamily: fonts.primary,
+                        fontSize: '0.875rem',
+                        color: colors.inkMuted,
+                        marginTop: '10px',
+                        marginBottom: 0,
+                      }}>
+                        Featuring curated content matching <span style={{ fontFamily: fonts.mono, color: colors.accent, fontWeight: 600 }}>"{categoryContent.query}"</span> · Refreshed dynamically
+                      </p>
+                    )}
+                  </div>
+                  
+                  {/* Refresh Button inside banner */}
+                  <button
+                    onClick={() => handleCategoryClick(activeCategory, true)}
+                    className="ske-raised refresh-btn"
+                    disabled={categoryContent.loading}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '12px 24px',
+                      borderRadius: '14px',
+                      background: colors.paperDark,
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                      fontFamily: fonts.mono,
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      color: colors.ink,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      cursor: categoryContent.loading ? 'default' : 'pointer',
+                      transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                      zIndex: 2,
+                    }}
+                  >
+                    <svg 
+                      width="14" 
+                      height="14" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2.5"
+                      style={{ 
+                        transition: 'transform 0.4s ease',
+                        animation: categoryContent.loading ? 'spin 1s linear infinite' : 'none' 
+                      }}
+                    >
+                      <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                    </svg>
+                    <span>Refresh Mix</span>
+                  </button>
+                </div>
+
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  {categoryContent.loading ? (
+                    /* Custom Skeleton Loader for Category Grid view */
+                    <DiscoverSection 
+                      songs={[]} 
+                      loading={true} 
+                      layout="grid" 
+                    />
+                  ) : categoryContent.songs.length > 0 ? (
+                    /* Premium Category Grid Layout & Load More */
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <DiscoverSection 
+                        songs={categoryContent.songs} 
+                        loading={false} 
+                        layout="grid" 
+                        onPlaySong={handlePlaySong} 
+                        onAddToQueue={addToQueue} 
+                      />
+                      
+                      {categoryContent.hasMore && (
+                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px', position: 'relative', zIndex: 2 }}>
+                          <button
+                            onClick={handleLoadMoreSongs}
+                            disabled={categoryContent.loadingMore}
+                            className="ske-raised load-more-btn"
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              padding: '14px 32px',
+                              borderRadius: '16px',
+                              background: colors.paperDark,
+                              border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}`,
+                              fontFamily: fonts.mono,
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                              color: colors.ink,
+                              letterSpacing: '0.06em',
+                              textTransform: 'uppercase',
+                              cursor: categoryContent.loadingMore ? 'default' : 'pointer',
+                              boxShadow: 'var(--shadow-ske-sm)',
+                              transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                            }}
+                          >
+                            {categoryContent.loadingMore ? (
+                              <>
+                                <svg 
+                                  width="14" 
+                                  height="14" 
+                                  viewBox="0 0 24 24" 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  strokeWidth="2.5"
+                                  style={{ animation: 'spin 1s linear infinite' }}
+                                >
+                                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                                </svg>
+                                <span>Loading...</span>
+                              </>
+                            ) : (
+                              <>
+                                <svg 
+                                  width="14" 
+                                  height="14" 
+                                  viewBox="0 0 24 24" 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  strokeWidth="2.5"
+                                  style={{ transition: 'transform 0.2s ease' }}
+                                >
+                                  <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                                <span>Load More Tracks</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{
+                      textAlign: 'center',
+                      padding: '64px 0',
+                      fontFamily: fonts.mono,
+                      color: colors.inkLight,
+                    }}>
+                      No songs found for this category
+                    </div>
+                  )}
+                </div>
               </section>
             ) : (
               <div>
