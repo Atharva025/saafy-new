@@ -661,6 +661,63 @@ export const getRecommendations = async (songId, limit = 10) => {
         return { success: false, recommendations: [], error: error.message }
     }
 }
+// ============================================================================
+// USER API
+// ============================================================================
+
+/**
+ * Register a new user
+ */
+export const registerUser = async (username, email, password) => {
+    try {
+        const response = await fetch('/api/users/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, email, password })
+        })
+        const data = await response.json()
+        return data
+    } catch (error) {
+        console.error('Error registering user:', error)
+        return { success: false, error: error.message || 'Registration failed' }
+    }
+}
+
+/**
+ * Login user
+ */
+export const loginUser = async (emailOrUsername, password) => {
+    try {
+        const response = await fetch('/api/users/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ emailOrUsername, password })
+        })
+        const data = await response.json()
+        return data
+    } catch (error) {
+        console.error('Error logging in:', error)
+        return { success: false, error: error.message || 'Login failed' }
+    }
+}
+
+/**
+ * Fetch all registered users (debug/testing connectivity)
+ */
+export const getAllUsers = async () => {
+    try {
+        const response = await fetch('/api/users')
+        const data = await response.json()
+        return data
+    } catch (error) {
+        console.error('Error fetching users:', error)
+        return { success: false, error: error.message || 'Failed to fetch users' }
+    }
+}
 
 // ============================================================================
 // UTILITY EXPORTS

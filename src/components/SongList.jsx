@@ -2,13 +2,19 @@ import { useState } from 'react'
 import { usePlayer } from '@/context/PlayerContext'
 import { useTheme } from '@/context/ThemeContext'
 import { useToast } from '@/context/ToastContext'
+import { encryptedGetItem } from '@/lib/encryption'
 
 export default function SongList({ songs, onPlaySong, onAddToQueue }) {
     const { colors, fonts, isDark } = useTheme()
-    const { playSong, addToQueue, currentSong, isPlaying, togglePlay } = usePlayer()
-    const { success } = useToast()
+    const { playSong, addToQueue, currentSong, isPlaying, togglePlay, playlists, addSongToPlaylist, createPlaylist } = usePlayer()
+    const { success: toastSuccess, error: toastError } = useToast()
     const [hoveredIndex, setHoveredIndex] = useState(null)
+    const [activePlaylistSong, setActivePlaylistSong] = useState(null)
+    const [isCreatingInModal, setIsCreatingInModal] = useState(false)
+    const [newPlaylistNameInModal, setNewPlaylistNameInModal] = useState('')
+    const [isCreatingPlaylistLoading, setIsCreatingPlaylistLoading] = useState(false)
     const [addedSongs, setAddedSongs] = useState({})
+    const currentUser = encryptedGetItem('saafy_user', null)
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
 
     if (!songs || songs.length === 0) {
@@ -54,7 +60,9 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
                         key={song.id}
                         onClick={() => handlePlay(song)}
                         onMouseEnter={() => setHoveredIndex(index)}
-                        onMouseLeave={() => setHoveredIndex(null)}
+                        onMouseLeave={() => {
+                            setHoveredIndex(null)
+                        }}
                         style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -352,15 +360,450 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
                                     )}
                                 </button>
                             )}
+
+                            {/* Add to Playlist Button */}
+                            {currentUser && (
+                                <div onClick={e => e.stopPropagation()}>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            setActivePlaylistSong(song)
+                                        }}
+                                        style={{
+                                            width: isMobile ? '24px' : '32px',
+                                            height: isMobile ? '24px' : '32px',
+                                            borderRadius: isMobile ? '6px' : '8px',
+                                            background: colors.paperDarker,
+                                            backgroundImage: 'var(--background-image-ske-button)',
+                                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'}`,
+                                            padding: 0,
+                                            minWidth: 0,
+                                            minHeight: 0,
+                                            boxSizing: 'border-box',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: colors.inkMuted,
+                                            boxShadow: 'var(--shadow-ske-xs)',
+                                            transition: 'box-shadow 80ms ease-out, transform 80ms ease-out, background 0.1s, border-color 0.1s',
+                                            position: 'relative',
+                                        }}
+                                        onMouseDown={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-ske-pressed)'; e.currentTarget.style.transform = 'translateY(1px)' }}
+                                        onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-ske-xs)' }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = colors.accent
+                                            e.currentTarget.style.color = '#fff'
+                                            e.currentTarget.style.borderColor = colors.accent
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = colors.paperDarker
+                                            e.currentTarget.style.color = colors.inkMuted
+                                            e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'
+                                        }}
+                                        title="Add to Playlist"
+                                    >
+                                        <svg width="clamp(13px, 3.2vw, 15px)" height="clamp(13px, 3.2vw, 15px)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                            <line x1="8" y1="6" x2="20" y2="6" />
+                                            <line x1="8" y1="12" x2="20" y2="12" />
+                                            <line x1="8" y1="18" x2="16" y2="18" />
+                                            <circle cx="3" cy="6" r="1.2" fill="currentColor" />
+                                            <circle cx="3" cy="12" r="1.2" fill="currentColor" />
+                                            <circle cx="3" cy="18" r="1.2" fill="currentColor" />
+                                            <line x1="19" y1="15" x2="19" y2="21" />
+                                            <line x1="16" y1="18" x2="22" y2="18" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )
             })}
 
+            {/* Playlist Selection Modal Overlay */}
+            {activePlaylistSong && (
+                <div 
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: isDark ? 'rgba(15, 12, 11, 0.65)' : 'rgba(26, 22, 20, 0.45)',
+                        backdropFilter: 'blur(12px)',
+                        WebkitBackdropFilter: 'blur(12px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 99999,
+                        animation: 'modalFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both',
+                    }} 
+                    onClick={() => {
+                        setActivePlaylistSong(null)
+                        setIsCreatingInModal(false)
+                        setNewPlaylistNameInModal('')
+                    }}
+                >
+                    {/* Modal Card */}
+                    <div 
+                        style={{
+                            width: 'min(420px, 92vw)',
+                            background: colors.paper,
+                            borderRadius: '24px',
+                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.70)'}`,
+                            boxShadow: isDark
+                                ? '0 24px 64px rgba(0,0,0,0.55), inset 1px 1px 0 rgba(255,255,255,0.05)'
+                                : '0 24px 64px rgba(26,22,20,0.15), inset 1px 1px 0 rgba(255,255,255,0.60)',
+                            padding: '28px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '20px',
+                            animation: 'modalScaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both',
+                            backgroundImage: 'var(--background-image-ske-surface)',
+                            position: 'relative',
+                        }} 
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Close Button */}
+                        <button
+                            onClick={() => {
+                                setActivePlaylistSong(null)
+                                setIsCreatingInModal(false)
+                                setNewPlaylistNameInModal('')
+                            }}
+                            style={{
+                                position: 'absolute',
+                                top: '20px',
+                                right: '20px',
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: colors.paperDark,
+                                border: `1px solid ${colors.rule}`,
+                                color: colors.inkMuted,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                boxShadow: 'var(--shadow-ske-xs)',
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.background = colors.accent
+                                e.currentTarget.style.color = '#fff'
+                                e.currentTarget.style.borderColor = colors.accent
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.background = colors.paperDark
+                                e.currentTarget.style.color = colors.inkMuted
+                                e.currentTarget.style.borderColor = colors.rule
+                            }}
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                        </button>
+
+                        {/* Header */}
+                        <div>
+                            <h3 style={{
+                                fontFamily: fonts.display,
+                                fontSize: '1.4rem',
+                                fontWeight: 700,
+                                color: colors.ink,
+                                marginBottom: '6px',
+                            }}>
+                                Add to Playlist
+                            </h3>
+                            <p style={{
+                                fontFamily: fonts.primary,
+                                fontSize: '0.85rem',
+                                color: colors.inkMuted,
+                                lineHeight: '1.4',
+                            }}>
+                                Select a playlist to add <span style={{ color: colors.accent, fontWeight: 600 }}>{activePlaylistSong.name || activePlaylistSong.title}</span>
+                            </p>
+                        </div>
+
+                        {/* Playlists List Container */}
+                        <div style={{
+                            maxHeight: '240px',
+                            overflowY: 'auto',
+                            paddingRight: '4px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '8px',
+                        }}>
+                            {playlists.length === 0 ? (
+                                <div style={{
+                                    padding: '24px 16px',
+                                    textAlign: 'center',
+                                    borderRadius: '16px',
+                                    background: colors.paperDark,
+                                    border: `1px dashed ${colors.rule}`,
+                                    color: colors.inkLight,
+                                    fontSize: '0.85rem',
+                                }}>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ margin: '0 auto 10px', opacity: 0.6 }}>
+                                        <path d="M9 18H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" />
+                                        <path d="M12 15h9" />
+                                        <path d="M12 19h9" />
+                                    </svg>
+                                    No playlists found.<br/>Create one below to start!
+                                </div>
+                            ) : (
+                                playlists.map((playlist) => {
+                                    const hasSong = playlist.songs?.some(s => s.id === activePlaylistSong.id)
+                                    return (
+                                        <button
+                                            key={playlist._id}
+                                            disabled={hasSong}
+                                            onClick={async () => {
+                                                const res = await addSongToPlaylist(currentUser.id || currentUser._id, playlist._id, activePlaylistSong)
+                                                if (res.success) {
+                                                    toastSuccess(`Added to "${playlist.name}"`)
+                                                    setActivePlaylistSong(null)
+                                                } else {
+                                                    toastError(res.error || 'Failed to add')
+                                                }
+                                            }}
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px 16px',
+                                                borderRadius: '12px',
+                                                border: `1px solid ${hasSong ? 'transparent' : colors.rule}`,
+                                                background: hasSong ? colors.paperDarker : colors.paperDark,
+                                                color: hasSong ? colors.inkLight : colors.ink,
+                                                fontFamily: fonts.primary,
+                                                fontSize: '0.9rem',
+                                                fontWeight: 500,
+                                                textAlign: 'left',
+                                                cursor: hasSong ? 'not-allowed' : 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                gap: '12px',
+                                                transition: 'all 0.2s ease',
+                                                boxShadow: 'var(--shadow-ske-xs)',
+                                                opacity: hasSong ? 0.6 : 1,
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                if (!hasSong) {
+                                                    e.currentTarget.style.background = colors.paperDarker
+                                                    e.currentTarget.style.borderColor = colors.accent
+                                                    e.currentTarget.style.transform = 'translateY(-1px)'
+                                                }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                if (!hasSong) {
+                                                    e.currentTarget.style.background = colors.paperDark
+                                                    e.currentTarget.style.borderColor = colors.rule
+                                                    e.currentTarget.style.transform = 'none'
+                                                }
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                                                <div style={{
+                                                    width: '32px',
+                                                    height: '32px',
+                                                    borderRadius: '6px',
+                                                    background: colors.paperDarker,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    flexShrink: 0,
+                                                }}>
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={hasSong ? colors.inkLight : colors.accent} strokeWidth="2.5">
+                                                        <path d="M9 18H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" />
+                                                        <path d="M6 6H14" />
+                                                        <path d="M6 10H10" />
+                                                    </svg>
+                                                </div>
+                                                <div style={{ flex: 1, minWidth: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                                    {playlist.name}
+                                                </div>
+                                            </div>
+                                            {hasSong ? (
+                                                <span style={{ fontSize: '0.75rem', fontFamily: fonts.mono, color: colors.inkLight }}>
+                                                    Already added
+                                                </span>
+                                            ) : (
+                                                <span style={{
+                                                    fontSize: '0.75rem',
+                                                    color: colors.inkLight,
+                                                    fontFamily: fonts.mono,
+                                                }}>
+                                                    {playlist.songs?.length || 0} tracks
+                                                </span>
+                                            )}
+                                        </button>
+                                    )
+                                })
+                            )}
+                        </div>
+
+                        {/* Quick Create Playlist Section */}
+                        <div style={{
+                            marginTop: '8px',
+                            borderTop: `1px solid ${colors.rule}`,
+                            paddingTop: '16px',
+                        }}>
+                            {!isCreatingInModal ? (
+                                <button
+                                    onClick={() => setIsCreatingInModal(true)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        borderRadius: '12px',
+                                        border: `1px dashed ${colors.accent}`,
+                                        background: 'transparent',
+                                        color: colors.accent,
+                                        fontFamily: fonts.primary,
+                                        fontSize: '0.88rem',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px',
+                                        transition: 'all 0.2s ease',
+                                    }}
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.background = `${colors.accent}0a`
+                                        e.currentTarget.style.transform = 'translateY(-1px)'
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.background = 'transparent'
+                                        e.currentTarget.style.transform = 'none'
+                                    }}
+                                >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                        <line x1="12" y1="5" x2="12" y2="19" />
+                                        <line x1="5" y1="12" x2="19" y2="12" />
+                                    </svg>
+                                    Create New Playlist
+                                </button>
+                            ) : (
+                                <form 
+                                    onSubmit={async (e) => {
+                                        e.preventDefault()
+                                        const trimmedName = newPlaylistNameInModal.trim()
+                                        if (!trimmedName) return
+                                        
+                                        const userId = currentUser.id || currentUser._id
+                                        setIsCreatingPlaylistLoading(true)
+                                        try {
+                                            const newPlaylist = await createPlaylist(userId, trimmedName)
+                                            if (newPlaylist) {
+                                                toastSuccess(`Playlist "${trimmedName}" created!`)
+                                                setNewPlaylistNameInModal('')
+                                                setIsCreatingInModal(false)
+                                                // Automatically add the song to the new playlist
+                                                const res = await addSongToPlaylist(userId, newPlaylist._id || newPlaylist.id, activePlaylistSong)
+                                                if (res.success) {
+                                                    toastSuccess(`Added to "${trimmedName}"`)
+                                                    setActivePlaylistSong(null)
+                                                } else {
+                                                    toastError(res.error || 'Failed to add song')
+                                                }
+                                            } else {
+                                                toastError('Failed to create playlist')
+                                            }
+                                        } catch (err) {
+                                            toastError('An error occurred')
+                                        } finally {
+                                            setIsCreatingPlaylistLoading(false)
+                                        }
+                                    }}
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '10px',
+                                    }}
+                                >
+                                    <input
+                                        type="text"
+                                        placeholder="Playlist name..."
+                                        value={newPlaylistNameInModal}
+                                        onChange={e => setNewPlaylistNameInModal(e.target.value)}
+                                        autoFocus
+                                        disabled={isCreatingPlaylistLoading}
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px 14px',
+                                            borderRadius: '10px',
+                                            background: colors.paperDark,
+                                            border: `1px solid ${colors.rule}`,
+                                            color: colors.ink,
+                                            fontFamily: fonts.primary,
+                                            fontSize: '0.88rem',
+                                            outline: 'none',
+                                            boxSizing: 'border-box',
+                                            transition: 'border-color 0.2s',
+                                        }}
+                                        onFocus={e => e.currentTarget.style.borderColor = colors.accent}
+                                        onBlur={e => e.currentTarget.style.borderColor = colors.rule}
+                                    />
+                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                        <button
+                                            type="button"
+                                            disabled={isCreatingPlaylistLoading}
+                                            onClick={() => {
+                                                setIsCreatingInModal(false)
+                                                setNewPlaylistNameInModal('')
+                                            }}
+                                            style={{
+                                                padding: '8px 14px',
+                                                borderRadius: '8px',
+                                                border: `1px solid ${colors.rule}`,
+                                                background: 'transparent',
+                                                color: colors.inkMuted,
+                                                fontSize: '0.8rem',
+                                                fontWeight: 500,
+                                                cursor: 'pointer',
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={isCreatingPlaylistLoading || !newPlaylistNameInModal.trim()}
+                                            style={{
+                                                padding: '8px 14px',
+                                                borderRadius: '8px',
+                                                border: 'none',
+                                                background: colors.accent,
+                                                color: '#fff',
+                                                fontSize: '0.8rem',
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                opacity: (!newPlaylistNameInModal.trim() || isCreatingPlaylistLoading) ? 0.5 : 1,
+                                            }}
+                                        >
+                                            {isCreatingPlaylistLoading ? 'Creating...' : 'Create & Add'}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <style>{`
                 @keyframes pulse {
                     0% { transform: scaleY(0.6); }
                     100% { transform: scaleY(1); }
+                }
+                @keyframes modalFadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes modalScaleUp {
+                    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+                    to { opacity: 1; transform: scale(1) translateY(0); }
                 }
             `}</style>
         </div>

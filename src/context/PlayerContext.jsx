@@ -293,6 +293,13 @@ export function PlayerProvider({ children }) {
     const [recommendationsLoading, setRecommendationsLoading] = useState(false)
     const [currentRecommendedSongId, setCurrentRecommendedSongId] = useState(null)
 
+    // Playlist system state
+    const [playlists, setPlaylists] = useState([])
+    const [playlistsLoading, setPlaylistsLoading] = useState(false)
+
+    // Playlist loop context state
+    const [playlistLoopSongs, setPlaylistLoopSongs] = useState(null)
+
     // Dominant color extraction for dynamic backdrop color sync
     const [dominantColor, setDominantColor] = useState(null)
 
@@ -405,6 +412,109 @@ export function PlayerProvider({ children }) {
             log.warn('Auto-queue fetch failed:', error?.message || error)
         } finally {
             autoQueueingRef.current = false
+        }
+    }
+
+    // ============================================================================
+    // PLAYLIST ACTIONS
+    // ============================================================================
+
+    const loadPlaylists = async (userId) => {
+        if (!userId) {
+            setPlaylists([])
+            return
+        }
+        setPlaylistsLoading(true)
+        try {
+            const response = await fetch(`/api/playlists?userId=${userId}`)
+            const data = await response.json()
+            if (data.success) {
+                setPlaylists(data.playlists)
+            }
+        } catch (error) {
+            log.error('Failed to load playlists:', error)
+        } finally {
+            setPlaylistsLoading(false)
+        }
+    }
+
+    const createPlaylist = async (userId, name) => {
+        if (!userId || !name) return false
+        try {
+            const response = await fetch('/api/playlists/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, name })
+            })
+            const data = await response.json()
+            if (data.success) {
+                await loadPlaylists(userId)
+                return data.playlist
+            }
+            return false
+        } catch (error) {
+            log.error('Failed to create playlist:', error)
+            return false
+        }
+    }
+
+    const deletePlaylist = async (userId, playlistId) => {
+        if (!userId || !playlistId) return false
+        try {
+            const response = await fetch('/api/playlists/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, playlistId })
+            })
+            const data = await response.json()
+            if (data.success) {
+                await loadPlaylists(userId)
+                return true
+            }
+            return false
+        } catch (error) {
+            log.error('Failed to delete playlist:', error)
+            return false
+        }
+    }
+
+    const addSongToPlaylist = async (userId, playlistId, song) => {
+        if (!userId || !playlistId || !song) return { success: false, error: 'Invalid parameters' }
+        try {
+            const response = await fetch('/api/playlists/add-song', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, playlistId, song })
+            })
+            const data = await response.json()
+            if (data.success) {
+                await loadPlaylists(userId)
+                return { success: true, playlist: data.playlist }
+            }
+            return { success: false, error: data.error || 'Failed to add song' }
+        } catch (error) {
+            log.error('Failed to add song to playlist:', error)
+            return { success: false, error: 'Network error occurred' }
+        }
+    }
+
+    const removeSongFromPlaylist = async (userId, playlistId, songId) => {
+        if (!userId || !playlistId || !songId) return false
+        try {
+            const response = await fetch('/api/playlists/remove-song', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, playlistId, songId })
+            })
+            const data = await response.json()
+            if (data.success) {
+                await loadPlaylists(userId)
+                return true
+            }
+            return false
+        } catch (error) {
+            log.error('Failed to remove song from playlist:', error)
+            return false
         }
     }
 
@@ -683,6 +793,13 @@ export function PlayerProvider({ children }) {
 
             const normalizedSong = normalizeImageForSong(songWithUrl)
 
+            // Update playlist loop songs
+            if (context && Array.isArray(context) && context.length > 0) {
+                setPlaylistLoopSongs(context)
+            } else {
+                setPlaylistLoopSongs(null)
+            }
+
             // CHANGE: Always play single song only - context is ignored
             // Users must manually add songs to queue using "Add to Queue" option
             dispatch({
@@ -738,6 +855,17 @@ export function PlayerProvider({ children }) {
                 audioRef.current.currentTime = 0
                 audioRef.current.play()
             }
+            return
+        }
+
+        // Playlist loop context takes highest precedence
+        if (playlistLoopSongs && playlistLoopSongs.length > 0) {
+            const remainingSongs = playlistLoopSongs.filter(s => s.id !== state.currentSong?.id)
+            const nextRandomSong = remainingSongs.length > 0
+                ? remainingSongs[Math.floor(Math.random() * remainingSongs.length)]
+                : playlistLoopSongs[0]
+            log.info('Playlist loop active - playing next random song from playlist:', nextRandomSong.name)
+            await playSong(nextRandomSong, playlistLoopSongs)
             return
         }
 
@@ -948,7 +1076,15 @@ export function PlayerProvider({ children }) {
         recommendationsLoading,
         currentRecommendedSongId,
         fetchRecommendations,
-        dominantColor
+        dominantColor,
+        // Playlists
+        playlists,
+        playlistsLoading,
+        loadPlaylists,
+        createPlaylist,
+        deletePlaylist,
+        addSongToPlaylist,
+        removeSongFromPlaylist
     }
 
 
