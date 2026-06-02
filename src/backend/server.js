@@ -24,21 +24,33 @@ try {
 
 const MONGODB_URI = process.env.MONGODB_URI
 
-let isConnected = false
-
 export async function connectToDatabase() {
-  if (isConnected) return
-  if (!MONGODB_URI) {
-    console.error("MONGODB_URI is not defined in the environment variables.")
+  if (mongoose.connection.readyState === 1) {
     return
   }
-  try {
-    await mongoose.connect(MONGODB_URI)
-    isConnected = true
-    console.log("Connected to MongoDB successfully!")
-  } catch (error) {
-    console.error("Error connecting to MongoDB:", error)
+
+  if (!MONGODB_URI) {
+    throw new Error("MONGODB_URI is not defined in the environment variables.")
   }
+
+  // If already connecting, wait for it to complete
+  if (mongoose.connection.readyState === 2) {
+    await new Promise((resolve) => {
+      const interval = setInterval(() => {
+        if (mongoose.connection.readyState !== 2) {
+          clearInterval(interval)
+          resolve()
+        }
+      }, 50)
+    })
+    if (mongoose.connection.readyState === 1) return
+  }
+
+  console.log("Connecting to MongoDB...")
+  await mongoose.connect(MONGODB_URI, {
+    serverSelectionTimeoutMS: 5000, // Fail fast after 5s instead of hanging
+  })
+  console.log("Connected to MongoDB successfully!")
 }
 
 // User Schema
