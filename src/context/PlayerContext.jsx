@@ -277,6 +277,17 @@ export function PlayerProvider({ children }) {
     const defaultFaviconRef = useRef(null)
     const defaultFaviconTypeRef = useRef(null)
 
+    // Refs to store the latest action handlers to prevent stale closure issues in event listeners
+    const togglePlayRef = useRef(null)
+    const handleNextRef = useRef(null)
+    const handlePreviousRef = useRef(null)
+
+    useEffect(() => {
+        togglePlayRef.current = togglePlay
+        handleNextRef.current = handleNext
+        handlePreviousRef.current = handlePrevious
+    })
+
     // Recommendations state
     const [recommendations, setRecommendations] = useState([])
     const [recommendationsLoading, setRecommendationsLoading] = useState(false)
@@ -414,7 +425,7 @@ export function PlayerProvider({ children }) {
         }
 
         const handleEnded = () => {
-            handleNext()
+            handleNextRef.current?.()
         }
 
         const handleError = (e) => {
@@ -896,13 +907,13 @@ export function PlayerProvider({ children }) {
         const cleanup = registerMediaControlHandler((action) => {
             switch (action) {
                 case 'playpause':
-                    togglePlay()
+                    togglePlayRef.current?.()
                     break
                 case 'next':
-                    handleNext()
+                    handleNextRef.current?.()
                     break
                 case 'previous':
-                    handlePrevious()
+                    handlePreviousRef.current?.()
                     break
             }
         })
