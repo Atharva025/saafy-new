@@ -86,6 +86,7 @@ export const User = mongoose.model('User', userSchema, 'users')
 const playlistSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true },
+  image: { type: String }, // Optimized Base64 JPEG string
   songs: [{
     id: { type: String, required: true },
     name: { type: String, required: true },
@@ -233,13 +234,29 @@ export async function viteBackendMiddleware(req, res, next) {
 
     // 5. Create Playlist: POST /api/playlists/create
     if (method === 'POST' && pathname === '/api/playlists/create') {
-      const { userId, name } = await getJsonBody(req)
+      const { userId, name, image } = await getJsonBody(req)
       if (!userId || !name) {
         return sendJson(res, { success: false, error: 'User ID and playlist name are required' }, 400)
       }
-      const playlist = new Playlist({ userId, name, songs: [] })
+      const playlist = new Playlist({ userId, name, image, songs: [] })
       await playlist.save()
       return sendJson(res, { success: true, message: 'Playlist created successfully', playlist }, 201)
+    }
+
+    // 5b. Update Playlist: POST /api/playlists/update
+    if (method === 'POST' && pathname === '/api/playlists/update') {
+      const { userId, playlistId, name, image } = await getJsonBody(req)
+      if (!userId || !playlistId) {
+        return sendJson(res, { success: false, error: 'User ID and Playlist ID are required' }, 400)
+      }
+      const playlist = await Playlist.findOne({ _id: playlistId, userId })
+      if (!playlist) {
+        return sendJson(res, { success: false, error: 'Playlist not found' }, 404)
+      }
+      if (name !== undefined) playlist.name = name
+      if (image !== undefined) playlist.image = image
+      await playlist.save()
+      return sendJson(res, { success: true, message: 'Playlist updated successfully', playlist }, 200)
     }
 
     // 6. Delete Playlist: POST /api/playlists/delete

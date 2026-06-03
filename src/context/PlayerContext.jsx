@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer, useRef, useEffect, useState } from 'react'
 import { getSong, addSongToRecommender, getRecommendations } from '@/lib/api'
 import { getForYouMix } from '@/lib/discovery'
+import { encryptedGetItem, encryptedSetItem } from '@/lib/encryption'
 import { addToSessionPlayedSongs, hasBeenPlayedInSession } from '@/utils/sessionStorage'
 import { updateTray, registerMediaControlHandler } from '@/lib/electron'
 import { extractDominantColor } from '@/utils/colorExtractor'
@@ -303,6 +304,26 @@ export function PlayerProvider({ children }) {
     // Dominant color extraction for dynamic backdrop color sync
     const [dominantColor, setDominantColor] = useState(null)
 
+    // Listening History state
+    const [listeningHistory, setListeningHistory] = useState([])
+
+    const loadListeningHistory = (userId) => {
+        const id = userId || 'guest'
+        const key = `listening_history_${id}`
+        try {
+            const history = encryptedGetItem(key, [])
+            setListeningHistory(Array.isArray(history) ? history : [])
+        } catch {
+            setListeningHistory([])
+        }
+    }
+
+    useEffect(() => {
+        const user = encryptedGetItem('saafy_user', null)
+        const userId = user ? (user.id || user._id) : 'guest'
+        loadListeningHistory(userId)
+    }, [])
+
     useEffect(() => {
         const song = state.currentSong
         if (!song) {
@@ -438,13 +459,13 @@ export function PlayerProvider({ children }) {
         }
     }
 
-    const createPlaylist = async (userId, name) => {
+    const createPlaylist = async (userId, name, image = null) => {
         if (!userId || !name) return false
         try {
             const response = await fetch('/api/playlists/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, name })
+                body: JSON.stringify({ userId, name, image })
             })
             const data = await response.json()
             if (data.success) {
@@ -454,6 +475,26 @@ export function PlayerProvider({ children }) {
             return false
         } catch (error) {
             log.error('Failed to create playlist:', error)
+            return false
+        }
+    }
+
+    const updatePlaylist = async (userId, playlistId, name, image = null) => {
+        if (!userId || !playlistId) return false
+        try {
+            const response = await fetch('/api/playlists/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, playlistId, name, image })
+            })
+            const data = await response.json()
+            if (data.success) {
+                await loadPlaylists(userId)
+                return data.playlist
+            }
+            return false
+        } catch (error) {
+            log.error('Failed to update playlist:', error)
             return false
         }
     }
@@ -713,6 +754,40 @@ export function PlayerProvider({ children }) {
      */
     const handleSongPlayback = async (song) => {
         if (!song?.id) return
+
+        // Add song to user-specific listening history in localStorage and state
+        try {
+            const user = encryptedGetItem('saafy_user', null)
+            const userId = user ? (user.id || user._id) : 'guest'
+            const key = `listening_history_${userId}`
+            
+            let history = []
+            try {
+                const existing = encryptedGetItem(key, [])
+                history = Array.isArray(existing) ? existing : []
+            } catch (err) {
+                log.warn('Failed to read listening history from storage:', err)
+            }
+            
+            // Normalize song format for history
+            const songWithTime = {
+                id: String(song.id),
+                name: song.name || song.title || 'Unknown',
+                title: song.title || song.name || 'Unknown',
+                primaryArtists: song.primaryArtists || 'Unknown Artist',
+                image: song.image,
+                duration: Number(song.duration) || 0,
+                album: song.album || {},
+                playedAt: Date.now()
+            }
+            
+            const filtered = history.filter(s => String(s.id) !== String(song.id))
+            const updated = [songWithTime, ...filtered].slice(0, 10)
+            encryptedSetItem(key, updated)
+            setListeningHistory(updated)
+        } catch (storageErr) {
+            log.error('Failed to save to listening history in PlayerContext:', storageErr)
+        }
 
         log.info('🎵 Processing song playback:', song.name || song.title, `(${song.id})`)
 
@@ -1082,9 +1157,13 @@ export function PlayerProvider({ children }) {
         playlistsLoading,
         loadPlaylists,
         createPlaylist,
+        updatePlaylist,
         deletePlaylist,
         addSongToPlaylist,
-        removeSongFromPlaylist
+        removeSongFromPlaylist,
+        // Listening History
+        listeningHistory,
+        loadListeningHistory
     }
 
 

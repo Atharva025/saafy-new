@@ -17,37 +17,16 @@ import LocalMusicPlayer from '@/components/LocalMusicPlayer'
 import { getAllDiscoveryContent, getForYouMix, getAllThemedContent, refreshDiscovery, getFreshSongsForCategory, getMoreSongsForCategory } from '@/lib/discovery'
 import { encryptedGetItem, encryptedSetItem } from '@/lib/encryption'
 import { validateSong } from '@/lib/security'
-import { getSong, searchSongs } from '@/lib/api'
+import { getSong, searchSongs, getRecommendations } from '@/lib/api'
+import { compressImage } from '@/utils/image'
 import { Sparkles, TrendingUp, Languages, BookText, Drum, Landmark, PartyPopper, CloudMoon, Heart, Dumbbell, ListMusic } from 'lucide-react'
-
-// Local Storage Keys
-const HISTORY_KEY = 'listening_history'
-
-// Helper to get/set listening history (with encryption)
-const getListeningHistory = () => {
-  try {
-    const history = encryptedGetItem(HISTORY_KEY, [])
-    return Array.isArray(history) ? history : []
-  } catch {
-    return []
-  }
-}
-
-const addToListeningHistory = (song) => {
-  if (!song || !validateSong(song)) return
-  const history = getListeningHistory()
-  const songWithTime = { ...song, playedAt: Date.now() }
-  const filtered = history.filter(s => s.id !== song.id)
-  const updated = [songWithTime, ...filtered].slice(0, 10)
-  encryptedSetItem(HISTORY_KEY, updated)
-}
 
 function HomePage() {
   const { isDark, colors, fonts, toggleTheme } = useTheme()
   const { 
     playSong, addToQueue, queue, recommendations, recommendationsLoading, currentSong, dominantColor,
-    playlists, playlistsLoading, loadPlaylists, createPlaylist, deletePlaylist, removeSongFromPlaylist, clearQueue,
-    isPlaying
+    playlists, playlistsLoading, loadPlaylists, createPlaylist, updatePlaylist, deletePlaylist, removeSongFromPlaylist, clearQueue,
+    isPlaying, listeningHistory, loadListeningHistory
   } = usePlayer()
   const toast = useToast()
   
@@ -61,6 +40,7 @@ function HomePage() {
   const [playlistSongs, setPlaylistSongs] = useState([])
   const [playlistSongsLoading, setPlaylistSongsLoading] = useState(false)
   const [newPlaylistName, setNewPlaylistName] = useState('')
+  const [newPlaylistImage, setNewPlaylistImage] = useState(null)
   const [isCreatingPlaylist, setIsCreatingPlaylist] = useState(false)
 
   // Playlist handlers
@@ -141,15 +121,48 @@ function HomePage() {
     }
   }
 
+  const handleCreatePlaylistImageChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    try {
+      const compressed = await compressImage(file)
+      setNewPlaylistImage(compressed)
+    } catch (err) {
+      console.error("Failed to compress image:", err)
+      toast.error("Failed to process cover image")
+    }
+  }
+
+  const handleUpdatePlaylistImage = async (e) => {
+    const file = e.target.files[0]
+    if (!file || !currentUser || !selectedPlaylist) return
+    
+    try {
+      const compressed = await compressImage(file)
+      const userId = currentUser.id || currentUser._id
+      const updatedPlaylist = await updatePlaylist(userId, selectedPlaylist._id, selectedPlaylist.name, compressed)
+      if (updatedPlaylist) {
+        toast.success("Playlist cover updated successfully!")
+        setSelectedPlaylist(updatedPlaylist)
+      } else {
+        toast.error("Failed to update playlist cover")
+      }
+    } catch (err) {
+      console.error("Failed to compress image:", err)
+      toast.error("Failed to process cover image")
+    }
+  }
+
   const handleCreatePlaylist = async (e) => {
     e.preventDefault()
     if (!newPlaylistName.trim() || !currentUser) return
     
     const userId = currentUser.id || currentUser._id
-    const playlist = await createPlaylist(userId, newPlaylistName.trim())
+    const playlist = await createPlaylist(userId, newPlaylistName.trim(), newPlaylistImage)
     if (playlist) {
       toast.success(`Playlist "${newPlaylistName}" created!`)
       setNewPlaylistName('')
+      setNewPlaylistImage(null)
       setIsCreatingPlaylist(false)
     } else {
       toast.error("Failed to create playlist")
@@ -182,6 +195,9 @@ function HomePage() {
   const handleLoginSuccess = (user) => {
     setCurrentUser(user)
     loadPlaylists(user.id || user._id)
+    const userId = user.id || user._id
+    loadListeningHistory(userId)
+    loadDiscoveryContent(user)
   }
 
 
@@ -198,7 +214,6 @@ function HomePage() {
   const [currentTime, setCurrentTime] = useState(new Date())
 
   const [showHistory, setShowHistory] = useState(false)
-  const [listeningHistory, setListeningHistory] = useState([])
   const [activeCategory, setActiveCategory] = useState('section-for-you')
   const [categoryContent, setCategoryContent] = useState({ songs: [], loading: false, loadingMore: false, title: '', query: '', page: 0, hasMore: true })
   const [showQueue, setShowQueue] = useState(false)
@@ -213,14 +228,15 @@ function HomePage() {
   })
 
   useEffect(() => {
-    loadDiscoveryContent()
-    setListeningHistory(getListeningHistory())
-    
     const savedUser = encryptedGetItem('saafy_user', null)
+    let activeUser = null
     if (savedUser) {
       setCurrentUser(savedUser)
       loadPlaylists(savedUser.id || savedUser._id)
+      activeUser = savedUser
     }
+    
+    loadDiscoveryContent(activeUser)
     
     const timer = setInterval(() => setCurrentTime(new Date()), 60000)
     
@@ -248,19 +264,93 @@ function HomePage() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const loadDiscoveryContent = async () => {
+
+
+  const loadDiscoveryContent = async (user = currentUser) => {
     setLoading(true)
+    setForYou(prev => ({ ...prev, loading: true }))
     try {
-      const [forYouData, allContent, themedContent] = await Promise.all([
-        getForYouMix(12),
+      const [allContent, themedContent] = await Promise.all([
         getAllDiscoveryContent(10),
         getAllThemedContent(10)
       ])
-      setForYou({ songs: forYouData.songs, loading: false })
       setDiscovery(allContent)
       setThemed(themedContent)
-    } catch (error) { }
-    finally {
+
+      // Fetch user specific recommendations if there is history
+      const userId = user ? (user.id || user._id) : 'guest'
+      const key = `listening_history_${userId}`
+      const history = encryptedGetItem(key, [])
+
+      if (history.length > 0) {
+        // Fetch recommendations for each recently played song
+        const recommendationPromises = history.map(async (historySong) => {
+          try {
+            const res = await getRecommendations(historySong.id, 10)
+            if (res.success && res.recommendations && res.recommendations.length > 0) {
+              // Find the first recommended song that we can successfully fetch details for
+              for (const rec of res.recommendations) {
+                try {
+                  const songRes = await getSong(rec.song_id)
+                  if (songRes.success && songRes.data) {
+                    return songRes.data
+                  }
+                } catch (err) {
+                  console.warn(`Failed to fetch song details for recommendation ${rec.song_id}:`, err)
+                }
+              }
+            }
+          } catch (err) {
+            console.error(`Failed to get recommendations for song ${historySong.id}:`, err)
+          }
+          return null
+        })
+
+        const recommendedSongs = (await Promise.all(recommendationPromises)).filter(Boolean)
+
+        // De-duplicate recommended songs
+        const seenIds = new Set()
+        const uniqueRecommended = []
+        for (const song of recommendedSongs) {
+          if (!seenIds.has(song.id)) {
+            seenIds.add(song.id)
+            uniqueRecommended.push(song)
+          }
+        }
+
+        // Pad with default For You mix if we have less than 12 recommendations
+        if (uniqueRecommended.length < 12) {
+          try {
+            const defaultMix = await getForYouMix(12)
+            if (defaultMix && defaultMix.songs) {
+              for (const song of defaultMix.songs) {
+                if (!seenIds.has(song.id)) {
+                  seenIds.add(song.id)
+                  uniqueRecommended.push(song)
+                }
+                if (uniqueRecommended.length >= 12) break
+              }
+            }
+          } catch (e) {
+            console.warn("Failed to fetch default mix for padding:", e)
+          }
+        }
+
+        setForYou({ songs: uniqueRecommended.slice(0, 12), loading: false })
+      } else {
+        // Fallback to default For You mix
+        const forYouData = await getForYouMix(12)
+        setForYou({ songs: forYouData.songs || [], loading: false })
+      }
+    } catch (error) {
+      console.error("Error loading discovery content:", error)
+      try {
+        const forYouData = await getForYouMix(12)
+        setForYou({ songs: forYouData.songs || [], loading: false })
+      } catch (fallbackError) {
+        setForYou({ songs: [], loading: false })
+      }
+    } finally {
       setLoading(false)
     }
   }
@@ -277,8 +367,6 @@ function HomePage() {
 
   const handlePlaySong = (song, context = null) => {
     playSong(song, context)
-    addToListeningHistory(song)
-    setListeningHistory(getListeningHistory())
   }
 
   const loadCategorySongs = async (id, forceRefresh = false) => {
@@ -693,7 +781,8 @@ function HomePage() {
             <div ref={historyRef} style={{ position: 'relative' }}>
               <button
                 onClick={() => {
-                  setListeningHistory(getListeningHistory())
+                  const userId = currentUser ? (currentUser.id || currentUser._id) : 'guest'
+                  loadListeningHistory(userId)
                   setShowHistory(!showHistory)
                 }}
                 style={{
@@ -956,6 +1045,8 @@ function HomePage() {
                         loadPlaylists(null)
                         setSelectedPlaylist(null)
                         setShowUserDropdown(false)
+                        loadListeningHistory('guest')
+                        loadDiscoveryContent(null)
                         toast.info('Signed out successfully')
                       }}
                       style={{
@@ -1177,7 +1268,8 @@ function HomePage() {
               {/* History */}
               <button
                 onClick={() => {
-                  setListeningHistory(getListeningHistory())
+                  const userId = currentUser ? (currentUser.id || currentUser._id) : 'guest'
+                  setListeningHistory(getListeningHistory(userId))
                   setShowHistory(true)
                   setShowMobileMenu(false)
                 }}
@@ -1644,6 +1736,56 @@ function HomePage() {
                           }}
                           autoFocus
                         />
+
+                        {/* Cover Image Selector */}
+                        <div style={{ marginBottom: '20px' }}>
+                          <label style={{
+                            fontFamily: fonts.mono,
+                            fontSize: '0.72rem',
+                            color: colors.inkMuted,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            marginBottom: '6px',
+                            display: 'block',
+                          }}>
+                            Playlist Cover (Optional)
+                          </label>
+                          <div 
+                            onClick={() => document.getElementById('create-playlist-image-input').click()}
+                            style={{
+                              width: '80px',
+                              height: '80px',
+                              borderRadius: '10px',
+                              border: `2px dashed ${colors.rule}`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              overflow: 'hidden',
+                              background: isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.5)',
+                              transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.borderColor = colors.accent}
+                            onMouseLeave={(e) => e.currentTarget.style.borderColor = colors.rule}
+                          >
+                            {newPlaylistImage ? (
+                              <img src={newPlaylistImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.inkLight} strokeWidth="2">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                <circle cx="12" cy="13" r="4" />
+                              </svg>
+                            )}
+                          </div>
+                          <input 
+                            type="file" 
+                            id="create-playlist-image-input" 
+                            accept="image/*" 
+                            onChange={handleCreatePlaylistImageChange} 
+                            style={{ display: 'none' }} 
+                          />
+                        </div>
+
                         <div style={{ display: 'flex', gap: '10px' }}>
                           <button
                             type="submit"
@@ -1710,7 +1852,7 @@ function HomePage() {
                       ) : (
                         playlists.map((playlist) => {
                           const hasSongs = playlist.songs && playlist.songs.length > 0
-                          const coverImage = hasSongs ? playlist.songs[0].image : ''
+                          const coverImage = playlist.image || (hasSongs ? playlist.songs[0].image : '')
                           return (
                             <div
                               key={playlist._id}
@@ -1820,20 +1962,34 @@ function HomePage() {
                       zIndex: 1,
                     }}>
                       {/* Large Cover Art */}
-                      <div style={{
-                        width: '160px',
-                        height: '160px',
-                        borderRadius: '16px',
-                        overflow: 'hidden',
-                        background: `linear-gradient(135deg, ${colors.accent}20 0%, ${isDark ? '#e0735630' : '#c45c3e30'} 100%)`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: 'var(--shadow-ske-sm)',
-                        flexShrink: 0,
-                      }}>
-                        {selectedPlaylist.songs && selectedPlaylist.songs.length > 0 && selectedPlaylist.songs[0].image ? (
-                          <img src={selectedPlaylist.songs[0].image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div 
+                        onClick={() => document.getElementById('update-playlist-image-input')?.click()}
+                        style={{
+                          width: '160px',
+                          height: '160px',
+                          borderRadius: '16px',
+                          overflow: 'hidden',
+                          background: `linear-gradient(135deg, ${colors.accent}20 0%, ${isDark ? '#e0735630' : '#c45c3e30'} 100%)`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: 'var(--shadow-ske-sm)',
+                          flexShrink: 0,
+                          cursor: 'pointer',
+                          position: 'relative',
+                        }}
+                        onMouseEnter={(e) => {
+                          const overlay = e.currentTarget.querySelector('.cover-edit-overlay');
+                          if (overlay) overlay.style.opacity = '1';
+                        }}
+                        onMouseLeave={(e) => {
+                          const overlay = e.currentTarget.querySelector('.cover-edit-overlay');
+                          if (overlay) overlay.style.opacity = '0';
+                        }}
+                        title="Click to update playlist cover"
+                      >
+                        {selectedPlaylist.image || (selectedPlaylist.songs && selectedPlaylist.songs.length > 0 && selectedPlaylist.songs[0].image) ? (
+                          <img src={selectedPlaylist.image || selectedPlaylist.songs[0].image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
                           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="1.5">
                             <path d="M9 18H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" />
@@ -1843,6 +1999,33 @@ function HomePage() {
                             <path d="M6 10H10" />
                           </svg>
                         )}
+                        {/* Edit Overlay */}
+                        <div 
+                          className="cover-edit-overlay"
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'rgba(0, 0, 0, 0.45)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: 0,
+                            transition: 'opacity 0.2s ease',
+                            pointerEvents: 'none',
+                          }}
+                        >
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                            <circle cx="12" cy="13" r="4" />
+                          </svg>
+                        </div>
+                        <input 
+                          type="file" 
+                          id="update-playlist-image-input" 
+                          accept="image/*" 
+                          onChange={handleUpdatePlaylistImage} 
+                          style={{ display: 'none' }} 
+                        />
                       </div>
 
                       {/* Metadata & Actions */}

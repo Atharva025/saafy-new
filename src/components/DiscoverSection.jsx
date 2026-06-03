@@ -1452,12 +1452,17 @@ export default function DiscoverSection({ songs, loading, featured = false, layo
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
                                                     flexShrink: 0,
+                                                    overflow: 'hidden',
                                                 }}>
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={hasSong ? colors.inkLight : colors.accent} strokeWidth="2.5">
-                                                        <path d="M9 18H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" />
-                                                        <path d="M6 6H14" />
-                                                        <path d="M6 10H10" />
-                                                    </svg>
+                                                    {playlist.image || (playlist.songs && playlist.songs.length > 0 && playlist.songs[0].image) ? (
+                                                        <img src={playlist.image || playlist.songs[0].image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    ) : (
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={hasSong ? colors.inkLight : colors.accent} strokeWidth="2.5">
+                                                            <path d="M9 18H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" />
+                                                            <path d="M6 6H14" />
+                                                            <path d="M6 10H10" />
+                                                        </svg>
+                                                    )}
                                                 </div>
                                                 <div style={{ flex: 1, minWidth: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                                                     {playlist.name}
