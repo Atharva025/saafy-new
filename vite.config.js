@@ -19,4 +19,4 @@ export default defineConfig({
     },
   },
 })
-// Force restart to reload backend modules (v3 playlists added)
+// Force restart to reload backend modules (v3 playlists added - final middleware loaded)

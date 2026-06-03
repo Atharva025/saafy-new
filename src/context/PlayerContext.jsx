@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useRef, useEffect, useState } from 'react'
-import { getSong, addSongToRecommender, getRecommendations } from '@/lib/api'
+import { getSong, addSongToRecommender, getRecommendations, searchSongs } from '@/lib/api'
 import { getForYouMix } from '@/lib/discovery'
 import { encryptedGetItem, encryptedSetItem } from '@/lib/encryption'
 import { addToSessionPlayedSongs, hasBeenPlayedInSession } from '@/utils/sessionStorage'
@@ -51,6 +51,12 @@ const playerReducer = (state, action) => {
                 currentSong: action.payload,
                 progress: 0,
                 error: null
+            }
+
+        case 'UPDATE_CURRENT_SONG':
+            return {
+                ...state,
+                currentSong: action.payload
             }
 
         case 'SET_PLAYING':
@@ -559,6 +565,26 @@ export function PlayerProvider({ children }) {
         }
     }
 
+    const importSpotifyPlaylist = async (userId, playlistUrl) => {
+        if (!userId || !playlistUrl) return { success: false, error: 'User ID and Playlist URL are required' }
+        try {
+            const response = await fetch('/api/playlists/import-spotify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, playlistUrl })
+            })
+            const data = await response.json()
+            if (data.success) {
+                await loadPlaylists(userId)
+                return { success: true, playlist: data.playlist }
+            }
+            return { success: false, error: data.error || 'Failed to import playlist' }
+        } catch (error) {
+            log.error('Failed to import Spotify playlist:', error)
+            return { success: false, error: 'Network error occurred' }
+        }
+    }
+
     // ============================================================================
     // AUDIO EVENT HANDLERS
     // ============================================================================
@@ -833,6 +859,53 @@ export function PlayerProvider({ children }) {
         await fetchRecommendations(song.id)
     }
 
+    const resolveSongDetails = async (song) => {
+        if (!song) return null
+        
+        // If it already has an audio URL, return it directly
+        if (extractAudioUrl(song)) {
+            return song
+        }
+
+        log.info('Lazy resolving song details for:', song.id || song.name)
+        
+        try {
+            let resolved = null
+
+            // 1. If it's a standard JioSaavn ID (doesn't start with spotify:)
+            if (song.id && typeof song.id === 'string' && !song.id.startsWith('spotify:')) {
+                const response = await getSong(song.id)
+                if (response.success && response.data) {
+                    resolved = response.data
+                }
+            }
+
+            // 2. If it's a Spotify ID or JioSaavn lookup failed, search fallback
+            if (!resolved) {
+                const searchTitle = song.name || song.title || ''
+                const searchArtist = song.primaryArtists || ''
+                if (searchTitle) {
+                    const searchResult = await searchSongs(`${searchTitle} ${searchArtist}`, 0, 1)
+                    if (searchResult.success && searchResult.data?.results?.[0]) {
+                        resolved = searchResult.data.results[0]
+                    }
+                }
+            }
+
+            if (resolved) {
+                // Keep the original ID to ensure correct queue and playback states match
+                return {
+                    ...resolved,
+                    id: song.id // preserve the playlist's original ID (spotify:xxx or other)
+                }
+            }
+        } catch (err) {
+            log.warn('Failed to resolve song details:', err)
+        }
+
+        return song // fallback to the original song object
+    }
+
     // ============================================================================
     // PLAYER ACTIONS
     // ============================================================================
@@ -848,16 +921,8 @@ export function PlayerProvider({ children }) {
         try {
             dispatch({ type: 'CLEAR_ERROR' })
 
-            let songWithUrl = song
-
-            // Fetch full song details if no download URL
-            if (!extractAudioUrl(song)) {
-                log.info('Fetching song details for:', song.id)
-                const response = await getSong(song.id)
-                if (response.success && response.data) {
-                    songWithUrl = response.data
-                }
-            }
+            // Lazy resolve details if no audio URL is present
+            const songWithUrl = await resolveSongDetails(song)
 
             const audioUrl = extractAudioUrl(songWithUrl)
 
@@ -986,30 +1051,40 @@ export function PlayerProvider({ children }) {
         }
 
         // Play next song and update queue
-        const nextSong = state.queue[0]
+        const rawNextSong = state.queue[0]
         dispatch({ type: 'PLAY_NEXT' })
 
-        // Setup audio for next song
-        const audioUrl = extractAudioUrl(nextSong)
-        if (audioUrl && audioRef.current) {
-            const audio = audioRef.current
-            audio.src = audioUrl
-            audio.load()
+        try {
+            const nextSong = await resolveSongDetails(rawNextSong)
+            dispatch({ type: 'UPDATE_CURRENT_SONG', payload: normalizeImageForSong(nextSong) })
 
-            try {
-                await audio.play()
-                dispatch({ type: 'SET_PLAYING', payload: true })
+            const audioUrl = extractAudioUrl(nextSong)
+            if (audioUrl && audioRef.current) {
+                const audio = audioRef.current
+                audio.src = audioUrl
+                audio.load()
 
-                // Track song in session and fetch recommendations
-                await handleSongPlayback(nextSong)
-            } catch (error) {
-                log.warn('Failed to play next song:', error)
+                try {
+                    await audio.play()
+                    dispatch({ type: 'SET_PLAYING', payload: true })
+
+                    // Track song in session and fetch recommendations
+                    await handleSongPlayback(normalizeImageForSong(nextSong))
+                } catch (error) {
+                    log.warn('Failed to play next song:', error)
+                    dispatch({ type: 'SET_PLAYING', payload: false })
+                }
+            } else {
+                log.warn('No audio URL found for next song')
                 dispatch({ type: 'SET_PLAYING', payload: false })
             }
+        } catch (err) {
+            log.error('Failed to play next song in handleNext:', err)
+            dispatch({ type: 'SET_PLAYING', payload: false })
         }
     }
 
-    const handlePrevious = () => {
+    const handlePrevious = async () => {
         // Restart if more than 3 seconds played
         if (state.progress > 3) {
             seekTo(0)
@@ -1022,23 +1097,34 @@ export function PlayerProvider({ children }) {
             return
         }
 
-        const previousSong = state.history[state.history.length - 1]
+        const rawPreviousSong = state.history[state.history.length - 1]
         dispatch({ type: 'PLAY_PREVIOUS' })
 
-        // Setup audio for previous song
-        const audioUrl = extractAudioUrl(previousSong)
-        if (audioUrl && audioRef.current) {
-            const audio = audioRef.current
-            audio.src = audioUrl
-            audio.load()
+        try {
+            const previousSong = await resolveSongDetails(rawPreviousSong)
+            dispatch({ type: 'UPDATE_CURRENT_SONG', payload: normalizeImageForSong(previousSong) })
 
-            audio.play().then(() => {
-                // Track song in session and fetch recommendations
-                handleSongPlayback(previousSong)
-            }).catch(error => {
-                log.warn('Failed to play previous song:', error)
+            const audioUrl = extractAudioUrl(previousSong)
+            if (audioUrl && audioRef.current) {
+                const audio = audioRef.current
+                audio.src = audioUrl
+                audio.load()
+
+                try {
+                    await audio.play()
+                    dispatch({ type: 'SET_PLAYING', payload: true })
+                    await handleSongPlayback(normalizeImageForSong(previousSong))
+                } catch (error) {
+                    log.warn('Failed to play previous song:', error)
+                    dispatch({ type: 'SET_PLAYING', payload: false })
+                }
+            } else {
+                log.warn('No audio URL found for previous song')
                 dispatch({ type: 'SET_PLAYING', payload: false })
-            })
+            }
+        } catch (err) {
+            log.error('Failed to play previous song in handlePrevious:', err)
+            dispatch({ type: 'SET_PLAYING', payload: false })
         }
     }
 
@@ -1161,6 +1247,7 @@ export function PlayerProvider({ children }) {
         deletePlaylist,
         addSongToPlaylist,
         removeSongFromPlaylist,
+        importSpotifyPlaylist,
         // Listening History
         listeningHistory,
         loadListeningHistory

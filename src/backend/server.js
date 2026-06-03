@@ -329,6 +329,257 @@ export async function viteBackendMiddleware(req, res, next) {
       return sendJson(res, { success: true, message: 'Song removed from playlist', playlist }, 200)
     }
 
+    // 9. Import Spotify Playlist: POST /api/playlists/import-spotify
+    if (method === 'POST' && pathname === '/api/playlists/import-spotify') {
+      const { userId, playlistUrl } = await getJsonBody(req)
+      if (!userId || !playlistUrl) {
+        return sendJson(res, { success: false, error: 'User ID and Spotify Playlist URL/ID are required' }, 400)
+      }
+
+      // Reload .env manually to ensure fresh variables are present
+      try {
+        const envPath = path.resolve(process.cwd(), '.env')
+        if (fs.existsSync(envPath)) {
+          const envConfig = fs.readFileSync(envPath, 'utf8')
+          envConfig.split('\n').forEach(line => {
+            const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/)
+            if (match) {
+              const key = match[1]
+              let val = match[2] || ''
+              val = val.trim().replace(/(^['"]|['"]$)/g, '')
+              process.env[key] = val
+            }
+          })
+        }
+      } catch (e) {
+        console.warn("Failed to reload .env dynamically inside handler:", e)
+      }
+
+      // Extract playlist ID
+      let playlistId = playlistUrl.trim()
+      if (playlistId.includes('spotify.com') || playlistId.includes('open.spotify')) {
+        const urlMatch = playlistId.match(/playlist\/([a-zA-Z0-9]+)/)
+        if (urlMatch) {
+          playlistId = urlMatch[1]
+        } else {
+          return sendJson(res, { success: false, error: 'Invalid Spotify playlist URL format' }, 400)
+        }
+      } else if (playlistId.startsWith('spotify:playlist:')) {
+        playlistId = playlistId.replace('spotify:playlist:', '')
+      }
+
+      // Check if credentials are present
+      const clientId = process.env.SPOTIFY_CLIENT_ID
+      const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
+
+      if (!clientId || !clientSecret || clientId === 'your_spotify_client_id_here' || clientSecret === 'your_spotify_client_secret_here') {
+        return sendJson(res, { 
+          success: false, 
+          error: 'Spotify API credentials are not configured on the server. Please add your SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET to the .env file.' 
+        }, 500)
+      }
+
+      try {
+        let playlistName = 'Imported Spotify Playlist'
+        let playlistCoverUrl = null
+        let songs = []
+        let importedVia = 'api'
+
+        const refreshToken = process.env.SPOTIFY_REFRESH_TOKEN
+        const hasRefreshToken = refreshToken && refreshToken !== 'your_spotify_refresh_token_here'
+
+        if (hasRefreshToken) {
+          try {
+            console.log('Using SPOTIFY_REFRESH_TOKEN to authenticate with Spotify API...')
+            const authString = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
+            const tokenResponse = await fetch('https://accounts.spotify.com/api/token', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Basic ${authString}`,
+                'Content-Type': 'application/x-www-form-urlencoded'
+              },
+              body: new URLSearchParams({
+                grant_type: 'refresh_token',
+                refresh_token: refreshToken
+              })
+            })
+
+            if (!tokenResponse.ok) {
+              const errData = await tokenResponse.json().catch(() => ({}))
+              throw new Error(`Failed to refresh access token: ${errData.error_description || tokenResponse.statusText}`)
+            }
+
+            const { access_token } = await tokenResponse.json()
+
+            // Fetch playlist details from Spotify API
+            console.log(`Fetching playlist metadata for ${playlistId} from API...`)
+            const playlistResponse = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
+              headers: {
+                'Authorization': `Bearer ${access_token}`
+              }
+            })
+
+            if (!playlistResponse.ok) {
+              throw new Error(`Failed to fetch playlist details: ${playlistResponse.statusText}`)
+            }
+
+            const spotifyPlaylist = await playlistResponse.json()
+            playlistName = spotifyPlaylist.name || 'Imported Spotify Playlist'
+            if (spotifyPlaylist.images && spotifyPlaylist.images.length > 0) {
+              playlistCoverUrl = spotifyPlaylist.images[0].url
+            }
+
+            // Fetch playlist items (tracks) with pagination support
+            console.log(`Fetching playlist items for ${playlistId} from API...`)
+            let nextUrl = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100`
+            let pageCount = 0
+
+            while (nextUrl && pageCount < 5) {
+              pageCount++
+              const itemsResponse = await fetch(nextUrl, {
+                headers: {
+                  'Authorization': `Bearer ${access_token}`
+                }
+              })
+
+              if (!itemsResponse.ok) {
+                throw new Error(`Failed to fetch playlist items on page ${pageCount}: ${itemsResponse.statusText} (${itemsResponse.status})`)
+              }
+
+              const itemsData = await itemsResponse.json()
+              const items = itemsData.items || []
+
+              const mappedTracks = items
+                .filter(item => item && item.track)
+                .map(item => {
+                  const track = item.track
+                  const artistNames = track.artists ? track.artists.map(a => a.name).join(', ') : 'Unknown Artist'
+                  const albumName = track.album ? track.album.name : ''
+                  const imageUrl = track.album?.images?.[1]?.url || track.album?.images?.[0]?.url || ''
+
+                  return {
+                    id: `spotify:${track.id}`,
+                    name: track.name || 'Unknown Track',
+                    primaryArtists: artistNames,
+                    image: imageUrl,
+                    duration: Math.round((track.duration_ms || 0) / 1000),
+                    album: albumName
+                  }
+                })
+
+              songs.push(...mappedTracks)
+              nextUrl = itemsData.next
+            }
+
+            console.log(`Successfully fetched ${songs.length} tracks via Spotify Web API.`)
+
+          } catch (apiErr) {
+            console.warn('Spotify API call failed, falling back to scraper path:', apiErr.message)
+            importedVia = 'scraper'
+          }
+        } else {
+          console.log('No SPOTIFY_REFRESH_TOKEN found in .env, using scraper path...')
+          importedVia = 'scraper'
+        }
+
+        // Scraper Path
+        if (importedVia === 'scraper') {
+          console.log(`Scraping public Spotify embed page for playlist ${playlistId}...`)
+          const embedUrl = `https://open.spotify.com/embed/playlist/${playlistId}`
+          const embedRes = await fetch(embedUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+          })
+
+          if (!embedRes.ok) {
+            throw new Error(`Failed to fetch public Spotify playlist embed page: ${embedRes.status} ${embedRes.statusText}`)
+          }
+
+          const html = await embedRes.text()
+          const jsonMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/)
+          if (!jsonMatch) {
+            throw new Error('Could not parse playlist tracks from public embed page.')
+          }
+
+          const data = JSON.parse(jsonMatch[1])
+          const entity = data.props?.pageProps?.state?.data?.entity || data.props?.pageProps?.playlist
+          if (!entity) {
+            throw new Error('Spotify playlist data not found in embed page.')
+          }
+
+          playlistName = entity.name || entity.title || 'Imported Spotify Playlist'
+          playlistCoverUrl = entity.coverArt?.sources?.[0]?.url || entity.images?.[0]?.url || ''
+
+          const trackList = entity.trackList || entity.tracks?.items || []
+          songs = trackList.map(item => {
+            const trackId = item.uri ? item.uri.split(':').pop() : ''
+            const trackName = item.title || item.name || 'Unknown Track'
+            
+            let artistNames = 'Unknown Artist'
+            if (item.subtitle) {
+              artistNames = item.subtitle.replace(/\u00a0/g, ' ')
+            } else if (item.artists) {
+              artistNames = item.artists.map(a => a.name).join(', ')
+            } else if (item.track?.artists) {
+              artistNames = item.track.artists.map(a => a.name).join(', ')
+            }
+
+            const duration = item.duration ? Math.round(item.duration / 1000) : 
+                            (item.track?.duration_ms ? Math.round(item.track.duration_ms / 1000) : 0)
+
+            const albumName = item.album?.name || playlistName
+
+            return {
+              id: `spotify:${trackId}`,
+              name: trackName,
+              primaryArtists: artistNames,
+              image: playlistCoverUrl, // Scraper doesn't have per-track images, fall back to playlist cover
+              duration,
+              album: albumName
+            }
+          })
+
+          console.log(`Successfully scraped ${songs.length} tracks from public Spotify embed page.`)
+        }
+
+        // Convert cover image to base64 if url is present
+        let playlistBase64Image = null
+        if (playlistCoverUrl) {
+          try {
+            const imgRes = await fetch(playlistCoverUrl)
+            if (imgRes.ok) {
+              const buffer = await imgRes.arrayBuffer()
+              const base64 = Buffer.from(buffer).toString('base64')
+              playlistBase64Image = `data:image/jpeg;base64,${base64}`
+            }
+          } catch (imgErr) {
+            console.warn('Failed to convert playlist cover image to base64:', imgErr)
+          }
+        }
+
+        // Save imported playlist to Saafy DB
+        const playlist = new Playlist({
+          userId,
+          name: playlistName,
+          image: playlistBase64Image,
+          songs
+        })
+
+        await playlist.save()
+
+        return sendJson(res, {
+          success: true,
+          message: `Spotify playlist imported successfully via ${importedVia}!`,
+          playlist
+        }, 201)
+
+      } catch (spotifyErr) {
+        console.error('Spotify import error:', spotifyErr)
+        return sendJson(res, { success: false, error: `Spotify API Error: ${spotifyErr.message}` }, 500)
+      }
+    }
+
     // Route not matched
     return sendJson(res, { success: false, error: 'Not found' }, 404)
 

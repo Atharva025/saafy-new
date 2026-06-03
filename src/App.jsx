@@ -5,6 +5,9 @@ import { ThemeProvider, useTheme } from '@/context/ThemeContext'
 import { ToastProvider, useToast } from '@/context/ToastContext'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import UserAuthModal from '@/components/UserAuthModal'
+import CreatePlaylistModal from '@/components/CreatePlaylistModal'
+import SpotifyImportModal from '@/components/SpotifyImportModal'
+import { AnimatePresence } from 'framer-motion'
 import BasicSearch from '@/components/BasicSearch'
 import SongList from '@/components/SongList'
 import BasicPlayer from '@/components/BasicPlayer'
@@ -19,14 +22,14 @@ import { encryptedGetItem, encryptedSetItem } from '@/lib/encryption'
 import { validateSong } from '@/lib/security'
 import { getSong, searchSongs, getRecommendations } from '@/lib/api'
 import { compressImage } from '@/utils/image'
-import { Sparkles, TrendingUp, Languages, BookText, Drum, Landmark, PartyPopper, CloudMoon, Heart, Dumbbell, ListMusic } from 'lucide-react'
+import { Sparkles, TrendingUp, Languages, BookText, Drum, Landmark, PartyPopper, CloudMoon, Heart, Dumbbell, ListMusic, Pencil, Check, Shuffle, Clock } from 'lucide-react'
 
 function HomePage() {
   const { isDark, colors, fonts, toggleTheme } = useTheme()
   const { 
     playSong, addToQueue, queue, recommendations, recommendationsLoading, currentSong, dominantColor,
     playlists, playlistsLoading, loadPlaylists, createPlaylist, updatePlaylist, deletePlaylist, removeSongFromPlaylist, clearQueue,
-    isPlaying, listeningHistory, loadListeningHistory
+    isPlaying, listeningHistory, loadListeningHistory, importSpotifyPlaylist
   } = usePlayer()
   const toast = useToast()
   
@@ -39,9 +42,15 @@ function HomePage() {
   const [selectedPlaylist, setSelectedPlaylist] = useState(null)
   const [playlistSongs, setPlaylistSongs] = useState([])
   const [playlistSongsLoading, setPlaylistSongsLoading] = useState(false)
-  const [newPlaylistName, setNewPlaylistName] = useState('')
-  const [newPlaylistImage, setNewPlaylistImage] = useState(null)
   const [isCreatingPlaylist, setIsCreatingPlaylist] = useState(false)
+  const [playlistSearchQuery, setPlaylistSearchQuery] = useState('')
+
+  // Playlist inline editing states
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [editingNameValue, setEditingNameValue] = useState('')
+
+  // Spotify playlist import states
+  const [isImportingSpotify, setIsImportingSpotify] = useState(false)
 
   // Playlist handlers
   const loadPlaylistSongs = async (playlist) => {
@@ -52,43 +61,24 @@ function HomePage() {
 
     setPlaylistSongsLoading(true)
     try {
-      const playableSongs = await Promise.all(
-        playlist.songs.map(async (song) => {
-          try {
-            // 1. Fetch by ID (precise and has downloadUrl)
-            const result = await getSong(song.id)
-            if (result.success && result.data) {
-              return result.data
-            }
-          } catch (e) {
-            console.warn(`Failed to fetch song by ID ${song.id}:`, e)
-          }
+      // Map the MongoDB playlist songs directly to formatted state instantly
+      const formattedSongs = playlist.songs.map(song => ({
+        id: song.id,
+        name: song.name,
+        title: song.name,
+        primaryArtists: song.primaryArtists,
+        // Normalize image format so other components like player and queue can read it
+        image: Array.isArray(song.image) 
+          ? song.image 
+          : [{ link: song.image }, { link: song.image }, { link: song.image }],
+        duration: song.duration,
+        album: typeof song.album === 'object' && song.album !== null
+          ? song.album
+          : { name: song.album || '' },
+        downloadUrl: song.downloadUrl || []
+      }))
 
-          try {
-            // 2. Fallback to search by name + artist
-            const searchResult = await searchSongs(`${song.name} ${song.primaryArtists || ''}`, 0, 1)
-            if (searchResult.success && searchResult.data?.results?.[0]) {
-              return searchResult.data.results[0]
-            }
-          } catch (e) {
-            console.warn(`Failed to search song for ${song.name}:`, e)
-          }
-
-          // 3. Fallback to offline/stored metadata
-          return {
-            id: song.id,
-            name: song.name,
-            title: song.name,
-            primaryArtists: song.primaryArtists,
-            image: [{ link: song.image }, { link: song.image }, { link: song.image }],
-            duration: song.duration,
-            album: { name: song.album || '' },
-            downloadUrl: []
-          }
-        })
-      )
-
-      setPlaylistSongs(playableSongs.filter(Boolean))
+      setPlaylistSongs(formattedSongs)
     } catch (err) {
       console.error("Error loading playlist songs:", err)
       toast.error("Failed to load playlist songs")
@@ -99,6 +89,7 @@ function HomePage() {
 
   const handlePlaylistClick = async (playlist) => {
     setSelectedPlaylist(playlist)
+    setPlaylistSearchQuery('')
     await loadPlaylistSongs(playlist)
   }
 
@@ -118,18 +109,6 @@ function HomePage() {
       setPlaylistSongs(prev => prev.filter(s => s.id !== songId))
     } else {
       toast.error("Failed to remove song")
-    }
-  }
-
-  const handleCreatePlaylistImageChange = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    try {
-      const compressed = await compressImage(file)
-      setNewPlaylistImage(compressed)
-    } catch (err) {
-      console.error("Failed to compress image:", err)
-      toast.error("Failed to process cover image")
     }
   }
 
@@ -153,21 +132,93 @@ function HomePage() {
     }
   }
 
-  const handleCreatePlaylist = async (e) => {
-    e.preventDefault()
-    if (!newPlaylistName.trim() || !currentUser) return
-    
-    const userId = currentUser.id || currentUser._id
-    const playlist = await createPlaylist(userId, newPlaylistName.trim(), newPlaylistImage)
-    if (playlist) {
-      toast.success(`Playlist "${newPlaylistName}" created!`)
-      setNewPlaylistName('')
-      setNewPlaylistImage(null)
-      setIsCreatingPlaylist(false)
-    } else {
-      toast.error("Failed to create playlist")
+  const handleSavePlaylistName = async () => {
+    if (!editingNameValue.trim() || !currentUser || !selectedPlaylist) {
+      setIsEditingName(false)
+      return
+    }
+    if (editingNameValue.trim() === selectedPlaylist.name) {
+      setIsEditingName(false)
+      return
+    }
+
+    try {
+      const userId = currentUser.id || currentUser._id
+      const updatedPlaylist = await updatePlaylist(userId, selectedPlaylist._id, editingNameValue.trim(), selectedPlaylist.image)
+      if (updatedPlaylist) {
+        toast.success("Playlist name updated successfully!")
+        setSelectedPlaylist(updatedPlaylist)
+      } else {
+        toast.error("Failed to update playlist name")
+      }
+    } catch (err) {
+      console.error("Failed to update playlist name:", err)
+      toast.error("Failed to update playlist name")
+    } finally {
+      setIsEditingName(false)
     }
   }
+
+  const handleShufflePlayPlaylist = () => {
+    if (playlistSongs.length > 0) {
+      const shuffledSongs = [...playlistSongs]
+      for (let i = shuffledSongs.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledSongs[i], shuffledSongs[j]] = [shuffledSongs[j], shuffledSongs[i]];
+      }
+      handlePlaySong(shuffledSongs[0], shuffledSongs)
+      clearQueue()
+      shuffledSongs.slice(1).forEach(song => addToQueue(song))
+      toast.success(`Shuffling and playing playlist: ${selectedPlaylist.name}`)
+    }
+  }
+
+  const formatDuration = (secs) => {
+    if (!secs) return '0:00'
+    const m = Math.floor(secs / 60)
+    const s = Math.floor(secs % 60)
+    return `${m}:${s < 10 ? '0' : ''}${s}`
+  }
+
+  const getPlaylistSongImage = (song) => {
+    if (!song) return '/placeholder.png'
+    const isImageString = (val) => typeof val === 'string' && val.startsWith('http')
+    
+    if (isImageString(song.imageUrl)) {
+      return song.imageUrl
+    }
+    if (isImageString(song.image)) {
+      return song.image
+    }
+    if (Array.isArray(song.image) && song.image.length > 0) {
+      for (let i = song.image.length - 1; i >= 0; i--) {
+        const item = song.image[i]
+        if (item) {
+          if (typeof item === 'string' && item.startsWith('http')) {
+            return item
+          }
+          if (typeof item === 'object') {
+            if (typeof item.link === 'string' && item.link.startsWith('http')) {
+              return item.link
+            }
+            if (typeof item.url === 'string' && item.url.startsWith('http')) {
+              return item.url
+            }
+          }
+        }
+      }
+    }
+    if (typeof song.image === 'object' && song.image !== null) {
+      if (typeof song.image.link === 'string' && song.image.link.startsWith('http')) {
+        return song.image.link
+      }
+      if (typeof song.image.url === 'string' && song.image.url.startsWith('http')) {
+        return song.image.url
+      }
+    }
+    return '/placeholder.png'
+  }
+
 
   const handleDeletePlaylist = async (playlistId) => {
     if (!currentUser) return
@@ -575,6 +626,14 @@ function HomePage() {
     </div>
   )
 
+  const filteredPlaylistSongs = playlistSongs.filter(song => {
+    const query = playlistSearchQuery.toLowerCase().trim()
+    if (!query) return true
+    const nameMatch = (song.name || song.title || '').toLowerCase().includes(query)
+    const artistMatch = (song.primaryArtists || '').toLowerCase().includes(query)
+    const albumMatch = (typeof song.album === 'string' ? song.album : song.album?.name || '').toLowerCase().includes(query)
+    return nameMatch || artistMatch || albumMatch
+  })
 
   return (
     <div style={{
@@ -1663,169 +1722,70 @@ function HomePage() {
                         </span>
                       </div>
                       
-                      <button
-                        onClick={() => setIsCreatingPlaylist(!isCreatingPlaylist)}
-                        style={{
-                          padding: '10px 18px',
-                          borderRadius: '10px',
-                          border: 'none',
-                          background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#e07356' : '#c45c3e'} 100%)`,
-                          color: '#fff',
-                          fontFamily: fonts.primary,
-                          fontSize: '0.85rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          boxShadow: `0 4px 14px ${colors.accent}20`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          transition: 'all 0.2s',
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.05)'}
-                        onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <line x1="12" y1="5" x2="12" y2="19" />
-                          <line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
-                        Create Playlist
-                      </button>
-                    </div>
-
-                    {/* Create Playlist Form Card */}
-                    {isCreatingPlaylist && (
-                      <form
-                        onSubmit={handleCreatePlaylist}
-                        style={{
-                          background: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
-                          border: `1px solid ${colors.rule}`,
-                          borderRadius: '16px',
-                          padding: '24px',
-                          marginBottom: '32px',
-                          position: 'relative',
-                          zIndex: 1,
-                          maxWidth: '400px',
-                          animation: 'slideUp 0.2s ease-out',
-                        }}
-                      >
-                        <h4 style={{
-                          fontFamily: fonts.primary,
-                          fontWeight: 700,
-                          color: colors.ink,
-                          margin: '0 0 16px 0',
-                          fontSize: '1rem',
-                        }}>
-                          New Playlist
-                        </h4>
-                        <input
-                          type="text"
-                          placeholder="Enter playlist name..."
-                          value={newPlaylistName}
-                          onChange={(e) => setNewPlaylistName(e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            borderRadius: '10px',
-                            background: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.7)',
-                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
-                            fontFamily: fonts.primary,
-                            fontSize: '0.9rem',
-                            color: colors.ink,
-                            outline: 'none',
-                            marginBottom: '16px',
+                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => {
+                            setIsImportingSpotify(false)
+                            setIsCreatingPlaylist(!isCreatingPlaylist)
                           }}
-                          autoFocus
-                        />
+                          style={{
+                            padding: '10px 18px',
+                            borderRadius: '10px',
+                            border: 'none',
+                            background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#e07356' : '#c45c3e'} 100%)`,
+                            color: '#fff',
+                            fontFamily: fonts.primary,
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            boxShadow: `0 4px 14px ${colors.accent}20`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            transition: 'all 0.2s',
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.05)'}
+                          onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                          </svg>
+                          Create Playlist
+                        </button>
 
-                        {/* Cover Image Selector */}
-                        <div style={{ marginBottom: '20px' }}>
-                          <label style={{
-                            fontFamily: fonts.mono,
-                            fontSize: '0.72rem',
-                            color: colors.inkMuted,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em',
-                            marginBottom: '6px',
-                            display: 'block',
-                          }}>
-                            Playlist Cover (Optional)
-                          </label>
-                          <div 
-                            onClick={() => document.getElementById('create-playlist-image-input').click()}
-                            style={{
-                              width: '80px',
-                              height: '80px',
-                              borderRadius: '10px',
-                              border: `2px dashed ${colors.rule}`,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              cursor: 'pointer',
-                              overflow: 'hidden',
-                              background: isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.5)',
-                              transition: 'all 0.2s',
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.borderColor = colors.accent}
-                            onMouseLeave={(e) => e.currentTarget.style.borderColor = colors.rule}
-                          >
-                            {newPlaylistImage ? (
-                              <img src={newPlaylistImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.inkLight} strokeWidth="2">
-                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                                <circle cx="12" cy="13" r="4" />
-                              </svg>
-                            )}
-                          </div>
-                          <input 
-                            type="file" 
-                            id="create-playlist-image-input" 
-                            accept="image/*" 
-                            onChange={handleCreatePlaylistImageChange} 
-                            style={{ display: 'none' }} 
-                          />
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '10px' }}>
+                        {currentUser && (
                           <button
-                            type="submit"
-                            style={{
-                              padding: '8px 16px',
-                              borderRadius: '8px',
-                              border: 'none',
-                              background: colors.accent,
-                              color: '#fff',
-                              fontFamily: fonts.primary,
-                              fontWeight: 600,
-                              fontSize: '0.85rem',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Create
-                          </button>
-                          <button
-                            type="button"
                             onClick={() => {
                               setIsCreatingPlaylist(false)
-                              setNewPlaylistName('')
+                              setIsImportingSpotify(!isImportingSpotify)
                             }}
                             style={{
-                              padding: '8px 16px',
-                              borderRadius: '8px',
-                              border: `1px solid ${colors.rule}`,
-                              background: 'transparent',
-                              color: colors.inkLight,
+                              padding: '10px 18px',
+                              borderRadius: '10px',
+                              border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.15)'}`,
+                              background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.9)',
+                              color: colors.ink,
                               fontFamily: fonts.primary,
-                              fontWeight: 600,
                               fontSize: '0.85rem',
+                              fontWeight: 600,
                               cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              transition: 'all 0.2s',
                             }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.9)'}
                           >
-                            Cancel
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ color: '#1DB954' }}>
+                              <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424c-.18.295-.563.387-.857.207-2.377-1.454-5.37-1.783-8.893-1.026-.33.076-.662-.133-.738-.463-.077-.33.133-.662.463-.738 3.856-.88 7.15-.5 9.818 1.137.295.18.387.563.207.857zm1.224-2.723c-.226.367-.707.487-1.074.26-2.72-1.672-6.87-2.157-10.075-1.183-.413.125-.85-.107-.975-.52-.125-.413.107-.85.52-.975 3.66-1.11 8.23-.57 11.345 1.342.367.227.487.708.26 1.076zm.105-2.81c-3.26-1.937-8.643-2.12-11.758-1.173-.5.15-1.02-.133-1.173-.633-.15-.5.133-1.02.633-1.173 3.616-1.1 9.54-.892 13.29 1.336.45.268.6.845.33 1.296-.268.45-.846.6-1.296.33z"/>
+                            </svg>
+                            Import Spotify
                           </button>
-                        </div>
-                      </form>
-                    )}
+                        )}
+                      </div>
+                    </div>
 
                     {/* Playlist Grid */}
                     <div style={{
@@ -1852,7 +1812,7 @@ function HomePage() {
                       ) : (
                         playlists.map((playlist) => {
                           const hasSongs = playlist.songs && playlist.songs.length > 0
-                          const coverImage = playlist.image || (hasSongs ? playlist.songs[0].image : '')
+                          const coverImage = playlist.image || (hasSongs ? getPlaylistSongImage(playlist.songs[0]) : '')
                           return (
                             <div
                               key={playlist._id}
@@ -1988,8 +1948,8 @@ function HomePage() {
                         }}
                         title="Click to update playlist cover"
                       >
-                        {selectedPlaylist.image || (selectedPlaylist.songs && selectedPlaylist.songs.length > 0 && selectedPlaylist.songs[0].image) ? (
-                          <img src={selectedPlaylist.image || selectedPlaylist.songs[0].image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        {selectedPlaylist.image || (selectedPlaylist.songs && selectedPlaylist.songs.length > 0) ? (
+                          <img src={selectedPlaylist.image || getPlaylistSongImage(selectedPlaylist.songs[0])} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
                           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="1.5">
                             <path d="M9 18H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" />
@@ -2041,16 +2001,90 @@ function HomePage() {
                           Playlist
                         </span>
                         
-                        <h1 style={{
-                          fontFamily: fonts.display,
-                          fontSize: '2.5rem',
-                          fontWeight: 800,
-                          color: colors.ink,
-                          letterSpacing: '-0.03em',
-                          margin: '4px 0 10px 0',
-                        }}>
-                          {selectedPlaylist.name}
-                        </h1>
+                        {isEditingName ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '4px 0 10px 0' }}>
+                            <input
+                              type="text"
+                              value={editingNameValue}
+                              onChange={(e) => setEditingNameValue(e.target.value)}
+                              onBlur={handleSavePlaylistName}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSavePlaylistName()
+                                if (e.key === 'Escape') {
+                                  setIsEditingName(false)
+                                  setEditingNameValue(selectedPlaylist.name)
+                                }
+                              }}
+                              style={{
+                                fontFamily: fonts.display,
+                                fontSize: '2rem',
+                                fontWeight: 800,
+                                color: colors.ink,
+                                background: 'transparent',
+                                border: 'none',
+                                borderBottom: `2px solid ${colors.accent}`,
+                                outline: 'none',
+                                padding: '0',
+                                width: '100%',
+                                maxWidth: '300px',
+                              }}
+                              autoFocus
+                            />
+                            <button 
+                              onClick={handleSavePlaylistName} 
+                              style={{ 
+                                background: 'transparent', 
+                                border: 'none', 
+                                cursor: 'pointer', 
+                                color: colors.accent,
+                                display: 'flex',
+                                alignItems: 'center',
+                                padding: '4px',
+                              }}
+                            >
+                              <Check size={20} />
+                            </button>
+                          </div>
+                        ) : (
+                          <h1 
+                            onClick={() => {
+                              setIsEditingName(true)
+                              setEditingNameValue(selectedPlaylist.name)
+                            }}
+                            style={{
+                              fontFamily: fonts.display,
+                              fontSize: '2.5rem',
+                              fontWeight: 800,
+                              color: colors.ink,
+                              letterSpacing: '-0.03em',
+                              margin: '4px 0 10px 0',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                            }}
+                            title="Click to edit playlist name"
+                            onMouseEnter={(e) => {
+                              const icon = e.currentTarget.querySelector('.pencil-icon')
+                              if (icon) icon.style.opacity = '1'
+                            }}
+                            onMouseLeave={(e) => {
+                              const icon = e.currentTarget.querySelector('.pencil-icon')
+                              if (icon) icon.style.opacity = '0'
+                            }}
+                          >
+                            {selectedPlaylist.name}
+                            <Pencil 
+                              className="pencil-icon" 
+                              size={18} 
+                              style={{ 
+                                opacity: 0, 
+                                transition: 'opacity 0.2s ease', 
+                                color: colors.accent 
+                              }} 
+                            />
+                          </h1>
+                        )}
 
                         <div style={{
                           fontFamily: fonts.primary,
@@ -2095,6 +2129,32 @@ function HomePage() {
                               <path d="M8 5v14l11-7z" />
                             </svg>
                             Play Playlist
+                          </button>
+
+                          <button
+                            onClick={handleShufflePlayPlaylist}
+                            disabled={playlistSongs.length === 0 || playlistSongsLoading}
+                            style={{
+                              padding: '12px 24px',
+                              borderRadius: '12px',
+                              border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.15)'}`,
+                              background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.9)',
+                              color: colors.ink,
+                              fontFamily: fonts.primary,
+                              fontSize: '0.9rem',
+                              fontWeight: 650,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              transition: 'all 0.2s',
+                              opacity: (playlistSongs.length === 0 || playlistSongsLoading) ? 0.6 : 1,
+                            }}
+                            onMouseEnter={(e) => { if (playlistSongs.length > 0) e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}
+                            onMouseLeave={(e) => { if (playlistSongs.length > 0) e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.9)' }}
+                          >
+                            <Shuffle size={14} />
+                            Shuffle Play
                           </button>
 
                           <button
@@ -2166,35 +2226,172 @@ function HomePage() {
                         </div>
                       ) : (
                         <div>
-                          {playlistSongs.map((song, index) => {
-                            const isCurrentSong = currentSong?.id === song.id
-                            const imageUrl = song.image?.[2]?.link || song.image?.[2]?.url ||
-                                             song.image?.[1]?.link || song.image?.[1]?.url ||
-                                             song.image?.[0]?.link || song.image?.[0]?.url ||
-                                             song.imageUrl || ''
+                          {/* Search & Header Row */}
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginBottom: '16px',
+                            gap: '16px',
+                            flexWrap: 'wrap'
+                          }}>
+                            <h3 style={{
+                              fontFamily: fonts.display,
+                              fontSize: '1.25rem',
+                              fontWeight: 700,
+                              color: colors.ink,
+                              margin: 0,
+                            }}>
+                              Tracks
+                            </h3>
+                            
+                            {/* Search Input Container */}
+                            <div style={{
+                              position: 'relative',
+                              width: isMobile ? '100%' : '260px',
+                              display: 'flex',
+                              alignItems: 'center',
+                            }}>
+                              <span style={{
+                                position: 'absolute',
+                                left: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                color: colors.inkLight,
+                                pointerEvents: 'none',
+                              }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ opacity: 0.7 }}>
+                                  <circle cx="11" cy="11" r="8" />
+                                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                </svg>
+                              </span>
+                              <input
+                                type="text"
+                                placeholder="Search within playlist..."
+                                value={playlistSearchQuery}
+                                onChange={(e) => setPlaylistSearchQuery(e.target.value)}
+                                style={{
+                                  width: '100%',
+                                  padding: '8px 36px 8px 34px',
+                                  borderRadius: '10px',
+                                  fontSize: '0.85rem',
+                                  fontFamily: fonts.primary,
+                                  color: colors.ink,
+                                  background: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
+                                  border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'}`,
+                                  outline: 'none',
+                                  transition: 'all 0.2s ease',
+                                }}
+                                onFocus={(e) => {
+                                  e.currentTarget.style.borderColor = colors.accent;
+                                  e.currentTarget.style.background = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.9)';
+                                  e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.accent}15`;
+                                }}
+                                onBlur={(e) => {
+                                  e.currentTarget.style.borderColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)';
+                                  e.currentTarget.style.background = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)';
+                                  e.currentTarget.style.boxShadow = 'none';
+                                }}
+                              />
+                              {playlistSearchQuery && (
+                                <button
+                                  onClick={() => setPlaylistSearchQuery('')}
+                                  style={{
+                                    position: 'absolute',
+                                    right: '10px',
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    padding: '4px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    color: colors.inkLight,
+                                  }}
+                                  onMouseEnter={(e) => e.currentTarget.style.color = colors.accent}
+                                  onMouseLeave={(e) => e.currentTarget.style.color = colors.inkLight}
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                          </div>
 
-                            return (
-                              <div
+                          {/* Table Headers */}
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '8px 16px',
+                            borderBottom: `1px solid ${colors.rule}`,
+                            color: colors.inkLight,
+                            fontFamily: fonts.mono,
+                            fontSize: '0.72rem',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            marginBottom: '12px',
+                          }}>
+                            <div style={{ width: '32px', textAlign: 'center', flexShrink: 0 }}>#</div>
+                            <div style={{ flex: 2, minWidth: 0, paddingLeft: '16px' }}>Title</div>
+                            <div style={{ flex: 1.5, minWidth: 0, display: isMobile ? 'none' : 'block', paddingLeft: '16px' }}>Album</div>
+                            <div style={{ width: '80px', textAlign: 'right', paddingRight: '24px', flexShrink: 0, display: isMobile ? 'none' : 'block' }}>
+                              <Clock size={13} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
+                            </div>
+                            <div style={{ width: '120px', textAlign: 'right', flexShrink: 0 }}>Actions</div>
+                          </div>
+
+                          {/* Song Rows */}
+                          {filteredPlaylistSongs.length === 0 ? (
+                            <div style={{
+                              textAlign: 'center',
+                              padding: '48px 24px',
+                              background: isDark ? 'rgba(255, 255, 255, 0.01)' : 'rgba(0, 0, 0, 0.005)',
+                              border: `1px dashed ${colors.rule}`,
+                              borderRadius: '12px',
+                              fontFamily: fonts.primary,
+                              color: colors.inkLight,
+                              fontSize: '0.88rem',
+                              marginTop: '8px',
+                            }}>
+                              No matching tracks found for "{playlistSearchQuery}"
+                            </div>
+                          ) : (
+                            filteredPlaylistSongs.map((song, index) => {
+                              const isCurrentSong = currentSong?.id === song.id
+                              const imageUrl = getPlaylistSongImage(song)
+
+                              return (
+                                <div
                                 key={song.id}
                                 style={{
                                   display: 'flex',
                                   alignItems: 'center',
-                                  gap: '16px',
-                                  padding: '12px 16px',
+                                  padding: '10px 16px',
                                   borderRadius: '12px',
                                   background: isCurrentSong 
                                     ? (isDark ? 'rgba(224, 115, 86, 0.08)' : 'rgba(196, 92, 62, 0.05)') 
-                                    : 'rgba(255, 255, 255, 0.01)',
-                                  border: `1px solid ${isCurrentSong ? colors.accent + '30' : 'transparent'}`,
+                                    : 'transparent',
+                                  border: `1px solid ${isCurrentSong ? colors.accent + '25' : 'transparent'}`,
                                   marginBottom: '6px',
                                   cursor: 'pointer',
-                                  transition: 'all 0.2s',
+                                  transition: 'all 0.2s ease',
                                 }}
                                 onClick={() => handlePlaySong(song, playlistSongs)}
-                                onMouseEnter={(e) => { if (!isCurrentSong) e.currentTarget.style.background = colors.paperDark }}
-                                onMouseLeave={(e) => { if (!isCurrentSong) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.01)' }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = isCurrentSong 
+                                    ? (isDark ? 'rgba(224, 115, 86, 0.12)' : 'rgba(196, 92, 62, 0.08)') 
+                                    : (isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)')
+                                  if (!isCurrentSong) e.currentTarget.style.borderColor = colors.border
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = isCurrentSong 
+                                    ? (isDark ? 'rgba(224, 115, 86, 0.08)' : 'rgba(196, 92, 62, 0.05)') 
+                                    : 'transparent'
+                                  e.currentTarget.style.borderColor = isCurrentSong ? colors.accent + '25' : 'transparent'
+                                }}
                               >
-                                {/* Index / Playing Pulse Indicator */}
+                                {/* Index / Pulse Animation */}
                                 <div style={{
                                   width: '32px',
                                   color: isCurrentSong ? colors.accent : colors.inkLight,
@@ -2203,6 +2400,7 @@ function HomePage() {
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
+                                  flexShrink: 0,
                                 }}>
                                   {isCurrentSong && isPlaying ? (
                                     <div style={{ display: 'flex', gap: '2.5px', alignItems: 'flex-end', height: '14px' }}>
@@ -2225,48 +2423,93 @@ function HomePage() {
                                   )}
                                 </div>
 
-                                {/* Art */}
-                                <img
-                                  src={imageUrl || '/placeholder.png'}
-                                  alt=""
-                                  style={{
-                                    width: '44px',
-                                    height: '44px',
-                                    borderRadius: '8px',
-                                    objectFit: 'cover',
-                                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-                                  }}
-                                />
-
-                                {/* Info */}
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                  <div style={{
-                                    fontFamily: fonts.primary,
-                                    fontWeight: 600,
-                                    fontSize: '0.9rem',
-                                    color: isCurrentSong ? colors.accent : colors.ink,
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                  }}>
-                                    {song.name || song.title}
-                                  </div>
-                                  <div style={{
-                                    fontFamily: fonts.primary,
-                                    fontSize: '0.75rem',
-                                    color: colors.inkLight,
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    marginTop: '2px',
-                                  }}>
-                                    {song.primaryArtists || 'Unknown Artist'}
+                                {/* Title (Art + Name + Artist) */}
+                                <div style={{
+                                  flex: 2,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '16px',
+                                  minWidth: 0,
+                                  paddingLeft: '16px',
+                                }}>
+                                  <img
+                                    src={imageUrl || '/placeholder.png'}
+                                    alt=""
+                                    style={{
+                                      width: '40px',
+                                      height: '40px',
+                                      borderRadius: '8px',
+                                      objectFit: 'cover',
+                                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+                                      flexShrink: 0,
+                                    }}
+                                  />
+                                  <div style={{ minWidth: 0 }}>
+                                    <div style={{
+                                      fontFamily: fonts.primary,
+                                      fontWeight: 600,
+                                      fontSize: '0.9rem',
+                                      color: isCurrentSong ? colors.accent : colors.ink,
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                    }}>
+                                      {song.name || song.title}
+                                    </div>
+                                    <div style={{
+                                      fontFamily: fonts.primary,
+                                      fontSize: '0.75rem',
+                                      color: colors.inkLight,
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      marginTop: '2px',
+                                    }}>
+                                      {song.primaryArtists || 'Unknown Artist'}
+                                    </div>
                                   </div>
                                 </div>
 
-                                {/* Custom Actions inside Playlist Detail Song Row */}
+                                {/* Album Column */}
+                                <div style={{
+                                  flex: 1.5,
+                                  minWidth: 0,
+                                  display: isMobile ? 'none' : 'block',
+                                  paddingLeft: '16px',
+                                  fontFamily: fonts.primary,
+                                  fontSize: '0.85rem',
+                                  color: colors.inkMuted,
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                }}>
+                                  {song.album?.name || song.album || 'Single'}
+                                </div>
+
+                                {/* Duration Column */}
+                                <div style={{
+                                  width: '80px',
+                                  textAlign: 'right',
+                                  paddingRight: '24px',
+                                  flexShrink: 0,
+                                  display: isMobile ? 'none' : 'block',
+                                  fontFamily: fonts.mono,
+                                  fontSize: '0.82rem',
+                                  color: colors.inkMuted,
+                                }}>
+                                  {formatDuration(song.duration)}
+                                </div>
+
+                                {/* Actions Column */}
                                 <div 
-                                  style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
+                                  style={{
+                                    width: '120px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'flex-end',
+                                    gap: '10px',
+                                    flexShrink: 0,
+                                  }}
                                   onClick={e => e.stopPropagation()}
                                 >
                                   <button
@@ -2282,7 +2525,7 @@ function HomePage() {
                                     }}
                                     onMouseEnter={(e) => e.currentTarget.style.color = colors.accent}
                                     onMouseLeave={(e) => e.currentTarget.style.color = colors.inkMuted}
-                                    title="Play Now"
+                                    title="Play"
                                   >
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                                       <path d="M8 5v14l11-7z" />
@@ -2318,14 +2561,14 @@ function HomePage() {
                                     style={{
                                       background: 'transparent',
                                       border: 'none',
-                                      color: 'rgba(239, 68, 68, 0.6)',
+                                      color: 'rgba(239, 68, 68, 0.65)',
                                       cursor: 'pointer',
                                       padding: '4px',
                                       display: 'flex',
                                       alignItems: 'center',
                                     }}
                                     onMouseEnter={(e) => e.currentTarget.style.color = '#EF4444'}
-                                    onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(239, 68, 68, 0.6)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(239, 68, 68, 0.65)'}
                                     title="Remove from Playlist"
                                   >
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -2338,7 +2581,8 @@ function HomePage() {
                                 </div>
                               </div>
                             )
-                          })}
+                          })
+                          )}
                         </div>
                       )}
                     </div>
@@ -2855,12 +3099,40 @@ function HomePage() {
         />
       )}
 
-      {/* User Authentication Modal */}
-      <UserAuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onLoginSuccess={handleLoginSuccess}
-      />
+      {/* Modals with animate presence */}
+      <AnimatePresence>
+        {showAuthModal && (
+          <UserAuthModal
+            isOpen={showAuthModal}
+            onClose={() => setShowAuthModal(false)}
+            onLoginSuccess={handleLoginSuccess}
+          />
+        )}
+        {isCreatingPlaylist && (
+          <CreatePlaylistModal
+            isOpen={isCreatingPlaylist}
+            onClose={() => setIsCreatingPlaylist(false)}
+            currentUser={currentUser}
+            createPlaylist={createPlaylist}
+            onSuccess={(name) => {
+              toast.success(`Playlist "${name}" created!`)
+              setIsCreatingPlaylist(false)
+            }}
+          />
+        )}
+        {isImportingSpotify && (
+          <SpotifyImportModal
+            isOpen={isImportingSpotify}
+            onClose={() => setIsImportingSpotify(false)}
+            currentUser={currentUser}
+            importSpotifyPlaylist={importSpotifyPlaylist}
+            onSuccess={(playlistName) => {
+              toast.success(`Spotify playlist "${playlistName}" imported successfully!`)
+              setIsImportingSpotify(false)
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
