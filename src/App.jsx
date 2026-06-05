@@ -1327,7 +1327,7 @@ function HomePage() {
         )}
 
         {/* Quick scroll navigation category tab ribbon */}
-        {!isSearching && !searchExpanded && (
+        {!isMobile && !isSearching && !searchExpanded && (
           <nav className="category-nav-ribbon">
             {[
               { id: 'section-for-you', label: 'For You', icon: Sparkles },
@@ -1874,6 +1874,39 @@ function HomePage() {
         padding: 'clamp(12px, 3.5vw, 32px)',
         paddingBottom: 'clamp(120px, 25vw, 160px)',
       }} id="main-content">
+        {/* Mobile Category Navigation Ribbon */}
+        {isMobile && !isSearching && !searchExpanded && (
+          <nav className="category-nav-ribbon" style={{ margin: '0 0 16px 0', padding: '0 0 12px 0' }}>
+            {[
+              { id: 'section-for-you', label: 'For You', icon: Sparkles },
+              { id: 'section-playlists', label: 'My Playlists', icon: ListMusic, condition: currentUser !== null },
+              { id: 'section-trending', label: 'Trending', icon: TrendingUp, condition: themed.trending?.songs && themed.trending.songs.length > 0 },
+              { id: 'section-hindi', label: 'Hindi', icon: Languages },
+              { id: 'section-english', label: 'English', icon: BookText },
+              { id: 'section-punjabi', label: 'Punjabi', icon: Drum },
+              { id: 'section-marathi', label: 'Marathi', icon: Landmark, condition: discovery.marathi?.songs && discovery.marathi.songs.length > 0 },
+              { id: 'section-party', label: 'Party', icon: PartyPopper, condition: themed.party?.songs && themed.party.songs.length > 0 },
+              { id: 'section-chill', label: 'Chill', icon: CloudMoon, condition: themed.chill?.songs && themed.chill.songs.length > 0 },
+              { id: 'section-romantic', label: 'Romantic', icon: Heart, condition: themed.romantic?.songs && themed.romantic.songs.length > 0 },
+              { id: 'section-workout', label: 'Workout', icon: Dumbbell, condition: themed.workout?.songs && themed.workout.songs.length > 0 },
+            ].map((item) => {
+              if (item.condition === false) return null;
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  className={`mobile-nav-tab ${activeCategory === item.id ? 'active' : ''}`}
+                  onClick={() => handleCategoryClick(item.id)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <Icon size={16} strokeWidth={1.75} style={{ flexShrink: 0 }} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        )}
+
         {isSearching ? (
           <section>
             <div style={{
@@ -1939,16 +1972,18 @@ function HomePage() {
                   <div>
                     <div style={{
                       display: 'flex',
-                      alignItems: 'center',
+                      flexDirection: isMobile ? 'column' : 'row',
+                      alignItems: isMobile ? 'flex-start' : 'center',
                       justifyContent: 'space-between',
                       marginBottom: '32px',
+                      gap: isMobile ? '16px' : '24px',
                       position: 'relative',
                       zIndex: 1,
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
                         <h2 style={{
                           fontFamily: fonts.display,
-                          fontSize: '2rem',
+                          fontSize: isMobile ? '1.5rem' : '2rem',
                           fontWeight: 800,
                           color: colors.ink,
                           letterSpacing: '-0.03em',
@@ -1966,13 +2001,19 @@ function HomePage() {
                         </span>
                       </div>
                       
-                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        gap: '12px', 
+                        flexWrap: 'wrap',
+                        width: isMobile ? '100%' : 'auto',
+                      }}>
                         <button
                           onClick={() => {
                             setIsImportingSpotify(false)
                             setIsCreatingPlaylist(!isCreatingPlaylist)
                           }}
                           style={{
+                            flex: isMobile ? 1 : 'none',
                             padding: '10px 18px',
                             borderRadius: '10px',
                             border: 'none',
@@ -1980,11 +2021,12 @@ function HomePage() {
                             color: '#fff',
                             fontFamily: fonts.primary,
                             fontSize: '0.85rem',
-                            fontWeight: 600,
+                            fontWeight: 650,
                             cursor: 'pointer',
                             boxShadow: `0 4px 14px ${colors.accent}20`,
                             display: 'flex',
                             alignItems: 'center',
+                            justifyContent: isMobile ? 'center' : 'flex-start',
                             gap: '8px',
                             transition: 'all 0.2s',
                           }}
@@ -2005,6 +2047,7 @@ function HomePage() {
                               setIsImportingSpotify(!isImportingSpotify)
                             }}
                             style={{
+                              flex: isMobile ? 1 : 'none',
                               padding: '10px 18px',
                               borderRadius: '10px',
                               border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.15)'}`,
@@ -2012,17 +2055,18 @@ function HomePage() {
                               color: colors.ink,
                               fontFamily: fonts.primary,
                               fontSize: '0.85rem',
-                              fontWeight: 600,
+                              fontWeight: 650,
                               cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
+                              justifyContent: isMobile ? 'center' : 'flex-start',
                               gap: '8px',
                               transition: 'all 0.2s',
                             }}
                             onMouseEnter={(e) => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
                             onMouseLeave={(e) => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.9)'}
                           >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ color: '#1DB954' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ color: '#1DB954', flexShrink: 0 }}>
                               <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424c-.18.295-.563.387-.857.207-2.377-1.454-5.37-1.783-8.893-1.026-.33.076-.662-.133-.738-.463-.077-.33.133-.662.463-.738 3.856-.88 7.15-.5 9.818 1.137.295.18.387.563.207.857zm1.224-2.723c-.226.367-.707.487-1.074.26-2.72-1.672-6.87-2.157-10.075-1.183-.413.125-.85-.107-.975-.52-.125-.413.107-.85.52-.975 3.66-1.11 8.23-.57 11.345 1.342.367.227.487.708.26 1.076zm.105-2.81c-3.26-1.937-8.643-2.12-11.758-1.173-.5.15-1.02-.133-1.173-.633-.15-.5.133-1.02.633-1.173 3.616-1.1 9.54-.892 13.29 1.336.45.268.6.845.33 1.296-.268.45-.846.6-1.296.33z"/>
                             </svg>
                             Import Spotify
@@ -2034,8 +2078,8 @@ function HomePage() {
                     {/* Playlist Grid */}
                     <div style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                      gap: '24px',
+                      gridTemplateColumns: isMobile ? 'repeat(auto-fill, minmax(135px, 1fr))' : 'repeat(auto-fill, minmax(200px, 1fr))',
+                      gap: isMobile ? '16px' : '24px',
                       position: 'relative',
                       zIndex: 1,
                     }}>
@@ -2634,11 +2678,11 @@ function HomePage() {
                               }}>
                                 <div style={{ width: '32px', textAlign: 'center', flexShrink: 0 }}>#</div>
                                 <div style={{ flex: 2, minWidth: 0, paddingLeft: '16px' }}>Title</div>
-                                <div style={{ flex: 1.5, minWidth: 0, display: isMobile ? 'none' : 'block', paddingLeft: '16px' }}>Album</div>
-                                <div style={{ width: '80px', textAlign: 'right', paddingRight: '24px', flexShrink: 0, display: isMobile ? 'none' : 'block' }}>
+                                <div style={{ flex: 1.5, minWidth: 0, display: isMobile ? 'none' : 'block', paddingLeft: '16px' }} className="playlist-track-album-col">Album</div>
+                                <div style={{ width: '80px', textAlign: 'right', paddingRight: '24px', flexShrink: 0, display: isMobile ? 'none' : 'block' }} className="playlist-track-duration-col">
                                   <Clock size={13} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
                                 </div>
-                                <div style={{ width: '120px', textAlign: 'right', flexShrink: 0 }}>Actions</div>
+                                <div style={{ width: isMobile ? '70px' : '120px', textAlign: 'right', flexShrink: 0, marginLeft: 'auto' }} className="playlist-track-actions-col">Actions</div>
                               </div>
 
                               {/* Song Rows */}
@@ -2744,7 +2788,7 @@ function HomePage() {
                                           flexShrink: 0,
                                         }}
                                       />
-                                      <div style={{ minWidth: 0 }}>
+                                      <div style={{ flex: 1, minWidth: 0 }}>
                                         <div style={{
                                           fontFamily: fonts.primary,
                                           fontWeight: 600,
@@ -2782,7 +2826,7 @@ function HomePage() {
                                       whiteSpace: 'nowrap',
                                       overflow: 'hidden',
                                       textOverflow: 'ellipsis',
-                                    }}>
+                                    }} className="playlist-track-album-col">
                                       {song.album?.name || song.album || 'Single'}
                                     </div>
 
@@ -2796,41 +2840,46 @@ function HomePage() {
                                       fontFamily: fonts.mono,
                                       fontSize: '0.82rem',
                                       color: colors.inkMuted,
-                                    }}>
+                                    }} className="playlist-track-duration-col">
                                       {formatDuration(song.duration)}
                                     </div>
 
                                     {/* Actions Column */}
                                     <div 
                                       style={{
-                                        width: '120px',
+                                        width: isMobile ? '70px' : '120px',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'flex-end',
                                         gap: '10px',
                                         flexShrink: 0,
+                                        marginLeft: 'auto',
                                       }}
                                       onClick={e => e.stopPropagation()}
+                                      className="playlist-track-actions-col"
                                     >
-                                      <button
-                                        onClick={() => handlePlaySong(song, playlistSongs)}
-                                        style={{
-                                          background: 'transparent',
-                                          border: 'none',
-                                          color: colors.inkMuted,
-                                          cursor: 'pointer',
-                                          padding: '4px',
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                        }}
-                                        onMouseEnter={(e) => e.currentTarget.style.color = colors.accent}
-                                        onMouseLeave={(e) => e.currentTarget.style.color = colors.inkMuted}
-                                        title="Play"
-                                      >
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                          <path d="M8 5v14l11-7z" />
-                                        </svg>
-                                      </button>
+                                      {!isMobile && (
+                                        <button
+                                          onClick={() => handlePlaySong(song, playlistSongs)}
+                                          style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: colors.inkMuted,
+                                            cursor: 'pointer',
+                                            padding: '4px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                          }}
+                                          onMouseEnter={(e) => e.currentTarget.style.color = colors.accent}
+                                          onMouseLeave={(e) => e.currentTarget.style.color = colors.inkMuted}
+                                          title="Play"
+                                          className="playlist-track-play-btn"
+                                        >
+                                          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M8 5v14l11-7z" />
+                                          </svg>
+                                        </button>
+                                      )}
 
                                       <button
                                         onClick={() => {

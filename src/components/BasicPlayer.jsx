@@ -291,9 +291,9 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                     onClick={() => setShowQueue(!showQueue)}
                                     className={`icon-btn ${showQueue ? 'active' : ''}`}
                                     style={{
-                                        width: '36px',
-                                        height: '36px',
-                                        borderRadius: '8px',
+                                        width: '42px',
+                                        height: '42px',
+                                        borderRadius: '10px',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -301,7 +301,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                     }}
                                     title="Toggle Queue"
                                 >
-                                    <ListMusic size={16} />
+                                    <ListMusic size={18} />
                                 </button>
                             )}
 
@@ -379,20 +379,20 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                     onClick={() => setVolumeExpanded(!volumeExpanded)}
                                     className={`icon-btn ${volumeExpanded ? 'active' : ''}`}
                                     style={{
-                                        width: '36px',
-                                        height: '36px',
-                                        borderRadius: '8px',
+                                        width: '42px',
+                                        height: '42px',
+                                        borderRadius: '10px',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                     }}
                                 >
                                     {volume === 0 ? (
-                                        <VolumeX size={16} />
+                                        <VolumeX size={18} />
                                     ) : volume < 0.5 ? (
-                                        <Volume1 size={16} />
+                                        <Volume1 size={18} />
                                     ) : (
-                                        <Volume2 size={16} />
+                                        <Volume2 size={18} />
                                     )}
                                 </button>
                             </div>
@@ -519,9 +519,9 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                 onClick={toggleShuffle}
                                 className={`icon-btn ${shuffleMode ? 'active' : ''}`}
                                 style={{
-                                    width: '36px',
-                                    height: '36px',
-                                    borderRadius: '8px',
+                                    width: '42px',
+                                    height: '42px',
+                                    borderRadius: '10px',
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: 'center',
@@ -530,11 +530,11 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                 }}
                                 title={shuffleMode ? "Shuffle: On" : "Shuffle: Off"}
                             >
-                                <Shuffle size={16} />
+                                <Shuffle size={18} />
                                 {shuffleMode && (
                                     <div style={{
                                         position: 'absolute',
-                                        bottom: '3px',
+                                        bottom: '4px',
                                         width: '4px',
                                         height: '4px',
                                         borderRadius: '50%',
@@ -551,16 +551,16 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                 disabled={!currentSong}
                                 className="icon-btn"
                                 style={{
-                                    width: '36px',
-                                    height: '36px',
-                                    borderRadius: '8px',
+                                    width: '42px',
+                                    height: '42px',
+                                    borderRadius: '10px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                 }}
                                 title="Previous"
                             >
-                                <SkipBack size={16} fill="currentColor" />
+                                <SkipBack size={18} fill="currentColor" />
                             </button>
 
                             {/* Play/Pause */}
@@ -569,8 +569,8 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                 disabled={!currentSong}
                                 className="ske-raised"
                                 style={{
-                                    width: '42px',
-                                    height: '42px',
+                                    width: '50px',
+                                    height: '50px',
                                     borderRadius: '50%',
                                     background: isPlaying ? accentColor : 'var(--color-paper-dark)',
                                     color: isPlaying ? 'var(--color-paper)' : 'var(--color-ink)',
@@ -584,9 +584,9 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                 title={isPlaying ? "Pause" : "Play"}
                             >
                                 {isPlaying ? (
-                                    <Pause size={18} fill="currentColor" color="currentColor" />
+                                    <Pause size={22} fill="currentColor" color="currentColor" />
                                 ) : (
-                                    <Play size={18} fill="currentColor" color="currentColor" style={{ marginLeft: '2px' }} />
+                                    <Play size={22} fill="currentColor" color="currentColor" style={{ marginLeft: '2px' }} />
                                 )}
                             </button>
 
@@ -596,16 +596,16 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                 disabled={!currentSong}
                                 className="icon-btn"
                                 style={{
-                                    width: '36px',
-                                    height: '36px',
-                                    borderRadius: '8px',
+                                    width: '42px',
+                                    height: '42px',
+                                    borderRadius: '10px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                 }}
                                 title="Next"
                             >
-                                <SkipForward size={16} fill="currentColor" />
+                                <SkipForward size={18} fill="currentColor" />
                             </button>
 
                             {/* Repeat */}
@@ -613,9 +613,9 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                 onClick={toggleRepeat}
                                 className={`icon-btn ${repeatMode !== 'none' ? 'active' : ''}`}
                                 style={{
-                                    width: '36px',
-                                    height: '36px',
-                                    borderRadius: '8px',
+                                    width: '42px',
+                                    height: '42px',
+                                    borderRadius: '10px',
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: 'center',
@@ -625,14 +625,14 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                 title={`Repeat: ${repeatMode}`}
                             >
                                 {repeatMode === 'one' ? (
-                                    <Repeat1 size={16} />
+                                    <Repeat1 size={18} />
                                 ) : (
-                                    <Repeat size={16} />
+                                    <Repeat size={18} />
                                 )}
                                 {repeatMode !== 'none' && (
                                     <div style={{
                                         position: 'absolute',
-                                        bottom: '3px',
+                                        bottom: '4px',
                                         width: '4px',
                                         height: '4px',
                                         borderRadius: '50%',

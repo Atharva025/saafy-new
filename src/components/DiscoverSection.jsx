@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { usePlayer } from '@/context/PlayerContext'
 import { useTheme } from '@/context/ThemeContext'
 import { useToast } from '@/context/ToastContext'
@@ -735,8 +736,132 @@ function MobileCompactCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist,
     )
 }
 
+// ─── Mobile Featured Row (Vertical list row for featured stack on mobile) ────
+function MobileFeaturedRow({ song, index, onPlay, onAddToQueue, onAddToPlaylist, currentUser, currentSong, isPlaying, colors, fonts, success, onOpenMenu }) {
+    const isActive = currentSong?.id === song.id
+    const imageUrl = getImageUrl(song)
+
+    return (
+        <div
+            onClick={() => onPlay(song)}
+            role="button"
+            tabIndex={0}
+            aria-label={`Play ${song.name}`}
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '10px 12px',
+                borderRadius: '14px',
+                background: colors.paperDark,
+                backgroundImage: 'var(--background-image-ske-surface)',
+                border: isActive
+                    ? `1.5px solid ${colors.accent}`
+                    : `1px solid ${colors.border}`,
+                boxShadow: isActive
+                    ? `0 6px 14px ${colors.accent}12`
+                    : '0 2px 6px rgba(0,0,0,0.04)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                animation: 'cardFadeIn 0.35s ease-out both',
+                animationDelay: `${index * 0.05}s`,
+            }}
+        >
+            {/* Artwork thumbnail */}
+            <div style={{
+                width: '46px',
+                height: '46px',
+                borderRadius: '10px',
+                overflow: 'hidden',
+                flexShrink: 0,
+                background: colors.paperDarker,
+                border: `1px solid ${colors.border}`,
+                position: 'relative',
+            }}>
+                {imageUrl ? (
+                    <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill={colors.inkLight}>
+                            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                        </svg>
+                    </div>
+                )}
+                
+                {isActive && isPlaying && (
+                    <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'rgba(0,0,0,0.4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}>
+                        <NowPlayingBars color={colors.accent} size={10} />
+                    </div>
+                )}
+            </div>
+
+            {/* Song details */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                    fontFamily: fonts.primary,
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    color: isActive ? colors.accent : colors.ink,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    lineHeight: 1.25,
+                }}>
+                    {song.name}
+                </div>
+                <div style={{
+                    fontFamily: fonts.mono,
+                    fontSize: '0.72rem',
+                    color: colors.inkMuted,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    marginTop: '2px',
+                }}>
+                    {song.primaryArtists}
+                </div>
+            </div>
+
+            {/* Actions button */}
+            <button
+                onClick={(e) => {
+                    e.stopPropagation()
+                    onOpenMenu(song)
+                }}
+                style={{
+                    background: 'transparent',
+                    border: 'none',
+                    width: '42px',
+                    height: '42px',
+                    cursor: 'pointer',
+                    color: colors.inkMuted,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    borderRadius: '50%',
+                }}
+                aria-label="More options"
+            >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="5" r="1.5" fill="currentColor" />
+                    <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                    <circle cx="12" cy="19" r="1.5" fill="currentColor" />
+                </svg>
+            </button>
+        </div>
+    )
+}
+
 // ─── Scroll Card (Premium Sleeve Pull-out Design) ───────────────────────────
-function ScrollCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, currentUser, currentSong, isPlaying, colors, fonts, success, layout, dominantColor, isDark }) {
+function ScrollCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, currentUser, currentSong, isPlaying, colors, fonts, success, layout, dominantColor, isDark, onOpenMenu }) {
     const [hovered, setHovered] = useState(false)
     const isActive = currentSong?.id === song.id
     const imageUrl = getImageUrl(song)
@@ -825,46 +950,50 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, curren
                     )}
 
                     {/* Floating Action Buttons (top-right) */}
-                    <div style={{
-                        position: 'absolute',
-                        top: '8px',
-                        right: '8px',
-                        zIndex: 10,
-                        opacity: hovered || isMobile ? 1 : 0,
-                        transform: hovered || isMobile ? 'translateY(0) scale(1)' : 'translateY(-4px) scale(0.95)',
-                        transition: 'opacity 250ms ease, transform 250ms cubic-bezier(0.16, 1, 0.3, 1)',
-                        display: 'flex',
-                        gap: '6px',
-                        alignItems: 'center'
-                    }}
-                    onClick={e => e.stopPropagation()}
-                    >
-                        {onAddToQueue && !isActive && (
-                            <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={28} />
-                        )}
-                        {currentUser && onAddToPlaylist && !isActive && (
-                            <PlaylistBtn song={song} onAddToPlaylist={onAddToPlaylist} size={28} />
-                        )}
-                    </div>
+                    {!isMobile && (
+                        <div style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            zIndex: 10,
+                            opacity: hovered ? 1 : 0,
+                            transform: hovered ? 'translateY(0) scale(1)' : 'translateY(-4px) scale(0.95)',
+                            transition: 'opacity 250ms ease, transform 250ms cubic-bezier(0.16, 1, 0.3, 1)',
+                            display: 'flex',
+                            gap: '6px',
+                            alignItems: 'center'
+                        }}
+                        onClick={e => e.stopPropagation()}
+                        >
+                            {onAddToQueue && !isActive && (
+                                <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={28} />
+                            )}
+                            {currentUser && onAddToPlaylist && !isActive && (
+                                <PlaylistBtn song={song} onAddToPlaylist={onAddToPlaylist} size={28} />
+                            )}
+                        </div>
+                    )}
 
                     {/* Floating circular frosted/accent play button (bottom-right) */}
-                    <div style={{
-                        position: 'absolute',
-                        bottom: '8px',
-                        right: '8px',
-                        zIndex: 10,
-                        opacity: hovered || (isActive && isPlaying) || isMobile ? 1 : 0,
-                        transform: hovered || (isActive && isPlaying) || isMobile ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.9)',
-                        transition: 'opacity 250ms ease, transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-                    }}>
-                        <GridPlayCircle 
-                            isActive={isActive} 
-                            isPlaying={isPlaying} 
-                            accentColor={colors.accent} 
-                            size={36} 
-                            hovered={hovered} 
-                        />
-                    </div>
+                    {!isMobile && (
+                        <div style={{
+                            position: 'absolute',
+                            bottom: '8px',
+                            right: '8px',
+                            zIndex: 10,
+                            opacity: hovered || (isActive && isPlaying) ? 1 : 0,
+                            transform: hovered || (isActive && isPlaying) ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.9)',
+                            transition: 'opacity 250ms ease, transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        }}>
+                            <GridPlayCircle 
+                                isActive={isActive} 
+                                isPlaying={isPlaying} 
+                                accentColor={colors.accent} 
+                                size={36} 
+                                hovered={hovered} 
+                            />
+                        </div>
+                    )}
 
                     {/* Bouncing EQ overlay (bottom-left) when active & playing */}
                     {isActive && isPlaying && (
@@ -890,32 +1019,63 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, curren
                 </div>
 
                 {/* Metadata block below */}
-                <div style={{ padding: '8px 2px 2px 2px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                    <div style={{
-                        fontFamily: fonts.primary,
-                        fontWeight: 700,
-                        fontSize: '0.875rem',
-                        color: isActive ? colors.accent : colors.ink,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        transition: 'color 0.22s ease',
-                        lineHeight: 1.3,
-                    }}>
-                        {song.name || song.title}
+                <div style={{ padding: '8px 2px 2px 2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{
+                            fontFamily: fonts.primary,
+                            fontWeight: 700,
+                            fontSize: '0.875rem',
+                            color: isActive ? colors.accent : colors.ink,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            transition: 'color 0.22s ease',
+                            lineHeight: 1.3,
+                        }}>
+                            {song.name || song.title}
+                        </div>
+                        <div style={{
+                            fontFamily: fonts.mono,
+                            fontSize: '0.72rem',
+                            color: colors.inkMuted,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            letterSpacing: '0.02em',
+                            textTransform: 'uppercase',
+                        }}>
+                            {song.primaryArtists || 'Unknown Artist'}
+                        </div>
                     </div>
-                    <div style={{
-                        fontFamily: fonts.mono,
-                        fontSize: '0.72rem',
-                        color: colors.inkMuted,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        letterSpacing: '0.02em',
-                        textTransform: 'uppercase',
-                    }}>
-                        {song.primaryArtists || 'Unknown Artist'}
-                    </div>
+
+                    {isMobile && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                if (onOpenMenu) onOpenMenu(song)
+                            }}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                width: '38px',
+                                height: '38px',
+                                cursor: 'pointer',
+                                color: colors.inkMuted,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                                borderRadius: '50%',
+                            }}
+                            aria-label="Song options"
+                        >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="5" r="1.5" fill="currentColor" />
+                                <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                                <circle cx="12" cy="19" r="1.5" fill="currentColor" />
+                            </svg>
+                        </button>
+                    )}
                 </div>
             </div>
         )
@@ -933,7 +1093,7 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, curren
             onKeyDown={e => e.key === 'Enter' && onPlay(song)}
             style={{
                 flexShrink: layout === 'grid' ? 1 : 0,
-                width: layout === 'grid' ? '100%' : 'clamp(124px, 37vw, 176px)',
+                width: layout === 'grid' ? '100%' : isMobile ? '140px' : 'clamp(124px, 37vw, 176px)',
                 cursor: 'pointer',
                 scrollSnapAlign: layout === 'grid' ? 'none' : 'start',
                 display: 'flex',
@@ -995,40 +1155,44 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, curren
                 )}
 
                 {/* Dark Hover overlay and Play button */}
-                <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'rgba(0, 0, 0, 0.38)',
-                    opacity: hovered || (isActive && isPlaying) ? 1 : 0,
-                    transition: 'opacity 0.25s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                }}>
-                    <PlayCircle isActive={isActive} isPlaying={isPlaying} accentColor={colors.accent} size={42} hovered={hovered} />
-                </div>
+                {!isMobile && (
+                    <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'rgba(0, 0, 0, 0.38)',
+                        opacity: hovered || (isActive && isPlaying) ? 1 : 0,
+                        transition: 'opacity 0.25s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}>
+                        <PlayCircle isActive={isActive} isPlaying={isPlaying} accentColor={colors.accent} size={42} hovered={hovered} />
+                    </div>
+                )}
 
                 {/* Action buttons widget */}
-                <div style={{
-                    position: 'absolute',
-                    top: '8px',
-                    right: '8px',
-                    zIndex: 10,
-                    opacity: hovered || isMobile ? 1 : 0,
-                    transition: 'opacity 0.22s ease',
-                    display: 'flex',
-                    gap: '6px',
-                    alignItems: 'center'
-                }}
-                onClick={e => e.stopPropagation()}
-                >
-                    {onAddToQueue && !isActive && (
-                        <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={isMobile ? 20 : 28} />
-                    )}
-                    {currentUser && onAddToPlaylist && !isActive && (
-                        <PlaylistBtn song={song} onAddToPlaylist={onAddToPlaylist} size={isMobile ? 20 : 28} />
-                    )}
-                </div>
+                {!isMobile && (
+                    <div style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        zIndex: 10,
+                        opacity: hovered ? 1 : 0,
+                        transition: 'opacity 0.22s ease',
+                        display: 'flex',
+                        gap: '6px',
+                        alignItems: 'center'
+                    }}
+                    onClick={e => e.stopPropagation()}
+                    >
+                        {onAddToQueue && !isActive && (
+                            <QueueBtn song={song} onAddToQueue={onAddToQueue} success={success} size={28} />
+                        )}
+                        {currentUser && onAddToPlaylist && !isActive && (
+                            <PlaylistBtn song={song} onAddToPlaylist={onAddToPlaylist} size={28} />
+                        )}
+                    </div>
+                )}
 
                 {/* Bouncing EQ overlay */}
                 {isActive && isPlaying && (
@@ -1039,32 +1203,63 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, curren
             </div>
 
             {/* Sleeve Text Description */}
-            <div style={{ padding: '0 2px' }}>
-                <div style={{
-                    fontFamily: fonts.primary,
-                    fontWeight: 700,
-                    fontSize: 'var(--text-sm)',
-                    color: isActive ? colors.accent : colors.ink,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    marginBottom: '3px',
-                    transition: 'color 0.22s ease',
-                    lineHeight: 1.3,
-                }}>
-                    {song.name || song.title}
+            <div style={{ padding: '0 2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                        fontFamily: fonts.primary,
+                        fontWeight: 700,
+                        fontSize: 'var(--text-sm)',
+                        color: isActive ? colors.accent : colors.ink,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        marginBottom: '3px',
+                        transition: 'color 0.22s ease',
+                        lineHeight: 1.3,
+                    }}>
+                        {song.name || song.title}
+                    </div>
+                    <div style={{
+                        fontFamily: fonts.mono,
+                        fontSize: 'var(--text-xs)',
+                        color: colors.inkMuted,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        letterSpacing: '0.01em',
+                    }}>
+                        {song.primaryArtists || 'Unknown Artist'}
+                    </div>
                 </div>
-                <div style={{
-                    fontFamily: fonts.mono,
-                    fontSize: 'var(--text-xs)',
-                    color: colors.inkMuted,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    letterSpacing: '0.01em',
-                }}>
-                    {song.primaryArtists || 'Unknown Artist'}
-                </div>
+
+                {isMobile && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            if (onOpenMenu) onOpenMenu(song)
+                        }}
+                        style={{
+                            background: 'transparent',
+                            border: 'none',
+                            width: '38px',
+                            height: '38px',
+                            cursor: 'pointer',
+                            color: colors.inkMuted,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            borderRadius: '50%',
+                        }}
+                        aria-label="Song options"
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="5" r="1.5" fill="currentColor" />
+                            <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                            <circle cx="12" cy="19" r="1.5" fill="currentColor" />
+                        </svg>
+                    </button>
+                )}
             </div>
         </div>
     )
@@ -1076,6 +1271,7 @@ export default function DiscoverSection({ songs, loading, featured = false, layo
     const { currentSong, isPlaying, playlists, addSongToPlaylist, createPlaylist, dominantColor } = usePlayer()
     const { success, error: toastError } = useToast()
     const [activePlaylistSong, setActivePlaylistSong] = useState(null)
+    const [activeMenuSong, setActiveMenuSong] = useState(null)
     const [isCreatingInModal, setIsCreatingInModal] = useState(false)
     const [newPlaylistNameInModal, setNewPlaylistNameInModal] = useState('')
     const [isCreatingPlaylistLoading, setIsCreatingPlaylistLoading] = useState(false)
@@ -1134,7 +1330,8 @@ export default function DiscoverSection({ songs, loading, featured = false, layo
         fonts, 
         success,
         dominantColor,
-        isDark
+        isDark,
+        onOpenMenu: setActiveMenuSong
     }
 
     let content = null
@@ -1175,19 +1372,19 @@ export default function DiscoverSection({ songs, loading, featured = false, layo
             content = (
                 <>
                     <style>{animStyle}</style>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                         {/* Hero Capsule */}
                         <div style={{ height: 'clamp(210px, 55vw, 270px)', borderRadius: '24px', overflow: 'hidden' }}>
                             <HeroCard song={hero} {...sharedProps} />
                         </div>
-                        {/* 4 Compact Glass Cards */}
+                        {/* 4 Featured Rows */}
                         <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(4, 1fr)',
-                            gap: '8px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px',
                         }}>
                             {rest.slice(0, 4).map((song, i) => (
-                                <MobileCompactCard key={song.id} song={song} index={i} {...sharedProps} />
+                                <MobileFeaturedRow key={song.id} song={song} index={i} {...sharedProps} />
                             ))}
                         </div>
                     </div>
@@ -1257,7 +1454,7 @@ export default function DiscoverSection({ songs, loading, featured = false, layo
                     className="hide-scrollbar scroll-snap-x"
                     style={{
                         display: 'flex',
-                        gap: '18px',
+                        gap: isMobile ? '12px' : '18px',
                         overflowX: 'auto',
                         paddingBottom: '16px',
                         paddingLeft: '4px',
@@ -1664,6 +1861,229 @@ export default function DiscoverSection({ songs, loading, featured = false, layo
                 </div>
             )}
 
+            {/* Mobile Actions Bottom Sheet */}
+            {isMobile && activeMenuSong && createPortal(
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
+                        zIndex: 999999,
+                        display: 'flex',
+                        alignItems: 'flex-end',
+                        animation: 'bottomSheetFadeIn 0.25s ease-out',
+                    }}
+                    onClick={() => setActiveMenuSong(null)}
+                >
+                    <div
+                        style={{
+                            width: '100%',
+                            background: colors.paper,
+                            borderTopLeftRadius: '24px',
+                            borderTopRightRadius: '24px',
+                            borderTop: `1px solid ${colors.border}`,
+                            boxShadow: '0 -10px 40px rgba(0,0,0,0.15)',
+                            padding: '16px 20px 24px 20px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '16px',
+                            animation: 'bottomSheetSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both',
+                            backgroundImage: 'var(--background-image-ske-surface)',
+                            boxSizing: 'border-box',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Grab Handle */}
+                        <div style={{
+                            width: '36px',
+                            height: '4px',
+                            borderRadius: '2px',
+                            background: colors.border,
+                            margin: '0 auto 8px auto',
+                        }} />
+
+                        {/* Song Header Info */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '12px', borderBottom: `1px solid ${colors.border}` }}>
+                            <div style={{
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '10px',
+                                overflow: 'hidden',
+                                background: colors.paperDarker,
+                                border: `1px solid ${colors.border}`,
+                                flexShrink: 0,
+                            }}>
+                                {getImageUrl(activeMenuSong) ? (
+                                    <img src={getImageUrl(activeMenuSong)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill={colors.inkLight}>
+                                            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                                        </svg>
+                                    </div>
+                                )}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{
+                                    fontFamily: fonts.primary,
+                                    fontWeight: 700,
+                                    fontSize: '0.95rem',
+                                    color: colors.ink,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                }}>
+                                    {activeMenuSong.name || activeMenuSong.title}
+                                </div>
+                                <div style={{
+                                    fontFamily: fonts.mono,
+                                    fontSize: '0.75rem',
+                                    color: colors.inkMuted,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    marginTop: '2px',
+                                }}>
+                                    {activeMenuSong.primaryArtists || 'Unknown Artist'}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Menu Actions */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            {/* Play Now */}
+                            <button
+                                onClick={() => {
+                                    handlePlay(activeMenuSong)
+                                    setActiveMenuSong(null)
+                                }}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '12px',
+                                    padding: '14px 12px',
+                                    width: '100%',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    cursor: 'pointer',
+                                    color: colors.ink,
+                                    fontFamily: fonts.primary,
+                                    fontSize: '0.9rem',
+                                    textAlign: 'left',
+                                    transition: 'background 0.2s',
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = colors.paperDark}
+                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                            >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <polygon points="5 3 19 12 5 21 5 3" />
+                                </svg>
+                                Play Now
+                            </button>
+
+                            {/* Add to Queue */}
+                            {onAddToQueue && (
+                                <button
+                                    onClick={() => {
+                                        onAddToQueue(activeMenuSong)
+                                        setActiveMenuSong(null)
+                                    }}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '12px',
+                                        padding: '14px 12px',
+                                        width: '100%',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        borderRadius: '12px',
+                                        cursor: 'pointer',
+                                        color: colors.ink,
+                                        fontFamily: fonts.primary,
+                                        fontSize: '0.9rem',
+                                        textAlign: 'left',
+                                        transition: 'background 0.2s',
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.background = colors.paperDark}
+                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                >
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                        <line x1="12" y1="5" x2="12" y2="19" />
+                                        <line x1="5" y1="12" x2="19" y2="12" />
+                                    </svg>
+                                    Add to Queue
+                                </button>
+                            )}
+
+                            {/* Add to Playlist */}
+                            {currentUser && (
+                                <button
+                                    onClick={() => {
+                                        setActiveMenuSong(null)
+                                        setTimeout(() => {
+                                            handleAddToPlaylist(activeMenuSong)
+                                        }, 150)
+                                    }}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '12px',
+                                        padding: '14px 12px',
+                                        width: '100%',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        borderRadius: '12px',
+                                        cursor: 'pointer',
+                                        color: colors.ink,
+                                        fontFamily: fonts.primary,
+                                        fontSize: '0.9rem',
+                                        textAlign: 'left',
+                                        transition: 'background 0.2s',
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.background = colors.paperDark}
+                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                >
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                        <path d="M9 18H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" />
+                                        <path d="M6 6H14" />
+                                        <path d="M6 10H10" />
+                                    </svg>
+                                    Add to Playlist
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Cancel Button */}
+                        <button
+                            onClick={() => setActiveMenuSong(null)}
+                            style={{
+                                width: '100%',
+                                padding: '14px',
+                                borderRadius: '14px',
+                                border: `1px solid ${colors.border}`,
+                                background: colors.paperDark,
+                                color: colors.inkMuted,
+                                fontFamily: fonts.primary,
+                                fontSize: '0.9rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                boxShadow: 'var(--shadow-ske-xs)',
+                            }}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>,
+                document.body
+            )}
+
             <style>{`
                 @keyframes modalFadeIn {
                     from { opacity: 0; }
@@ -1672,6 +2092,14 @@ export default function DiscoverSection({ songs, loading, featured = false, layo
                 @keyframes modalScaleUp {
                     from { opacity: 0; transform: scale(0.95) translateY(10px); }
                     to { opacity: 1; transform: scale(1) translateY(0); }
+                }
+                @keyframes bottomSheetFadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes bottomSheetSlideUp {
+                    from { transform: translateY(100%); }
+                    to { transform: translateY(0); }
                 }
             `}</style>
         </>

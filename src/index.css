@@ -834,13 +834,13 @@ input[type="range"]:hover::-moz-range-thumb {
   }
 
   /* Category Navigation Ribbon (Glassmorphic) mobile tweaks */
-  /* Single-row mobile header + category nav ribbon = ~96px total */
+  /* Single-row mobile header only (category ribbon moved to main content) = ~62px total */
   :root {
-    --layout-header-height: 96px;
+    --layout-header-height: 62px;
   }
 
   html {
-    scroll-padding-top: 96px;
+    scroll-padding-top: 62px;
   }
 
   .category-nav-ribbon {
@@ -1201,5 +1201,23 @@ input[type="range"]:hover::-moz-range-thumb {
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* ── Playlist Track Row Responsive Treatment ── */
+@media (max-width: 768px) {
+  .playlist-track-album-col {
+    display: none !important;
+  }
+  .playlist-track-duration-col {
+    display: none !important;
+  }
+  .playlist-track-actions-col {
+    width: 64px !important;
+    gap: 6px !important;
+    margin-left: auto !important;
+  }
+  .playlist-track-play-btn {
+    display: none !important;
   }
 }
