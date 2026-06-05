@@ -10,9 +10,9 @@ function ShimmerOverlay({ isDark }) {
                 width: '200%',
                 height: '100%',
                 background: isDark
-                    ? 'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 100%)'
-                    : 'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 250, 240, 0.45) 50%, rgba(255, 255, 255, 0) 100%)',
-                animation: 'shimmerSweep 1.8s infinite ease-in-out',
+                    ? 'linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.02) 75%, rgba(255, 255, 255, 0) 100%)'
+                    : 'linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 248, 230, 0.20) 25%, rgba(255, 248, 230, 0.50) 50%, rgba(255, 248, 230, 0.20) 75%, rgba(255, 255, 255, 0) 100%)',
+                animation: 'shimmerSweep 1.6s infinite cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                 pointerEvents: 'none',
                 zIndex: 2,
             }}

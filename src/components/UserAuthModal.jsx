@@ -9,6 +9,8 @@ export default function UserAuthModal({ isOpen, onClose, onLoginSuccess }) {
   const { isDark, colors, fonts } = useTheme()
   const toast = useToast()
   
+  const isMobileView = typeof window !== 'undefined' && window.innerWidth < 640
+  
   const [activeTab, setActiveTab] = useState('login') // 'login' | 'register'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -112,7 +114,7 @@ export default function UserAuthModal({ isOpen, onClose, onLoginSuccess }) {
 
   const inputStyle = {
     width: '100%',
-    padding: '12px 16px',
+    padding: isMobileView ? '10px 14px' : '12px 16px',
     borderRadius: '10px',
     background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
     border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)'}`,
@@ -129,7 +131,7 @@ export default function UserAuthModal({ isOpen, onClose, onLoginSuccess }) {
     color: colors.inkMuted,
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
-    marginBottom: '6px',
+    marginBottom: isMobileView ? '4px' : '6px',
     display: 'block',
   }
 
@@ -147,7 +149,7 @@ export default function UserAuthModal({ isOpen, onClose, onLoginSuccess }) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '20px',
+      padding: isMobileView ? '10px' : '20px',
     }}>
       {/* Backdrop */}
       <motion.div
@@ -173,14 +175,15 @@ export default function UserAuthModal({ isOpen, onClose, onLoginSuccess }) {
           position: 'relative',
           width: '100%',
           maxWidth: '440px',
+          maxHeight: 'calc(100vh - 40px)',
+          overflowY: 'auto',
           background: isDark ? 'rgba(20, 16, 15, 0.95)' : 'rgba(255, 254, 252, 0.98)',
           border: `1px solid ${isDark ? 'rgba(224, 115, 86, 0.2)' : 'rgba(196, 92, 62, 0.15)'}`,
           borderRadius: '24px',
           boxShadow: isDark 
             ? '0 24px 80px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255,255,255,0.05)'
             : '0 24px 80px rgba(26, 22, 20, 0.15)',
-          overflow: 'hidden',
-          padding: '32px',
+          padding: isMobileView ? '24px 16px' : '32px',
         }}
       >
         {/* Glow ambient effect in modal */}
@@ -225,25 +228,25 @@ export default function UserAuthModal({ isOpen, onClose, onLoginSuccess }) {
         </button>
 
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+        <div style={{ textAlign: 'center', marginBottom: isMobileView ? '16px' : '28px' }}>
           <div style={{
-            width: '40px',
-            height: '40px',
+            width: isMobileView ? '32px' : '40px',
+            height: isMobileView ? '32px' : '40px',
             borderRadius: '12px',
             background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto 12px auto',
+            margin: isMobileView ? '0 auto 8px auto' : '0 auto 12px auto',
             boxShadow: `0 4px 12px ${colors.accent}30`,
           }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff">
+            <svg width={isMobileView ? "14" : "18"} height={isMobileView ? "14" : "18"} viewBox="0 0 24 24" fill="#fff">
               <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
             </svg>
           </div>
           <h3 style={{
             fontFamily: fonts.display,
-            fontSize: '1.4rem',
+            fontSize: isMobileView ? '1.15rem' : '1.4rem',
             fontWeight: 800,
             color: colors.ink,
             margin: 0,
@@ -253,7 +256,7 @@ export default function UserAuthModal({ isOpen, onClose, onLoginSuccess }) {
           </h3>
           <p style={{
             fontFamily: fonts.primary,
-            fontSize: '0.82rem',
+            fontSize: isMobileView ? '0.78rem' : '0.82rem',
             color: colors.inkLight,
             marginTop: '4px',
             marginBottom: 0,
@@ -344,7 +347,7 @@ export default function UserAuthModal({ isOpen, onClose, onLoginSuccess }) {
               exit={{ opacity: 0, x: 10 }}
               transition={{ duration: 0.2 }}
             >
-              <div style={{ marginBottom: '18px' }}>
+              <div style={{ marginBottom: isMobileView ? '12px' : '18px' }}>
                 <label style={labelStyle}>Username or Email</label>
                 <input
                   type="text"
@@ -357,7 +360,7 @@ export default function UserAuthModal({ isOpen, onClose, onLoginSuccess }) {
                 />
               </div>
 
-              <div style={{ marginBottom: '28px' }}>
+              <div style={{ marginBottom: isMobileView ? '20px' : '28px' }}>
                 <label style={labelStyle}>Password</label>
                 <input
                   type="password"
@@ -407,7 +410,7 @@ export default function UserAuthModal({ isOpen, onClose, onLoginSuccess }) {
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <div style={{ marginBottom: '16px' }}>
+              <div style={{ marginBottom: isMobileView ? '10px' : '16px' }}>
                 <label style={labelStyle}>Username</label>
                 <input
                   type="text"
@@ -420,7 +423,7 @@ export default function UserAuthModal({ isOpen, onClose, onLoginSuccess }) {
                 />
               </div>
 
-              <div style={{ marginBottom: '16px' }}>
+              <div style={{ marginBottom: isMobileView ? '10px' : '16px' }}>
                 <label style={labelStyle}>Email Address</label>
                 <input
                   type="email"
@@ -433,7 +436,7 @@ export default function UserAuthModal({ isOpen, onClose, onLoginSuccess }) {
                 />
               </div>
 
-              <div style={{ marginBottom: '16px' }}>
+              <div style={{ marginBottom: isMobileView ? '10px' : '16px' }}>
                 <label style={labelStyle}>Password</label>
                 <input
                   type="password"
@@ -446,7 +449,7 @@ export default function UserAuthModal({ isOpen, onClose, onLoginSuccess }) {
                 />
               </div>
 
-              <div style={{ marginBottom: '24px' }}>
+              <div style={{ marginBottom: isMobileView ? '16px' : '24px' }}>
                 <label style={labelStyle}>Confirm Password</label>
                 <input
                   type="password"

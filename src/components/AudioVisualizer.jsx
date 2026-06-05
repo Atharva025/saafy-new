@@ -66,6 +66,11 @@ export default function AudioVisualizer({ compact = false }) {
             const barWidth = canvas.width / barCount
             const gap = compact ? 2 : 3
 
+            // Apply a subtle dynamic neon glow based on overall amplitude
+            const glowStrength = Math.min(8, average / 12)
+            ctx.shadowBlur = glowStrength
+            ctx.shadowColor = colors.accent
+
             for (let i = 0; i < barCount; i++) {
                 const dataIndex = Math.floor((i / barCount) * dataArray.length)
                 let value = dataArray[dataIndex] / 255
@@ -75,7 +80,7 @@ export default function AudioVisualizer({ compact = false }) {
                     value = 0.05 // Minimal height to show bars exist
                 }
 
-                const barHeight = value * canvas.height * 0.8
+                const barHeight = Math.max(3, value * canvas.height * 0.8)
 
                 const x = i * barWidth
                 const y = canvas.height - barHeight
@@ -86,7 +91,19 @@ export default function AudioVisualizer({ compact = false }) {
                 gradient.addColorStop(1, `${colors.accent}60`)
 
                 ctx.fillStyle = gradient
-                ctx.fillRect(x + gap, y, barWidth - gap * 2, barHeight)
+
+                const w = barWidth - gap * 2
+                const h = barHeight
+                const r = w / 2 // round radius
+
+                ctx.beginPath()
+                if (ctx.roundRect) {
+                    // Draw clean skeuomorphic capsule bar with rounded top corners
+                    ctx.roundRect(x + gap, y, w, h, [r, r, 0, 0])
+                } else {
+                    ctx.rect(x + gap, y, w, h)
+                }
+                ctx.fill()
             }
         }
 
@@ -115,7 +132,8 @@ export default function AudioVisualizer({ compact = false }) {
                     style={{
                         flex: 1,
                         background: `linear-gradient(to top, ${colors.accent}, ${colors.accent}60)`,
-                        borderRadius: '2px 2px 0 0',
+                        borderRadius: '3px 3px 0 0',
+                        boxShadow: `0 0 6px ${colors.accent}30`,
                         animation: `wave 1s ease-in-out infinite`,
                         animationDelay: `${i * 0.05}s`,
                         minHeight: '20%',

@@ -3,10 +3,11 @@ import { usePlayer } from '@/context/PlayerContext'
 import { useTheme } from '@/context/ThemeContext'
 import { useToast } from '@/context/ToastContext'
 import { encryptedGetItem } from '@/lib/encryption'
+import { adjustColorForTheme } from '@/lib/utils'
 
 export default function SongList({ songs, onPlaySong, onAddToQueue }) {
     const { colors, fonts, isDark } = useTheme()
-    const { playSong, addToQueue, currentSong, isPlaying, togglePlay, playlists, addSongToPlaylist, createPlaylist } = usePlayer()
+    const { playSong, addToQueue, currentSong, isPlaying, togglePlay, playlists, addSongToPlaylist, createPlaylist, dominantColor } = usePlayer()
     const { success: toastSuccess, error: toastError } = useToast()
     const [hoveredIndex, setHoveredIndex] = useState(null)
     const [activePlaylistSong, setActivePlaylistSong] = useState(null)
@@ -55,6 +56,23 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
                     song.image?.[0]?.link || song.image?.[0]?.url ||
                     song.imageUrl || ''
 
+                // Soft glassmorphic background & glow shadow for active song matching its dominant color
+                const activeColor = (isCurrentSong && dominantColor)
+                    ? adjustColorForTheme(dominantColor, isDark)
+                    : null
+                
+                const activeBg = activeColor
+                    ? activeColor.rgba(isDark ? 0.08 : 0.05)
+                    : (isDark ? 'rgba(224,115,86,0.07)' : 'rgba(196,92,62,0.05)')
+                
+                const activeBorder = activeColor
+                    ? `1px solid ${activeColor.rgba(isDark ? 0.20 : 0.12)}`
+                    : `1px solid ${colors.accent}22`
+
+                const activeBorderLeft = isCurrentSong
+                    ? `3px solid ${activeColor ? activeColor.rgb : colors.accent}`
+                    : '3px solid transparent'
+
                 return (
                     <div
                         key={song.id}
@@ -70,18 +88,23 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
                             padding: 'clamp(12px, 3vw, 16px)',
                             cursor: 'pointer',
                             background: isCurrentSong
-                                ? (isDark ? 'rgba(224,115,86,0.07)' : 'rgba(196,92,62,0.05)')
+                                ? activeBg
                                 : hoveredIndex === index ? colors.paperDark : 'transparent',
                             backgroundImage: (isCurrentSong || hoveredIndex === index) ? 'var(--background-image-ske-surface)' : 'none',
                             borderRadius: 'clamp(8px, 2vw, 10px)',
-                            borderLeft: isCurrentSong ? `3px solid ${colors.accent}` : '3px solid transparent',
+                            border: isCurrentSong ? activeBorder : '1px solid transparent',
+                            borderLeft: activeBorderLeft,
                             boxShadow: isCurrentSong
-                                ? `inset 1px 2px 5px var(--ske-inner-shadow), inset -1px -1px 3px var(--ske-inner-highlight)`
+                                ? `0 8px 20px ${activeColor ? activeColor.rgba(isDark ? 0.20 : 0.12) : `${colors.accent}12`}, inset 1px 1px 0 rgba(255,255,255,${isDark ? 0.05 : 0.60})`
                                 : hoveredIndex === index
                                     ? `1px 2px 6px var(--ske-shadow), -1px -1px 4px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight)`
                                     : 'none',
-                            transition: 'background 0.1s ease, box-shadow 100ms ease-out',
-                            marginBottom: '2px',
+                            backdropFilter: isCurrentSong ? 'blur(8px)' : 'none',
+                            WebkitBackdropFilter: isCurrentSong ? 'blur(8px)' : 'none',
+                            opacity: isCurrentSong ? 1 : hoveredIndex === index ? 1 : isPlaying && currentSong ? 0.6 : 1,
+                            transition: 'background 0.2s ease, box-shadow 150ms ease-out, border 0.25s ease, opacity 0.25s ease, transform 0.25s var(--ease-spring)',
+                            transform: hoveredIndex === index && !isCurrentSong ? 'translateY(-1px)' : 'none',
+                            marginBottom: '4px',
                             position: 'relative',
                         }}
                     >

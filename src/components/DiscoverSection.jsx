@@ -4,6 +4,7 @@ import { useTheme } from '@/context/ThemeContext'
 import { useToast } from '@/context/ToastContext'
 import { encryptedGetItem } from '@/lib/encryption'
 import SkeletonLoader from './SkeletonLoader'
+import { adjustColorForTheme } from '@/lib/utils'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function getImageUrl(song) {
@@ -288,11 +289,18 @@ function GridPlayCircle({ isActive, isPlaying, accentColor, size = 36, hovered }
 
 
 // ─── Hero Card (Frosted Asymmetric Glass Capsule) ──────────────────────────
-function HeroCard({ song, onPlay, onAddToQueue, onAddToPlaylist, currentUser, currentSong, isPlaying, colors, fonts, success }) {
+function HeroCard({ song, onPlay, onAddToQueue, onAddToPlaylist, currentUser, currentSong, isPlaying, colors, fonts, success, dominantColor, isDark }) {
     const [hovered, setHovered] = useState(false)
     const isActive = currentSong?.id === song.id
     const imageUrl = getImageUrl(song)
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
+
+    const activeGlow = (isActive && dominantColor)
+        ? (adjustColorForTheme(dominantColor, isDark)?.rgba(isDark ? 0.35 : 0.22) || `${colors.accent}24`)
+        : `${colors.accent}24`
+    const hoverGlow = (isActive && dominantColor)
+        ? (adjustColorForTheme(dominantColor, isDark)?.rgba(isDark ? 0.45 : 0.30) || `${colors.accent}30`)
+        : `${colors.accent}30`
 
     return (
         <div
@@ -304,6 +312,7 @@ function HeroCard({ song, onPlay, onAddToQueue, onAddToPlaylist, currentUser, cu
                 onClick={() => onPlay(song)}
                 role="button"
                 tabIndex={0}
+                className="ske-sheen"
                 aria-label={`Play ${song.name}`}
                 onKeyDown={e => e.key === 'Enter' && onPlay(song)}
                 style={{
@@ -318,9 +327,9 @@ function HeroCard({ song, onPlay, onAddToQueue, onAddToPlaylist, currentUser, cu
                         ? `2px solid ${colors.accent}`
                         : `1px solid ${colors.border}`,
                     boxShadow: isActive
-                        ? `0 24px 48px ${colors.accent}24, var(--shadow-ske-sm)`
+                        ? `0 24px 48px ${activeGlow}, var(--shadow-ske-sm)`
                         : hovered
-                            ? `0 30px 60px ${colors.accent}1c, 0 12px 24px var(--ske-shadow), var(--shadow-ske-md)`
+                            ? `0 30px 60px ${hoverGlow}, 0 12px 24px var(--ske-shadow), var(--shadow-ske-md)`
                             : `0 8px 24px var(--ske-shadow), var(--shadow-ske-xs)`,
                     transform: hovered ? 'translateY(-6px) rotateX(1deg) rotateY(1deg)' : 'translateY(0) rotateX(0) rotateY(0)',
                     transition: 'all 400ms cubic-bezier(0.16, 1, 0.3, 1)',
@@ -479,11 +488,18 @@ function HeroCard({ song, onPlay, onAddToQueue, onAddToPlaylist, currentUser, cu
 }
 
 // ─── Small companion card (Frosted Sleek Row-Card style) ──────────────────────
-function SmallCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, currentUser, currentSong, isPlaying, colors, fonts, success }) {
+function SmallCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, currentUser, currentSong, isPlaying, colors, fonts, success, dominantColor, isDark }) {
     const [hovered, setHovered] = useState(false)
     const isActive = currentSong?.id === song.id
     const imageUrl = getImageUrl(song)
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
+
+    const activeGlow = (isActive && dominantColor)
+        ? (adjustColorForTheme(dominantColor, isDark)?.rgba(isDark ? 0.30 : 0.18) || `${colors.accent}18`)
+        : `${colors.accent}18`
+    const hoverGlow = (isActive && dominantColor)
+        ? (adjustColorForTheme(dominantColor, isDark)?.rgba(isDark ? 0.40 : 0.26) || `${colors.accent}24`)
+        : `${colors.accent}24`
 
     return (
         <div
@@ -492,6 +508,7 @@ function SmallCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, current
             onMouseLeave={() => setHovered(false)}
             role="button"
             tabIndex={0}
+            className="ske-sheen"
             aria-label={`Play ${song.name}`}
             onKeyDown={e => e.key === 'Enter' && onPlay(song)}
             style={{
@@ -504,9 +521,9 @@ function SmallCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, current
                 background: colors.paperDark,
                 border: isActive ? `2px solid ${colors.accent}` : `1px solid ${colors.border}`,
                 boxShadow: isActive
-                    ? `0 12px 28px ${colors.accent}18, var(--shadow-ske-sm)`
+                    ? `0 12px 28px ${activeGlow}, var(--shadow-ske-sm)`
                     : hovered
-                        ? `0 16px 36px rgba(0,0,0,0.12), var(--shadow-ske-md)`
+                        ? `0 16px 36px ${hoverGlow}, var(--shadow-ske-md)`
                         : `0 4px 12px var(--ske-shadow), var(--shadow-ske-xs)`,
                 transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
                 transition: 'all 350ms cubic-bezier(0.16, 1, 0.3, 1)',
@@ -719,16 +736,23 @@ function MobileCompactCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist,
 }
 
 // ─── Scroll Card (Premium Sleeve Pull-out Design) ───────────────────────────
-function ScrollCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, currentUser, currentSong, isPlaying, colors, fonts, success, layout }) {
+function ScrollCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, currentUser, currentSong, isPlaying, colors, fonts, success, layout, dominantColor, isDark }) {
     const [hovered, setHovered] = useState(false)
     const isActive = currentSong?.id === song.id
     const imageUrl = getImageUrl(song)
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
 
+    const activeGlow = (isActive && dominantColor)
+        ? (adjustColorForTheme(dominantColor, isDark)?.rgba(isDark ? 0.30 : 0.20) || `${colors.accent}20`)
+        : `${colors.accent}20`
+    const hoverGlow = (isActive && dominantColor)
+        ? (adjustColorForTheme(dominantColor, isDark)?.rgba(isDark ? 0.40 : 0.28) || `${colors.accent}26`)
+        : `${colors.accent}26`
+
     if (layout === 'grid') {
         return (
             <div
-                className="grid-card-tile"
+                className="grid-card-tile ske-sheen"
                 onMouseEnter={() => setHovered(true)}
                 onMouseLeave={() => setHovered(false)}
                 onClick={() => onPlay(song)}
@@ -749,9 +773,9 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, curren
                             ? `1px solid ${colors.border}` 
                             : '1px solid transparent',
                     boxShadow: isActive
-                        ? `0 12px 28px ${colors.accent}20, var(--shadow-ske-sm)`
+                        ? `0 12px 28px ${activeGlow}, var(--shadow-ske-sm)`
                         : hovered
-                            ? 'var(--shadow-ske-md), 0 10px 20px rgba(0, 0, 0, 0.06)'
+                            ? `0 16px 36px ${hoverGlow}, var(--shadow-ske-md)`
                             : 'var(--shadow-ske-xs)',
                     transform: hovered ? 'translateY(-6px)' : 'translateY(0)',
                     transition: 'all 350ms cubic-bezier(0.16, 1, 0.3, 1)',
@@ -919,23 +943,26 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, curren
             }}
         >
             {/* Artwork sleeve */}
-            <div style={{
-                position: 'relative',
-                width: '100%',
-                paddingBottom: '100%',
-                borderRadius: '16px',
-                background: colors.paperDark,
-                border: isActive ? `2px solid ${colors.accent}` : `1px solid ${colors.border}`,
-                boxShadow: isActive && isPlaying
-                    ? `0 14px 28px ${colors.accent}24, var(--shadow-ske-sm)`
-                    : hovered
-                        ? `0 20px 40px ${colors.accent}18, 0 8px 16px var(--ske-shadow), var(--shadow-ske-md)`
-                        : `0 4px 12px var(--ske-shadow), var(--shadow-ske-xs)`,
-                transform: hovered ? 'translateY(-6px)' : 'translateY(0)',
-                transition: 'all 350ms cubic-bezier(0.16, 1, 0.3, 1)',
-                marginBottom: '12px',
-                overflow: 'hidden',
-            }}>
+            <div 
+                className="ske-sheen"
+                style={{
+                    position: 'relative',
+                    width: '100%',
+                    paddingBottom: '100%',
+                    borderRadius: '16px',
+                    background: colors.paperDark,
+                    border: isActive ? `2px solid ${colors.accent}` : `1px solid ${colors.border}`,
+                    boxShadow: isActive && isPlaying
+                        ? `0 14px 28px ${activeGlow}, var(--shadow-ske-sm)`
+                        : hovered
+                            ? `0 20px 40px ${hoverGlow}, 0 8px 16px var(--ske-shadow), var(--shadow-ske-md)`
+                            : `0 4px 12px var(--ske-shadow), var(--shadow-ske-xs)`,
+                    transform: hovered ? 'translateY(-6px)' : 'translateY(0)',
+                    transition: 'all 350ms cubic-bezier(0.16, 1, 0.3, 1)',
+                    marginBottom: '12px',
+                    overflow: 'hidden',
+                }}
+            >
                 {imageUrl ? (
                     <img
                         src={imageUrl}
@@ -1046,7 +1073,7 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, curren
 // ─── DiscoverSection Export ──────────────────────────────────────────────────
 export default function DiscoverSection({ songs, loading, featured = false, layout, onPlaySong, onAddToQueue }) {
     const { colors, fonts, isDark } = useTheme()
-    const { currentSong, isPlaying, playlists, addSongToPlaylist, createPlaylist } = usePlayer()
+    const { currentSong, isPlaying, playlists, addSongToPlaylist, createPlaylist, dominantColor } = usePlayer()
     const { success, error: toastError } = useToast()
     const [activePlaylistSong, setActivePlaylistSong] = useState(null)
     const [isCreatingInModal, setIsCreatingInModal] = useState(false)
@@ -1105,7 +1132,9 @@ export default function DiscoverSection({ songs, loading, featured = false, layo
         isPlaying, 
         colors, 
         fonts, 
-        success 
+        success,
+        dominantColor,
+        isDark
     }
 
     let content = null

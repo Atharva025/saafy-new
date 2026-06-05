@@ -22,7 +22,7 @@ import { encryptedGetItem, encryptedSetItem } from '@/lib/encryption'
 import { validateSong } from '@/lib/security'
 import { getSong, searchSongs, getRecommendations } from '@/lib/api'
 import { compressImage } from '@/utils/image'
-import { Sparkles, TrendingUp, Languages, BookText, Drum, Landmark, PartyPopper, CloudMoon, Heart, Dumbbell, ListMusic, Pencil, Check, Shuffle, Clock } from 'lucide-react'
+import { Sparkles, TrendingUp, Languages, BookText, Drum, Landmark, PartyPopper, CloudMoon, Heart, Dumbbell, ListMusic, Pencil, Check, Shuffle, Clock, Menu, List, Grid } from 'lucide-react'
 
 function HomePage() {
   const { isDark, colors, fonts, toggleTheme } = useTheme()
@@ -44,6 +44,8 @@ function HomePage() {
   const [playlistSongsLoading, setPlaylistSongsLoading] = useState(false)
   const [isCreatingPlaylist, setIsCreatingPlaylist] = useState(false)
   const [playlistSearchQuery, setPlaylistSearchQuery] = useState('')
+  const [playlistViewMode, setPlaylistViewMode] = useState('list') // 'list' | 'card'
+  const [searchExpanded, setSearchExpanded] = useState(false)
 
   // Playlist inline editing states
   const [isEditingName, setIsEditingName] = useState(false)
@@ -255,6 +257,8 @@ function HomePage() {
   // Computed once per render — consistent with BasicPlayer / BasicSearch patterns
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
   const isTiny = typeof window !== 'undefined' && window.innerWidth < 390
+
+
 
   const [searchResults, setSearchResults] = useState([])
   const [isSearching, setIsSearching] = useState(false)
@@ -664,7 +668,7 @@ function HomePage() {
       <header style={{
         position: 'sticky',
         top: 0,
-        zIndex: 50,
+        zIndex: searchExpanded ? 1001 : 50,
         background: scrolled
           ? (isDark ? 'rgba(26, 22, 20, 0.72)' : 'rgba(250, 247, 242, 0.72)')
           : (isDark ? 'rgba(26, 22, 20, 0.88)' : 'rgba(250, 247, 242, 0.88)'),
@@ -676,92 +680,101 @@ function HomePage() {
         boxShadow: scrolled
           ? (isDark ? '0 4px 20px rgba(0, 0, 0, 0.45)' : '0 4px 20px rgba(26, 22, 20, 0.08)')
           : 'none',
-        transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        transition: searchExpanded ? 'none' : 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
       }}>
-        <div className="header-container" style={{
-          maxWidth: '1400px',
-          margin: '0 auto',
-          padding: scrolled
-            ? 'clamp(6px, 1.5vw, 9px) clamp(16px, 4vw, 28px)'
-            : 'clamp(10px, 2.5vw, 14px) clamp(16px, 4vw, 28px)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'clamp(10px, 2.5vw, 20px)',
-          flexWrap: 'nowrap',
-          transition: 'padding 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-        }}>
-          {/* Left - Logo + Greeting */}
-          <div className="header-left" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{
-              fontFamily: fonts.display,
-              fontSize: 'clamp(1.05rem, 3.5vw, 1.25rem)',
-              fontWeight: 800,
-              color: colors.ink,
-              letterSpacing: '-0.03em',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              transition: 'transform 0.2s ease',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
-            >
+        {/* ─── DESKTOP HEADER ROW ─────────────────────────────────────── */}
+        {!isMobile && (
+          <div className="header-container" style={{
+            maxWidth: '1400px',
+            margin: '0 auto',
+            padding: scrolled
+              ? 'clamp(6px, 1.5vw, 9px) clamp(16px, 4vw, 28px)'
+              : 'clamp(10px, 2.5vw, 14px) clamp(16px, 4vw, 28px)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'clamp(10px, 2.5vw, 20px)',
+            flexWrap: 'nowrap',
+            transition: 'padding 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+          }}>
+            {/* Left - Logo + Greeting */}
+            <div className="header-left" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '14px' }}>
               <div style={{
-                width: '26px',
-                height: '26px',
-                borderRadius: '8px',
-                background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`,
+                fontFamily: fonts.display,
+                fontSize: 'clamp(1.05rem, 3.5vw, 1.25rem)',
+                fontWeight: 800,
+                color: colors.ink,
+                letterSpacing: '-0.03em',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                boxShadow: `0 4px 12px ${colors.accent}30, var(--shadow-ske-xs)`,
-              }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff">
-                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-                </svg>
+                gap: '8px',
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+              >
+                <div style={{
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '8px',
+                  background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: `0 4px 12px ${colors.accent}30, var(--shadow-ske-xs)`,
+                }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff">
+                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                  </svg>
+                </div>
+                SAAFY
               </div>
-              SAAFY
+
+              <div className="header-divider" style={{
+                width: '1.5px',
+                height: '24px',
+                background: isDark
+                  ? 'linear-gradient(to bottom, rgba(255,255,255,0.01), rgba(255,255,255,0.12), rgba(255,255,255,0.01))'
+                  : 'linear-gradient(to bottom, rgba(0,0,0,0.01), rgba(0,0,0,0.08), rgba(0,0,0,0.01))'
+              }} />
+
+              <div className="header-greeting" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div style={{
+                  fontFamily: fonts.primary,
+                  fontSize: 'clamp(0.72rem, 1.8vw, 0.85rem)',
+                  fontWeight: 650,
+                  color: colors.ink,
+                  lineHeight: 1.2,
+                  letterSpacing: '-0.01em',
+                }}>
+                  {getGreeting()}
+                </div>
+                <div style={{
+                  fontFamily: fonts.mono,
+                  fontSize: 'clamp(0.58rem, 1.3vw, 0.6rem)',
+                  color: colors.inkLight,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  marginTop: '1px',
+                  opacity: 0.85,
+                }}>
+                  {formatDate()}
+                </div>
+              </div>
             </div>
 
-            <div className="header-divider" style={{
-              width: '1.5px',
-              height: '24px',
-              background: isDark
-                ? 'linear-gradient(to bottom, rgba(255,255,255,0.01), rgba(255,255,255,0.12), rgba(255,255,255,0.01))'
-                : 'linear-gradient(to bottom, rgba(0,0,0,0.01), rgba(0,0,0,0.08), rgba(0,0,0,0.01))'
-            }} />
-
-            <div className="header-greeting" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <div style={{
-                fontFamily: fonts.primary,
-                fontSize: 'clamp(0.72rem, 1.8vw, 0.85rem)',
-                fontWeight: 650,
-                color: colors.ink,
-                lineHeight: 1.2,
-                letterSpacing: '-0.01em',
-              }}>
-                {getGreeting()}
-              </div>
-              <div style={{
-                fontFamily: fonts.mono,
-                fontSize: 'clamp(0.58rem, 1.3vw, 0.6rem)',
-                color: colors.inkLight,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                marginTop: '1px',
-                opacity: 0.85,
-              }}>
-                {formatDate()}
-              </div>
+            {/* Center - Search (Desktop only) */}
+            <div className="header-search" style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: 0, position: 'relative' }}>
+              <BasicSearch 
+                onSelectSong={handlePlaySong} 
+                setSearchResults={setSearchResults} 
+                setIsSearching={setIsSearching} 
+                featuredSongs={forYou.songs} 
+                listeningHistory={listeningHistory} 
+                onExpandChange={setSearchExpanded}
+              />
             </div>
-          </div>
-
-          {/* Center - Search */}
-          <div className="header-search" style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: 0 }}>
-            <BasicSearch onSelectSong={handlePlaySong} setSearchResults={setSearchResults} setIsSearching={setIsSearching} featuredSongs={forYou.songs} listeningHistory={listeningHistory} />
-          </div>
 
           {/* Desktop: Right - Actions (hidden on mobile) */}
           <div className="header-actions" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap' }}>
@@ -776,14 +789,7 @@ function HomePage() {
               }}
               title="Queue"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="8" y1="6" x2="21" y2="6" />
-                <line x1="8" y1="12" x2="21" y2="12" />
-                <line x1="8" y1="18" x2="21" y2="18" />
-                <line x1="3" y1="6" x2="3.01" y2="6" />
-                <line x1="3" y1="12" x2="3.01" y2="12" />
-                <line x1="3" y1="18" x2="3.01" y2="18" />
-              </svg>
+              <ListMusic size={18} />
               {queue.length > 0 && (
                 <div style={{
                   position: 'absolute',
@@ -1140,51 +1146,218 @@ function HomePage() {
               )}
             </div>
           </div>
-
-          {/* Mobile: "More" button — only visible on small screens */}
-          {isMobile && (
-            <button
-              onClick={() => setShowMobileMenu(true)}
-              className="mobile-more-btn"
-              style={{
-                flexShrink: 0,
-                width: '36px',
-                height: '36px',
-                borderRadius: '10px',
-                background: showMobileMenu
-                  ? `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`
-                  : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-                border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-                color: showMobileMenu ? '#fff' : colors.ink,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s ease',
-              }}
-              title="More options"
-              aria-label="Open controls"
-            >
-              {/* EQ Fader / Mixer icon — unique to music apps */}
-              <svg width="18" height="16" viewBox="0 0 18 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Base line */}
-                <line x1="0" y1="15.5" x2="18" y2="15.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                {/* Left fader track */}
-                <rect x="2" y="7" width="2" height="8" rx="1" fill="currentColor" opacity="0.3" />
-                {/* Left fader knob — at 70% height */}
-                <rect x="1" y="6" width="4" height="3" rx="1.5" fill="currentColor" />
-                {/* Center fader track */}
-                <rect x="8" y="1" width="2" height="14" rx="1" fill="currentColor" opacity="0.3" />
-                {/* Center fader knob — near top (90%) */}
-                <rect x="7" y="0" width="4" height="3" rx="1.5" fill="currentColor" />
-                {/* Right fader track */}
-                <rect x="14" y="5" width="2" height="10" rx="1" fill="currentColor" opacity="0.3" />
-                {/* Right fader knob — at 55% */}
-                <rect x="13" y="4" width="4" height="3" rx="1.5" fill="currentColor" />
-              </svg>
-            </button>
-          )}
         </div>
+        )}
+
+        {/* ─── MOBILE HEADER (single-row layout) ───────────────────────────── */}
+        {isMobile && (
+          <div className="mobile-header-wrapper" style={{
+            padding: '10px 16px 10px 16px',
+          }}>
+            {/* Row 1: Profile + Search + Menu */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              height: '42px',
+              position: 'relative',
+            }}>
+              {!searchExpanded && (
+                <div style={{ position: 'relative', flexShrink: 0 }} ref={userDropdownRef}>
+                  <button
+                    onClick={() => {
+                      if (currentUser) {
+                        setShowUserDropdown(!showUserDropdown)
+                      } else {
+                        setShowAuthModal(true)
+                      }
+                    }}
+                    style={{
+                      width: '34px',
+                      height: '34px',
+                      borderRadius: '10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: 0,
+                      overflow: 'hidden',
+                      border: currentUser
+                        ? `1.5px solid ${colors.accent}60`
+                        : `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+                      background: currentUser
+                        ? `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`
+                        : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
+                      cursor: 'pointer',
+                      boxShadow: currentUser ? `0 2px 8px ${colors.accent}30` : 'none',
+                      transition: 'all 0.2s ease',
+                    }}
+                    title={currentUser ? `Account: ${currentUser.username}` : "Sign In"}
+                  >
+                    {currentUser ? (
+                      <span style={{
+                        color: '#fff',
+                        fontWeight: 700,
+                        fontSize: '0.72rem',
+                        fontFamily: fonts.mono,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.02em',
+                      }}>
+                        {currentUser.username.substring(0, 2)}
+                      </span>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.inkMuted} strokeWidth="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                    )}
+                  </button>
+
+                  {currentUser && showUserDropdown && (
+                    <div style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 8px)',
+                      right: 0,
+                      width: '200px',
+                      background: isDark ? 'rgba(28,24,22,0.96)' : 'rgba(252,249,244,0.97)',
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
+                      borderRadius: '14px',
+                      border: `1px solid ${colors.rule}`,
+                      boxShadow: isDark ? '0 16px 48px rgba(0,0,0,0.5)' : '0 12px 32px rgba(0,0,0,0.1)',
+                      overflow: 'hidden',
+                      zIndex: 300,
+                    }}>
+                      <div style={{ padding: '12px 14px', borderBottom: `1px solid ${colors.rule}` }}>
+                        <div style={{ fontFamily: fonts.primary, fontSize: '0.82rem', fontWeight: 650, color: colors.ink }}>
+                          {currentUser.username}
+                        </div>
+                        <div style={{ fontFamily: fonts.primary, fontSize: '0.68rem', color: colors.inkLight, wordBreak: 'break-all', marginTop: '2px' }}>
+                          {currentUser.email}
+                        </div>
+                      </div>
+                      <div style={{ padding: '6px' }}>
+                        <button
+                          onClick={() => {
+                            encryptedSetItem('saafy_user', null)
+                            setCurrentUser(null)
+                            loadPlaylists(null)
+                            setSelectedPlaylist(null)
+                            setShowUserDropdown(false)
+                            loadListeningHistory('guest')
+                            loadDiscoveryContent(null)
+                            toast.info('Signed out successfully')
+                          }}
+                          style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '9px 10px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            background: 'transparent',
+                            color: '#EF4444',
+                            fontFamily: fonts.primary,
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                          </svg>
+                          Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div style={{
+                flex: 1,
+                minWidth: 0,
+                transition: 'all 0.3s ease',
+              }}>
+                <BasicSearch 
+                  onSelectSong={handlePlaySong} 
+                  setSearchResults={setSearchResults} 
+                  setIsSearching={setIsSearching} 
+                  featuredSongs={forYou.songs} 
+                  listeningHistory={listeningHistory} 
+                  onExpandChange={setSearchExpanded}
+                />
+              </div>
+
+              {!searchExpanded && (
+                <button
+                  onClick={() => setShowMobileMenu(true)}
+                  className="mobile-more-btn"
+                  style={{
+                    flexShrink: 0,
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '10px',
+                    background: showMobileMenu
+                      ? `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`
+                      : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                    color: showMobileMenu ? '#fff' : colors.ink,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s ease',
+                  }}
+                  title="More options"
+                  aria-label="Open controls"
+                >
+                  <Menu size={17} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Quick scroll navigation category tab ribbon */}
+        {!isSearching && !searchExpanded && (
+          <nav className="category-nav-ribbon">
+            {[
+              { id: 'section-for-you', label: 'For You', icon: Sparkles },
+              { id: 'section-playlists', label: 'My Playlists', icon: ListMusic, condition: currentUser !== null },
+              { id: 'section-trending', label: 'Trending', icon: TrendingUp, condition: themed.trending?.songs && themed.trending.songs.length > 0 },
+              { id: 'section-hindi', label: 'Hindi', icon: Languages },
+              { id: 'section-english', label: 'English', icon: BookText },
+              { id: 'section-punjabi', label: 'Punjabi', icon: Drum },
+              { id: 'section-marathi', label: 'Marathi', icon: Landmark, condition: discovery.marathi?.songs && discovery.marathi.songs.length > 0 },
+              { id: 'section-party', label: 'Party', icon: PartyPopper, condition: themed.party?.songs && themed.party.songs.length > 0 },
+              { id: 'section-chill', label: 'Chill', icon: CloudMoon, condition: themed.chill?.songs && themed.chill.songs.length > 0 },
+              { id: 'section-romantic', label: 'Romantic', icon: Heart, condition: themed.romantic?.songs && themed.romantic.songs.length > 0 },
+              { id: 'section-workout', label: 'Workout', icon: Dumbbell, condition: themed.workout?.songs && themed.workout.songs.length > 0 },
+            ].map((item) => {
+              if (item.condition === false) return null;
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  className={`mobile-nav-tab ${activeCategory === item.id ? 'active' : ''}`}
+                  onClick={() => handleCategoryClick(item.id)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <Icon size={16} strokeWidth={1.75} style={{ flexShrink: 0 }} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        )}
       </header>
 
       {/* Mobile Actions Bottom Sheet */}
@@ -1243,7 +1416,113 @@ function HomePage() {
             }}>Quick Actions</div>
 
             {/* Action rows */}
-            <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+
+              {/* Sign In / Register (Mobile Menu) */}
+              {!currentUser && (
+                <button
+                  onClick={() => { setShowAuthModal(true); setShowMobileMenu(false) }}
+                  className="bottom-sheet-btn"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '14px',
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: '14px',
+                    background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#e07356' : '#c45c3e'} 100%)`,
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#ffffff',
+                    textAlign: 'left',
+                    boxShadow: `0 4px 14px ${colors.accent}20`,
+                  }}
+                >
+                  <div style={{
+                    width: '38px', height: '38px', borderRadius: '10px',
+                    background: 'rgba(255,255,255,0.2)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: fonts.primary, fontWeight: 700, fontSize: '0.9rem' }}>Sign In / Register</div>
+                    <div style={{ fontFamily: fonts.mono, fontSize: '0.65rem', color: 'rgba(255,255,255,0.75)', marginTop: '2px' }}>Access your custom playlists</div>
+                  </div>
+                </button>
+              )}
+
+              {/* Profile Card & Sign Out (Mobile Menu) */}
+              {currentUser && (
+                <div style={{
+                  background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                  borderRadius: '14px',
+                  border: `1px solid ${colors.rule}`,
+                  padding: '12px 14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                  marginBottom: '6px',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                      width: '36px', height: '36px', borderRadius: '10px',
+                      background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`,
+                      color: '#fff',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      textTransform: 'uppercase',
+                    }}>
+                      {currentUser.username.substring(0, 2)}
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: fonts.primary, fontWeight: 650, fontSize: '0.85rem', color: colors.ink }}>
+                        {currentUser.username}
+                      </div>
+                      <div style={{ fontFamily: fonts.primary, fontSize: '0.7rem', color: colors.inkLight, wordBreak: 'break-all' }}>
+                        {currentUser.email}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      encryptedSetItem('saafy_user', null)
+                      setCurrentUser(null)
+                      loadPlaylists(null)
+                      setSelectedPlaylist(null)
+                      setShowMobileMenu(false)
+                      loadListeningHistory('guest')
+                      loadDiscoveryContent(null)
+                      toast.info('Signed out successfully')
+                    }}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: `1px solid rgba(239, 68, 68, 0.2)`,
+                      background: isDark ? 'rgba(239, 68, 68, 0.05)' : 'rgba(239, 68, 68, 0.02)',
+                      color: '#EF4444',
+                      fontFamily: fonts.primary,
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                      <polyline points="16 17 21 12 16 7" />
+                      <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    Sign Out
+                  </button>
+                </div>
+              )}
 
               {/* Shuffle All — highlighted */}
               <button
@@ -1302,11 +1581,7 @@ function HomePage() {
                   background: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.07)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.ink} strokeWidth="2">
-                    <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" />
-                    <line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" />
-                    <line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
-                  </svg>
+                  <ListMusic size={16} strokeWidth={2} color={colors.ink} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: fonts.primary, fontWeight: 600, fontSize: '0.9rem' }}>Queue</div>
@@ -1591,38 +1866,7 @@ function HomePage() {
           </div>
         </>
       )}
-      {/* Quick scroll navigation category tab ribbon */}
-      {!isSearching && (
-        <nav className="category-nav-ribbon">
-          {[
-            { id: 'section-for-you', label: 'For You', icon: Sparkles },
-            { id: 'section-playlists', label: 'My Playlists', icon: ListMusic, condition: currentUser !== null },
-            { id: 'section-trending', label: 'Trending', icon: TrendingUp, condition: themed.trending?.songs && themed.trending.songs.length > 0 },
-            { id: 'section-hindi', label: 'Hindi', icon: Languages },
-            { id: 'section-english', label: 'English', icon: BookText },
-            { id: 'section-punjabi', label: 'Punjabi', icon: Drum },
-            { id: 'section-marathi', label: 'Marathi', icon: Landmark, condition: discovery.marathi?.songs && discovery.marathi.songs.length > 0 },
-            { id: 'section-party', label: 'Party', icon: PartyPopper, condition: themed.party?.songs && themed.party.songs.length > 0 },
-            { id: 'section-chill', label: 'Chill', icon: CloudMoon, condition: themed.chill?.songs && themed.chill.songs.length > 0 },
-            { id: 'section-romantic', label: 'Romantic', icon: Heart, condition: themed.romantic?.songs && themed.romantic.songs.length > 0 },
-            { id: 'section-workout', label: 'Workout', icon: Dumbbell, condition: themed.workout?.songs && themed.workout.songs.length > 0 },
-          ].map((item) => {
-            if (item.condition === false) return null;
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                className={`mobile-nav-tab ${activeCategory === item.id ? 'active' : ''}`}
-                onClick={() => handleCategoryClick(item.id)}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-              >
-                <Icon size={16} strokeWidth={1.75} style={{ flexShrink: 0 }} />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-      )}
+      {/* Category ribbon is now inside header */}
 
       <main className="main-content" style={{
         maxWidth: '1400px',
@@ -2100,7 +2344,8 @@ function HomePage() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: isMobile ? 'center' : 'flex-start',
-                          gap: '14px',
+                          gap: '10px',
+                          flexWrap: 'wrap',
                         }}>
                           <button
                             onClick={handlePlayPlaylist}
@@ -2235,15 +2480,68 @@ function HomePage() {
                             gap: '16px',
                             flexWrap: 'wrap'
                           }}>
-                            <h3 style={{
-                              fontFamily: fonts.display,
-                              fontSize: '1.25rem',
-                              fontWeight: 700,
-                              color: colors.ink,
-                              margin: 0,
-                            }}>
-                              Tracks
-                            </h3>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <h3 style={{
+                                fontFamily: fonts.display,
+                                fontSize: '1.25rem',
+                                fontWeight: 700,
+                                color: colors.ink,
+                                margin: 0,
+                              }}>
+                                Tracks
+                              </h3>
+                              
+                              {/* View Mode Switcher */}
+                              <div style={{
+                                display: 'flex',
+                                background: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
+                                borderRadius: '8px',
+                                padding: '2px',
+                                border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
+                                gap: '2px',
+                              }}>
+                                <button
+                                  onClick={() => setPlaylistViewMode('list')}
+                                  style={{
+                                    padding: '6px',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    background: playlistViewMode === 'list' 
+                                      ? (isDark ? 'rgba(224, 115, 86, 0.18)' : 'rgba(196, 92, 62, 0.12)') 
+                                      : 'transparent',
+                                    color: playlistViewMode === 'list' ? colors.accent : colors.inkMuted,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.2s',
+                                  }}
+                                  title="List View"
+                                >
+                                  <List size={15} strokeWidth={2.2} />
+                                </button>
+                                <button
+                                  onClick={() => setPlaylistViewMode('card')}
+                                  style={{
+                                    padding: '6px',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    background: playlistViewMode === 'card' 
+                                      ? (isDark ? 'rgba(224, 115, 86, 0.18)' : 'rgba(196, 92, 62, 0.12)') 
+                                      : 'transparent',
+                                    color: playlistViewMode === 'card' ? colors.accent : colors.inkMuted,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.2s',
+                                  }}
+                                  title="Card View"
+                                >
+                                  <Grid size={15} strokeWidth={2.2} />
+                                </button>
+                              </div>
+                            </div>
                             
                             {/* Search Input Container */}
                             <div style={{
@@ -2319,30 +2617,276 @@ function HomePage() {
                             </div>
                           </div>
 
-                          {/* Table Headers */}
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            padding: '8px 16px',
-                            borderBottom: `1px solid ${colors.rule}`,
-                            color: colors.inkLight,
-                            fontFamily: fonts.mono,
-                            fontSize: '0.72rem',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em',
-                            marginBottom: '12px',
-                          }}>
-                            <div style={{ width: '32px', textAlign: 'center', flexShrink: 0 }}>#</div>
-                            <div style={{ flex: 2, minWidth: 0, paddingLeft: '16px' }}>Title</div>
-                            <div style={{ flex: 1.5, minWidth: 0, display: isMobile ? 'none' : 'block', paddingLeft: '16px' }}>Album</div>
-                            <div style={{ width: '80px', textAlign: 'right', paddingRight: '24px', flexShrink: 0, display: isMobile ? 'none' : 'block' }}>
-                              <Clock size={13} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
-                            </div>
-                            <div style={{ width: '120px', textAlign: 'right', flexShrink: 0 }}>Actions</div>
-                          </div>
+                          {playlistViewMode === 'list' ? (
+                            <>
+                              {/* Table Headers */}
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                padding: '8px 16px',
+                                borderBottom: `1px solid ${colors.rule}`,
+                                color: colors.inkLight,
+                                fontFamily: fonts.mono,
+                                fontSize: '0.72rem',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                marginBottom: '12px',
+                              }}>
+                                <div style={{ width: '32px', textAlign: 'center', flexShrink: 0 }}>#</div>
+                                <div style={{ flex: 2, minWidth: 0, paddingLeft: '16px' }}>Title</div>
+                                <div style={{ flex: 1.5, minWidth: 0, display: isMobile ? 'none' : 'block', paddingLeft: '16px' }}>Album</div>
+                                <div style={{ width: '80px', textAlign: 'right', paddingRight: '24px', flexShrink: 0, display: isMobile ? 'none' : 'block' }}>
+                                  <Clock size={13} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
+                                </div>
+                                <div style={{ width: '120px', textAlign: 'right', flexShrink: 0 }}>Actions</div>
+                              </div>
 
-                          {/* Song Rows */}
-                          {filteredPlaylistSongs.length === 0 ? (
+                              {/* Song Rows */}
+                              {filteredPlaylistSongs.length === 0 ? (
+                                <div style={{
+                                  textAlign: 'center',
+                                  padding: '48px 24px',
+                                  background: isDark ? 'rgba(255, 255, 255, 0.01)' : 'rgba(0, 0, 0, 0.005)',
+                                  border: `1px dashed ${colors.rule}`,
+                                  borderRadius: '12px',
+                                  fontFamily: fonts.primary,
+                                  color: colors.inkLight,
+                                  fontSize: '0.88rem',
+                                  marginTop: '8px',
+                                }}>
+                                  No matching tracks found for "{playlistSearchQuery}"
+                                </div>
+                              ) : (
+                                filteredPlaylistSongs.map((song, index) => {
+                                  const isCurrentSong = currentSong?.id === song.id
+                                  const imageUrl = getPlaylistSongImage(song)
+
+                                  return (
+                                    <div
+                                    key={song.id}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      padding: '10px 16px',
+                                      borderRadius: '12px',
+                                      background: isCurrentSong 
+                                        ? (isDark ? 'rgba(224, 115, 86, 0.08)' : 'rgba(196, 92, 62, 0.05)') 
+                                        : 'transparent',
+                                      border: `1px solid ${isCurrentSong ? colors.accent + '25' : 'transparent'}`,
+                                      marginBottom: '6px',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s ease',
+                                    }}
+                                    onClick={() => handlePlaySong(song, playlistSongs)}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.background = isCurrentSong 
+                                        ? (isDark ? 'rgba(224, 115, 86, 0.12)' : 'rgba(196, 92, 62, 0.08)') 
+                                        : (isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)')
+                                      if (!isCurrentSong) e.currentTarget.style.borderColor = colors.border
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.background = isCurrentSong 
+                                        ? (isDark ? 'rgba(224, 115, 86, 0.08)' : 'rgba(196, 92, 62, 0.05)') 
+                                        : 'transparent'
+                                      e.currentTarget.style.borderColor = isCurrentSong ? colors.accent + '25' : 'transparent'
+                                    }}
+                                  >
+                                    {/* Index / Pulse Animation */}
+                                    <div style={{
+                                      width: '32px',
+                                      color: isCurrentSong ? colors.accent : colors.inkLight,
+                                      fontFamily: fonts.mono,
+                                      fontSize: '0.85rem',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      flexShrink: 0,
+                                    }}>
+                                      {isCurrentSong && isPlaying ? (
+                                        <div style={{ display: 'flex', gap: '2.5px', alignItems: 'flex-end', height: '14px' }}>
+                                          {[0.6, 1, 0.45].map((h, i) => (
+                                            <div
+                                              key={i}
+                                              style={{
+                                                width: '2px',
+                                                height: `${h * 100}%`,
+                                                background: colors.accent,
+                                                borderRadius: '1px',
+                                                animation: `pulse 0.6s ease-in-out ${i * 0.15}s infinite alternate`,
+                                                transformOrigin: 'bottom',
+                                              }}
+                                            />
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <span>{String(index + 1).padStart(2, '0')}</span>
+                                      )}
+                                    </div>
+
+                                    {/* Title (Art + Name + Artist) */}
+                                    <div style={{
+                                      flex: 2,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '16px',
+                                      minWidth: 0,
+                                      paddingLeft: '16px',
+                                    }}>
+                                      <img
+                                        src={imageUrl || '/placeholder.png'}
+                                        alt=""
+                                        style={{
+                                          width: '40px',
+                                          height: '40px',
+                                          borderRadius: '8px',
+                                          objectFit: 'cover',
+                                          border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+                                          flexShrink: 0,
+                                        }}
+                                      />
+                                      <div style={{ minWidth: 0 }}>
+                                        <div style={{
+                                          fontFamily: fonts.primary,
+                                          fontWeight: 600,
+                                          fontSize: '0.9rem',
+                                          color: isCurrentSong ? colors.accent : colors.ink,
+                                          whiteSpace: 'nowrap',
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                        }}>
+                                          {song.name || song.title}
+                                        </div>
+                                        <div style={{
+                                          fontFamily: fonts.primary,
+                                          fontSize: '0.75rem',
+                                          color: colors.inkLight,
+                                          whiteSpace: 'nowrap',
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                          marginTop: '2px',
+                                        }}>
+                                          {song.primaryArtists || 'Unknown Artist'}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Album Column */}
+                                    <div style={{
+                                      flex: 1.5,
+                                      minWidth: 0,
+                                      display: isMobile ? 'none' : 'block',
+                                      paddingLeft: '16px',
+                                      fontFamily: fonts.primary,
+                                      fontSize: '0.85rem',
+                                      color: colors.inkMuted,
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                    }}>
+                                      {song.album?.name || song.album || 'Single'}
+                                    </div>
+
+                                    {/* Duration Column */}
+                                    <div style={{
+                                      width: '80px',
+                                      textAlign: 'right',
+                                      paddingRight: '24px',
+                                      flexShrink: 0,
+                                      display: isMobile ? 'none' : 'block',
+                                      fontFamily: fonts.mono,
+                                      fontSize: '0.82rem',
+                                      color: colors.inkMuted,
+                                    }}>
+                                      {formatDuration(song.duration)}
+                                    </div>
+
+                                    {/* Actions Column */}
+                                    <div 
+                                      style={{
+                                        width: '120px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'flex-end',
+                                        gap: '10px',
+                                        flexShrink: 0,
+                                      }}
+                                      onClick={e => e.stopPropagation()}
+                                    >
+                                      <button
+                                        onClick={() => handlePlaySong(song, playlistSongs)}
+                                        style={{
+                                          background: 'transparent',
+                                          border: 'none',
+                                          color: colors.inkMuted,
+                                          cursor: 'pointer',
+                                          padding: '4px',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.color = colors.accent}
+                                        onMouseLeave={(e) => e.currentTarget.style.color = colors.inkMuted}
+                                        title="Play"
+                                      >
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                          <path d="M8 5v14l11-7z" />
+                                        </svg>
+                                      </button>
+
+                                      <button
+                                        onClick={() => {
+                                          addToQueue(song)
+                                          toast.success("Added to Queue")
+                                        }}
+                                        style={{
+                                          background: 'transparent',
+                                          border: 'none',
+                                          color: colors.inkMuted,
+                                          cursor: 'pointer',
+                                          padding: '4px',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.color = colors.accent}
+                                        onMouseLeave={(e) => e.currentTarget.style.color = colors.inkMuted}
+                                        title="Add to Queue"
+                                      >
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                          <line x1="12" y1="5" x2="12" y2="19" />
+                                          <line x1="5" y1="12" x2="19" y2="12" />
+                                        </svg>
+                                      </button>
+
+                                      <button
+                                        onClick={() => handleRemoveSong(song.id)}
+                                        style={{
+                                          background: 'transparent',
+                                          border: 'none',
+                                          color: 'rgba(239, 68, 68, 0.65)',
+                                          cursor: 'pointer',
+                                          padding: '4px',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.color = '#EF4444'}
+                                        onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(239, 68, 68, 0.65)'}
+                                        title="Remove from Playlist"
+                                      >
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                          <polyline points="3 6 5 6 21 6" />
+                                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                          <line x1="10" y1="11" x2="10" y2="17" />
+                                          <line x1="14" y1="11" x2="14" y2="17" />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                  </div>
+                                )
+                              })
+                            )}
+                          </>
+                        ) : (
+                          /* Card View Grid */
+                          filteredPlaylistSongs.length === 0 ? (
                             <div style={{
                               textAlign: 'center',
                               padding: '48px 24px',
@@ -2357,232 +2901,37 @@ function HomePage() {
                               No matching tracks found for "{playlistSearchQuery}"
                             </div>
                           ) : (
-                            filteredPlaylistSongs.map((song, index) => {
-                              const isCurrentSong = currentSong?.id === song.id
-                              const imageUrl = getPlaylistSongImage(song)
-
-                              return (
-                                <div
-                                key={song.id}
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  padding: '10px 16px',
-                                  borderRadius: '12px',
-                                  background: isCurrentSong 
-                                    ? (isDark ? 'rgba(224, 115, 86, 0.08)' : 'rgba(196, 92, 62, 0.05)') 
-                                    : 'transparent',
-                                  border: `1px solid ${isCurrentSong ? colors.accent + '25' : 'transparent'}`,
-                                  marginBottom: '6px',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s ease',
-                                }}
-                                onClick={() => handlePlaySong(song, playlistSongs)}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = isCurrentSong 
-                                    ? (isDark ? 'rgba(224, 115, 86, 0.12)' : 'rgba(196, 92, 62, 0.08)') 
-                                    : (isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)')
-                                  if (!isCurrentSong) e.currentTarget.style.borderColor = colors.border
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = isCurrentSong 
-                                    ? (isDark ? 'rgba(224, 115, 86, 0.08)' : 'rgba(196, 92, 62, 0.05)') 
-                                    : 'transparent'
-                                  e.currentTarget.style.borderColor = isCurrentSong ? colors.accent + '25' : 'transparent'
-                                }}
-                              >
-                                {/* Index / Pulse Animation */}
-                                <div style={{
-                                  width: '32px',
-                                  color: isCurrentSong ? colors.accent : colors.inkLight,
-                                  fontFamily: fonts.mono,
-                                  fontSize: '0.85rem',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  flexShrink: 0,
-                                }}>
-                                  {isCurrentSong && isPlaying ? (
-                                    <div style={{ display: 'flex', gap: '2.5px', alignItems: 'flex-end', height: '14px' }}>
-                                      {[0.6, 1, 0.45].map((h, i) => (
-                                        <div
-                                          key={i}
-                                          style={{
-                                            width: '2px',
-                                            height: `${h * 100}%`,
-                                            background: colors.accent,
-                                            borderRadius: '1px',
-                                            animation: `pulse 0.6s ease-in-out ${i * 0.15}s infinite alternate`,
-                                            transformOrigin: 'bottom',
-                                          }}
-                                        />
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <span>{String(index + 1).padStart(2, '0')}</span>
-                                  )}
-                                </div>
-
-                                {/* Title (Art + Name + Artist) */}
-                                <div style={{
-                                  flex: 2,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '16px',
-                                  minWidth: 0,
-                                  paddingLeft: '16px',
-                                }}>
-                                  <img
-                                    src={imageUrl || '/placeholder.png'}
-                                    alt=""
-                                    style={{
-                                      width: '40px',
-                                      height: '40px',
-                                      borderRadius: '8px',
-                                      objectFit: 'cover',
-                                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-                                      flexShrink: 0,
-                                    }}
+                            <div style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+                              gap: '20px',
+                              marginTop: '8px',
+                            }}>
+                              {filteredPlaylistSongs.map((song, index) => {
+                                const isCurrentSong = currentSong?.id === song.id
+                                const imageUrl = getPlaylistSongImage(song)
+                                return (
+                                  <PlaylistSongCard
+                                    key={song.id}
+                                    song={song}
+                                    index={index}
+                                    imageUrl={imageUrl}
+                                    isCurrentSong={isCurrentSong}
+                                    isPlaying={isPlaying}
+                                    colors={colors}
+                                    fonts={fonts}
+                                    isDark={isDark}
+                                    handlePlaySong={handlePlaySong}
+                                    playlistSongs={playlistSongs}
+                                    addToQueue={addToQueue}
+                                    handleRemoveSong={handleRemoveSong}
+                                    toast={toast}
                                   />
-                                  <div style={{ minWidth: 0 }}>
-                                    <div style={{
-                                      fontFamily: fonts.primary,
-                                      fontWeight: 600,
-                                      fontSize: '0.9rem',
-                                      color: isCurrentSong ? colors.accent : colors.ink,
-                                      whiteSpace: 'nowrap',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                    }}>
-                                      {song.name || song.title}
-                                    </div>
-                                    <div style={{
-                                      fontFamily: fonts.primary,
-                                      fontSize: '0.75rem',
-                                      color: colors.inkLight,
-                                      whiteSpace: 'nowrap',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      marginTop: '2px',
-                                    }}>
-                                      {song.primaryArtists || 'Unknown Artist'}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Album Column */}
-                                <div style={{
-                                  flex: 1.5,
-                                  minWidth: 0,
-                                  display: isMobile ? 'none' : 'block',
-                                  paddingLeft: '16px',
-                                  fontFamily: fonts.primary,
-                                  fontSize: '0.85rem',
-                                  color: colors.inkMuted,
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                }}>
-                                  {song.album?.name || song.album || 'Single'}
-                                </div>
-
-                                {/* Duration Column */}
-                                <div style={{
-                                  width: '80px',
-                                  textAlign: 'right',
-                                  paddingRight: '24px',
-                                  flexShrink: 0,
-                                  display: isMobile ? 'none' : 'block',
-                                  fontFamily: fonts.mono,
-                                  fontSize: '0.82rem',
-                                  color: colors.inkMuted,
-                                }}>
-                                  {formatDuration(song.duration)}
-                                </div>
-
-                                {/* Actions Column */}
-                                <div 
-                                  style={{
-                                    width: '120px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'flex-end',
-                                    gap: '10px',
-                                    flexShrink: 0,
-                                  }}
-                                  onClick={e => e.stopPropagation()}
-                                >
-                                  <button
-                                    onClick={() => handlePlaySong(song, playlistSongs)}
-                                    style={{
-                                      background: 'transparent',
-                                      border: 'none',
-                                      color: colors.inkMuted,
-                                      cursor: 'pointer',
-                                      padding: '4px',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.color = colors.accent}
-                                    onMouseLeave={(e) => e.currentTarget.style.color = colors.inkMuted}
-                                    title="Play"
-                                  >
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                      <path d="M8 5v14l11-7z" />
-                                    </svg>
-                                  </button>
-
-                                  <button
-                                    onClick={() => {
-                                      addToQueue(song)
-                                      toast.success("Added to Queue")
-                                    }}
-                                    style={{
-                                      background: 'transparent',
-                                      border: 'none',
-                                      color: colors.inkMuted,
-                                      cursor: 'pointer',
-                                      padding: '4px',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.color = colors.accent}
-                                    onMouseLeave={(e) => e.currentTarget.style.color = colors.inkMuted}
-                                    title="Add to Queue"
-                                  >
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                      <line x1="12" y1="5" x2="12" y2="19" />
-                                      <line x1="5" y1="12" x2="19" y2="12" />
-                                    </svg>
-                                  </button>
-
-                                  <button
-                                    onClick={() => handleRemoveSong(song.id)}
-                                    style={{
-                                      background: 'transparent',
-                                      border: 'none',
-                                      color: 'rgba(239, 68, 68, 0.65)',
-                                      cursor: 'pointer',
-                                      padding: '4px',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.color = '#EF4444'}
-                                    onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(239, 68, 68, 0.65)'}
-                                    title="Remove from Playlist"
-                                  >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                      <polyline points="3 6 5 6 21 6" />
-                                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                      <line x1="10" y1="11" x2="10" y2="17" />
-                                      <line x1="14" y1="11" x2="14" y2="17" />
-                                    </svg>
-                                  </button>
-                                </div>
-                              </div>
-                            )
-                          })
-                          )}
+                                )
+                              })}
+                            </div>
+                          )
+                        )}
                         </div>
                       )}
                     </div>
@@ -2840,6 +3189,36 @@ function HomePage() {
                 {/* For You */}
                 <section id="section-for-you" style={getStaggerStyle(0, isMobile ? '20px' : 'clamp(28px, 6vw, 56px)')}>
 
+                  {/* Curated Greeting for Mobile */}
+                  {isMobile && (
+                    <div style={{
+                      marginBottom: '18px',
+                      paddingLeft: '4px',
+                      marginTop: '6px',
+                    }}>
+                      <div style={{
+                        fontFamily: fonts.primary,
+                        fontSize: 'clamp(1.4rem, 6vw, 1.7rem)',
+                        fontWeight: 800,
+                        color: colors.ink,
+                        lineHeight: 1.2,
+                        letterSpacing: '-0.02em',
+                      }}>
+                        {getGreeting()} 👋
+                      </div>
+                      <div style={{
+                        fontFamily: fonts.mono,
+                        fontSize: '0.72rem',
+                        color: colors.inkLight,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        marginTop: '4px',
+                      }}>
+                        {formatDate()}
+                      </div>
+                    </div>
+                  )}
+
                   {/* ── Section header ── */}
                   <div style={{ marginBottom: isMobile ? '12px' : 'clamp(14px, 3.5vw, 24px)' }}>
 
@@ -3078,7 +3457,7 @@ function HomePage() {
             )}
       </main>
 
-      <BasicPlayer />
+      <BasicPlayer showQueue={showQueue} setShowQueue={setShowQueue} />
       <QueuePanel isOpen={showQueue} onClose={() => setShowQueue(false)} />
 
 
@@ -3133,6 +3512,229 @@ function HomePage() {
           />
         )}
       </AnimatePresence>
+    </div>
+  )
+}
+
+// ─── PlaylistSongCard Grid Component ──────────────────────────────────────────
+function PlaylistSongCard({ 
+  song, 
+  index, 
+  imageUrl, 
+  isCurrentSong, 
+  isPlaying, 
+  colors, 
+  fonts, 
+  isDark, 
+  handlePlaySong, 
+  playlistSongs, 
+  addToQueue, 
+  handleRemoveSong,
+  toast
+}) {
+  const [hovered, setHovered] = useState(false)
+  const [added, setAdded] = useState(false)
+
+  const handleQueueClick = (e) => {
+    e.stopPropagation()
+    if (added) return
+    addToQueue(song)
+    setAdded(true)
+    toast.success("Added to Queue")
+    setTimeout(() => setAdded(false), 2000)
+  }
+
+  const handleRemoveClick = (e) => {
+    e.stopPropagation()
+    handleRemoveSong(song.id)
+  }
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => handlePlaySong(song, playlistSongs)}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '12px',
+        borderRadius: '16px',
+        background: hovered 
+          ? (isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)') 
+          : 'transparent',
+        border: `1px solid ${isCurrentSong 
+          ? colors.accent + '50' 
+          : (hovered ? (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)') : 'transparent')}`,
+        boxShadow: hovered ? 'var(--shadow-ske-xs)' : 'none',
+        transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
+        transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+        cursor: 'pointer',
+        position: 'relative',
+      }}
+    >
+      {/* Artwork Container */}
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        aspectRatio: '1',
+        borderRadius: '12px',
+        overflow: 'hidden',
+        background: colors.paperDarker,
+        border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+        boxShadow: 'var(--shadow-ske-inset-sm)',
+        marginBottom: '10px',
+      }}>
+        <img 
+          src={imageUrl || '/placeholder.png'} 
+          alt="" 
+          style={{ 
+            width: '100%', 
+            height: '100%', 
+            objectFit: 'cover',
+            transform: hovered ? 'scale(1.05)' : 'scale(1)',
+            transition: 'transform 0.5s ease',
+          }} 
+        />
+
+        {/* Hover / Active Overlay */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: isCurrentSong && isPlaying 
+            ? 'rgba(0, 0, 0, 0.4)' 
+            : (hovered ? 'rgba(0, 0, 0, 0.35)' : 'transparent'),
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          opacity: (hovered || isCurrentSong) ? 1 : 0,
+          transition: 'all 0.25s ease',
+          backdropFilter: hovered ? 'blur(2px)' : 'none',
+          WebkitBackdropFilter: hovered ? 'blur(2px)' : 'none',
+        }}>
+          {/* Centered Play/Pause Button */}
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            background: isCurrentSong && isPlaying ? colors.accent : 'rgba(255, 255, 255, 0.9)',
+            color: isCurrentSong && isPlaying ? '#ffffff' : '#000000',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+            transform: hovered ? 'scale(1.05)' : 'scale(0.9)',
+            transition: 'all 0.2s ease',
+          }}>
+            {isCurrentSong && isPlaying ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: '2px' }}>
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            )}
+          </div>
+
+          {/* Action buttons (Queue & Delete) at top corners on hover */}
+          {hovered && (
+            <div 
+              style={{
+                position: 'absolute',
+                top: '8px',
+                right: '8px',
+                display: 'flex',
+                gap: '6px',
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Queue Button */}
+              <button
+                onClick={handleQueueClick}
+                style={{
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '6px',
+                  background: added ? 'rgba(16, 185, 129, 0.95)' : 'rgba(0, 0, 0, 0.65)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  padding: 0,
+                  transition: 'all 0.15s ease',
+                }}
+                title={added ? "Added!" : "Add to Queue"}
+              >
+                {added ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                )}
+              </button>
+
+              {/* Remove Button */}
+              <button
+                onClick={handleRemoveClick}
+                style={{
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '6px',
+                  background: 'rgba(239, 68, 68, 0.85)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  padding: 0,
+                  transition: 'all 0.15s ease',
+                }}
+                title="Remove from playlist"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Info Container */}
+      <div style={{ minWidth: 0 }}>
+        <div style={{
+          fontFamily: fonts.primary,
+          fontWeight: 600,
+          fontSize: '0.85rem',
+          color: isCurrentSong ? colors.accent : colors.ink,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          textAlign: 'center',
+        }}>
+          {song.name || song.title}
+        </div>
+        <div style={{
+          fontFamily: fonts.primary,
+          fontSize: '0.72rem',
+          color: colors.inkLight,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          textAlign: 'center',
+          marginTop: '2px',
+        }}>
+          {song.primaryArtists || 'Unknown Artist'}
+        </div>
+      </div>
     </div>
   )
 }

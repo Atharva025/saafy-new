@@ -48,9 +48,9 @@
 
   /* ── Directional surface gradients ── */
   --background-image-ske-surface:
-    linear-gradient(145deg, var(--ske-highlight) 0%, transparent 50%, var(--ske-inner-shadow) 100%);
+    linear-gradient(135deg, var(--ske-inner-highlight) 0%, transparent 40%, rgba(0, 0, 0, 0.02) 75%, var(--ske-inner-shadow) 100%);
   --background-image-ske-button:
-    linear-gradient(145deg, var(--ske-highlight) 0%, transparent 40%, rgba(0,0,0,0.07) 100%);
+    linear-gradient(135deg, var(--ske-highlight) 0%, rgba(255, 255, 255, 0.03) 35%, transparent 65%, rgba(0, 0, 0, 0.07) 100%);
   --background-image-ske-recessed:
     linear-gradient(to bottom, rgba(0,0,0,0.055) 0%, transparent 60%);
 
@@ -228,20 +228,20 @@ body {
     box-shadow: var(--shadow-ske-md);
     background-image: var(--background-image-ske-button);
     transition:
-      box-shadow 150ms var(--ease-premium),
-      transform 150ms var(--ease-premium),
-      filter 150ms var(--ease-premium);
+      box-shadow 300ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      filter 200ms ease;
   }
   .ske-raised:hover {
     box-shadow: var(--shadow-ske-lg);
-    transform: translateY(-1px) scale(1.02);
-    filter: brightness(1.04);
+    transform: translateY(-2px) scale(1.03);
+    filter: brightness(1.05);
   }
   .ske-raised:active {
     box-shadow: var(--shadow-ske-pressed);
-    transform: translateY(1px) scale(0.96);
-    filter: brightness(0.95);
-    transition-duration: 60ms;
+    transform: translateY(1.5px) scale(0.95);
+    filter: brightness(0.94);
+    transition-duration: 80ms;
   }
   .ske-raised:focus-visible {
     box-shadow: var(--shadow-ske-focus);
@@ -260,16 +260,19 @@ body {
   .ske-raised-xs {
     box-shadow: var(--shadow-ske-xs);
     background-image: var(--background-image-ske-button);
-    transition: box-shadow 120ms var(--ease-premium), transform 120ms var(--ease-premium);
+    transition: 
+      box-shadow 250ms cubic-bezier(0.34, 1.56, 0.64, 1), 
+      transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .ske-raised-xs:hover {
     box-shadow: var(--shadow-ske-sm);
-    transform: translateY(-0.5px) scale(1.02);
-    filter: brightness(1.03);
+    transform: translateY(-1px) scale(1.03);
+    filter: brightness(1.04);
   }
   .ske-raised-xs:active {
     box-shadow: var(--shadow-ske-pressed);
     transform: translateY(1px) scale(0.96);
+    transition-duration: 80ms;
   }
 
   /* ── Recessed surface (inputs, search, wells, progress tracks) ── */
@@ -343,17 +346,17 @@ body {
   /* ── Scroll card lift effect ── */
   .ske-lift {
     transition:
-      transform 280ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-      box-shadow 280ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .ske-lift:hover {
-    transform: translateY(-5px);
+    transform: translateY(-7px) scale(1.03) rotate(0.4deg);
     box-shadow: var(--shadow-ske-lg);
   }
   .ske-lift:active {
-    transform: translateY(-2px);
+    transform: translateY(-2px) scale(0.97);
     box-shadow: var(--shadow-ske-md);
-    transition-duration: 100ms;
+    transition-duration: 80ms;
   }
 
   /* ── Progress fill raised (fill within recessed track) ── */
@@ -420,6 +423,7 @@ h5,
 h6 {
   text-wrap: balance;
   line-height: 1.15;
+  letter-spacing: -0.025em;
 }
 
 p,
@@ -516,8 +520,8 @@ button {
 
 /* ── Scrollbar ──────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -527,10 +531,43 @@ button {
 ::-webkit-scrollbar-thumb {
   background: var(--color-paper-darker);
   border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-ink-light);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+/* ── Specular Sheen Sweep animation ── */
+.ske-sheen {
+  position: relative;
+  overflow: hidden;
+}
+.ske-sheen::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 30%;
+  height: 200%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(25deg);
+  transition: left 0.6s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+.ske-sheen:hover::after {
+  left: 130%;
+  transition: left 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hide-scrollbar::-webkit-scrollbar {
@@ -758,53 +795,14 @@ input[type="range"]:hover::-moz-range-thumb {
     display: none !important;
   }
 
-  /* ── Mobile Header — single tight row ── */
+  /* ── Mobile Header — two-row layout, sidebar hidden ── */
+  /* hide old single-row header-container on mobile (we use mobile-header-wrapper now) */
   .header-container {
-    display: grid !important;
-    grid-template-columns: auto 1fr auto !important;
-    grid-template-rows: auto !important;
-    gap: 8px !important;
-    padding: 10px 14px !important;
-    align-items: center !important;
-    flex-wrap: nowrap !important;
-  }
-
-  .header-left {
-    grid-column: 1;
-    gap: 0 !important;
-  }
-
-  .header-search {
-    grid-column: 2;
-    justify-content: stretch !important;
-    min-width: 0 !important;
-  }
-
-  .header-actions {
-    grid-column: 3;
-    gap: 4px !important;
-  }
-
-  /* Shrink icon buttons on mobile */
-  .header-actions button {
-    width: 34px !important;
-    height: 34px !important;
-    min-height: unset !important;
-    min-width: unset !important;
-  }
-
-  /* Hide the refresh button label on mobile, keep just icon */
-  .header-refresh-label {
     display: none !important;
   }
 
-  /* Refresh button becomes compact icon square on mobile */
-  .header-refresh-btn {
-    padding: 0 !important;
-    width: 34px !important;
-    height: 34px !important;
-    border-radius: 10px !important;
-    gap: 0 !important;
+  .mobile-header-wrapper {
+    display: block;
   }
 
   /* Tighter main content padding */
@@ -834,36 +832,42 @@ input[type="range"]:hover::-moz-range-thumb {
     gap: 8px !important;
     height: clamp(80px, 22vw, 120px) !important;
   }
+
+  /* Category Navigation Ribbon (Glassmorphic) mobile tweaks */
+  /* Single-row mobile header + category nav ribbon = ~96px total */
+  :root {
+    --layout-header-height: 96px;
+  }
+
+  html {
+    scroll-padding-top: 96px;
+  }
+
+  .category-nav-ribbon {
+    padding: 6px 12px 10px 12px !important;
+    gap: 8px !important;
+    margin-bottom: 0 !important;
+  }
+
+  .mobile-nav-tab {
+    padding: 6px 12px !important;
+    font-size: 0.7rem !important;
+  }
 }
 
 /* Extra small — iPhone SE (375px) and similarly tiny devices */
 @media (max-width: 390px) {
-  .header-container {
-    padding: 8px 10px !important;
-    gap: 6px !important;
-  }
-
-  .header-actions {
-    gap: 3px !important;
-  }
-
-  .header-actions button {
-    width: 30px !important;
-    height: 30px !important;
-  }
-
-  .header-refresh-btn {
-    width: 30px !important;
-    height: 30px !important;
-  }
-
-  .main-content {
-    padding: 12px 12px clamp(100px, 22vw, 130px) 12px !important;
+  .mobile-header-wrapper {
+    padding: 8px 12px 0 !important;
   }
 
   /* On SE: show only 3 cards in small grid row */
   .featured-small-grid {
     grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  .main-content {
+    padding: 12px 12px clamp(100px, 22vw, 130px) 12px !important;
   }
 }
 
@@ -978,33 +982,14 @@ input[type="range"]:hover::-moz-range-thumb {
   }
 }
 
-/* ── Mobile Header: hide desktop actions, expose More button ─────── */
+/* ── Mobile Header: full two-row layout ─────────────────────── */
 @media (max-width: 639px) {
   /* Hide ALL desktop action buttons on mobile */
   .header-actions {
     display: none !important;
   }
 
-  /* Hide greeting text + divider so search has max space */
-  .header-greeting,
-  .header-divider {
-    display: none !important;
-  }
-
-  /* Tighten container padding on mobile */
-  .header-container {
-    gap: 10px !important;
-    padding-left: 14px !important;
-    padding-right: 14px !important;
-  }
-
-  /* Ensure header-search stretches properly */
-  .header-search {
-    flex: 1 1 0% !important;
-    min-width: 0 !important;
-  }
-
-  /* Give the mobile more button its proper display */
+  /* Mobile-more-btn is now in the mobile-header-wrapper, always flex */
   .mobile-more-btn {
     display: flex !important;
   }
@@ -1013,6 +998,11 @@ input[type="range"]:hover::-moz-range-thumb {
 /* ── Desktop: hide the mobile More button ───────────────────────── */
 @media (min-width: 640px) {
   .mobile-more-btn {
+    display: none !important;
+  }
+
+  /* Desktop header: ensure mobile-header-wrapper is hidden */
+  .mobile-header-wrapper {
     display: none !important;
   }
 }
@@ -1103,19 +1093,14 @@ input[type="range"]:hover::-moz-range-thumb {
   display: flex;
   gap: 10px;
   overflow-x: auto;
-  padding: 10px clamp(16px, 4vw, 32px);
+  padding: 10px clamp(16px, 4vw, 32px) 12px clamp(16px, 4vw, 32px);
   scrollbar-width: none;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-  position: sticky;
-  top: var(--layout-header-height);
-  background: var(--color-overlay);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: transparent;
   z-index: 40;
-  border-bottom: 1px solid var(--color-border);
   transition: all 0.3s ease;
-  margin-bottom: 20px;
+  margin-bottom: 0px;
 }
 .category-nav-ribbon::-webkit-scrollbar {
   display: none;
