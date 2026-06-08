@@ -104,13 +104,17 @@ export default function ArtistPage() {
         <div style={{
             minHeight: '100vh',
             background: colors.paper,
+            paddingTop: '76px',
             paddingBottom: '120px',
             transition: 'background 0.3s ease',
+            position: 'relative',
         }}>
             {/* Header */}
             <header style={{
-                position: 'sticky',
+                position: 'fixed',
                 top: 0,
+                left: 0,
+                right: 0,
                 zIndex: 50,
                 background: isDark ? 'rgba(26, 22, 20, 0.88)' : 'rgba(250, 247, 242, 0.88)',
                 backdropFilter: 'blur(12px) saturate(140%)',

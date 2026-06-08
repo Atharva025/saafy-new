@@ -104,7 +104,7 @@ function TrailRow({ song, index, vibeTitle, timeString, onPlay, colors, fonts, i
                 padding: '10px 14px',
                 borderRadius: '12px',
                 cursor: 'pointer',
-                background: hovered ? (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)') : 'transparent',
+                background: hovered ? (isDark ? 'rgba(224, 115, 86, 0.12)' : 'rgba(196, 92, 62, 0.08)') : 'transparent',
                 transform: hovered ? 'translateX(4px)' : 'translateX(0)',
                 transition: 'background-color 0.2s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
                 marginBottom: '4px',
@@ -356,22 +356,30 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                 onMouseLeave={() => setIsHovered(false)}
                 style={{
                     position: 'relative',
-                    background: colors.paperDark,
-                    backgroundImage: 'var(--background-image-ske-recessed)',
-                    borderRadius: isExpanded ? '28px' : '22px',
-                    border: isFocused
-                        ? `1.5px solid ${colors.accent}`
-                        : isHovered
-                            ? `1.5px solid ${isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'}`
-                            : `1px solid var(--color-border)`,
-                    boxShadow: isFocused
-                        ? `var(--shadow-ske-focus)`
-                        : isHovered
-                            ? `inset 1px 2px 6px var(--ske-inner-shadow), 0 2px 8px ${colors.accent}12`
-                            : isExpanded
-                                ? `inset 2px 3px 10px var(--ske-shadow), inset -1px -1px 5px var(--ske-highlight), 0 12px 36px var(--ske-shadow)`
-                                : `inset 1px 2px 6px var(--ske-inner-shadow), inset -1px -1px 3px var(--ske-inner-highlight)`,
-                    transition: 'all 200ms cubic-bezier(0.16, 1, 0.3, 1)',
+                    background: isExpanded
+                        ? (isDark ? 'rgba(26, 22, 20, 0.65)' : 'rgba(253, 251, 249, 0.65)')
+                        : colors.paperDark,
+                    backgroundImage: isExpanded ? 'none' : 'var(--background-image-ske-recessed)',
+                    backdropFilter: isExpanded ? 'blur(20px) saturate(160%)' : 'none',
+                    WebkitBackdropFilter: isExpanded ? 'blur(20px) saturate(160%)' : 'none',
+                    borderRadius: isExpanded ? '18px' : '22px',
+                    border: isExpanded
+                        ? (isDark ? '1px solid rgba(255, 255, 255, 0.10)' : '1px solid rgba(0, 0, 0, 0.06)')
+                        : (isFocused
+                            ? `1.5px solid ${colors.accent}`
+                            : isHovered
+                                ? `1.5px solid ${isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'}`
+                                : `1px solid var(--color-border)`),
+                    boxShadow: isExpanded
+                        ? (isDark 
+                            ? 'inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 20px 50px rgba(0, 0, 0, 0.5)' 
+                            : 'inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 20px 50px rgba(26, 22, 20, 0.12)')
+                        : (isFocused
+                            ? `var(--shadow-ske-focus)`
+                            : isHovered
+                                ? `inset 1px 2px 6px var(--ske-inner-shadow), 0 2px 8px ${colors.accent}12`
+                                : `inset 1px 2px 6px var(--ske-inner-shadow), inset -1px -1px 3px var(--ske-inner-highlight)`),
+                    transition: 'all 300ms cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
             >
                 <div style={{
@@ -594,7 +602,7 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                                         padding: isExpanded ? '10px 12px' : '8px 10px',
                                         borderRadius: '8px',
                                         cursor: 'pointer',
-                                        background: isSelected ? colors.paperDark : 'transparent',
+                                        background: isSelected ? (isDark ? 'rgba(224, 115, 86, 0.12)' : 'rgba(196, 92, 62, 0.08)') : 'transparent',
                                         transform: isSelected ? 'translateX(4px)' : 'translateX(0)',
                                         transition: 'background 0.2s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
                                     }}
@@ -824,7 +832,7 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
     return (
         <>
             {/* Backdrop blur overlay — desktop only (mobile uses isExpanded + portal separately) */}
-            {!isMobile && isFocused && typeof document !== 'undefined' && createPortal(
+            {!isMobile && isExpanded && typeof document !== 'undefined' && createPortal(
                 <div
                     style={{
                         position: 'fixed',
@@ -891,14 +899,14 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                         ref={containerRef}
                         style={{
                             position: 'absolute',
-                            top: '50%',
+                            top: isExpanded ? '20vh' : '50%',
                             left: '50%',
                             transform: 'translate(-50%, -50%)',
                             transformOrigin: 'center center',
-                            width: isExpanded ? 'min(680px, 80vw)' : '100%',
+                            width: isExpanded ? 'min(680px, 90vw)' : '100%',
                             maxWidth: isExpanded ? '680px' : '480px',
                             zIndex: isExpanded ? 1000 : 'auto',
-                            transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1), max-width 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                            transition: 'top 0.4s cubic-bezier(0.16, 1, 0.3, 1), width 0.4s cubic-bezier(0.16, 1, 0.3, 1), max-width 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
                         }}
                     >
                         {renderSearchForm()}

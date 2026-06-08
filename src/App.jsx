@@ -22,6 +22,7 @@ import { encryptedGetItem, encryptedSetItem } from '@/lib/encryption'
 import { validateSong } from '@/lib/security'
 import { getSong, searchSongs, getRecommendations } from '@/lib/api'
 import { compressImage } from '@/utils/image'
+import { generateGradient } from '@/utils/colorExtractor'
 import { Sparkles, TrendingUp, Languages, BookText, Drum, Landmark, PartyPopper, CloudMoon, Heart, Dumbbell, ListMusic, Pencil, Check, Shuffle, Clock, Menu, List, Grid } from 'lucide-react'
 
 function HomePage() {
@@ -639,47 +640,77 @@ function HomePage() {
     return nameMatch || artistMatch || albumMatch
   })
 
+  const songImageUrl = currentSong?.image?.[2]?.link || 
+                       currentSong?.image?.[2]?.url ||
+                       currentSong?.image?.[1]?.link || 
+                       currentSong?.image?.[1]?.url ||
+                       currentSong?.image?.[0]?.link || 
+                       currentSong?.image?.[0]?.url ||
+                       currentSong?.imageUrl || 
+                       '';
+
   return (
     <div style={{
-
-
-
       minHeight: '100vh',
       background: colors.paper,
       transition: 'background 0.3s ease',
+      position: 'relative',
     }}>
-      {/* Background Ambient Glow Orbs - dynamic matching Spotify/Apple Music */}
+      {/* Dynamic ambient playing background (static iOS-style blurred cover art matching song color) */}
       <div 
-        className="glow-orb glow-orb-1" 
-        style={{ 
-          opacity: isDark ? 0.35 : 0.45,
-          background: dominantColor ? dominantColor.rgba(isDark ? 0.16 : 0.10) : 'var(--color-accent-subtle)',
-        }} 
+        className="ambient-playing-bg"
+        style={{
+          backgroundImage: (currentSong && songImageUrl) ? `url("${songImageUrl}")` : 'none',
+          opacity: (currentSong && songImageUrl) ? (isDark ? 0.28 : 0.18) : 0,
+        }}
       />
-      <div 
-        className="glow-orb glow-orb-2" 
-        style={{ 
-          opacity: isDark ? 0.25 : 0.35,
-          background: dominantColor ? dominantColor.rgba(isDark ? 0.12 : 0.08) : 'rgba(224, 115, 86, 0.08)',
-        }} 
-      />
+      {/* Background Ambient Glow Orbs - dynamic matching Spotify/Apple Music, hidden when song is active to avoid movement */}
+      {!(currentSong && songImageUrl) && (
+        <>
+          <div 
+            className="glow-orb glow-orb-1" 
+            style={{ 
+              opacity: isDark ? 0.35 : 0.45,
+              background: dominantColor ? dominantColor.rgba(isDark ? 0.16 : 0.10) : 'var(--color-accent-subtle)',
+            }} 
+          />
+          <div 
+            className="glow-orb glow-orb-2" 
+            style={{ 
+              opacity: isDark ? 0.25 : 0.35,
+              background: dominantColor ? dominantColor.rgba(isDark ? 0.12 : 0.08) : 'rgba(224, 115, 86, 0.08)',
+            }} 
+          />
+        </>
+      )}
 
-      {/* Header */}
       <header style={{
-        position: 'sticky',
+        position: 'fixed',
         top: 0,
+        left: 0,
+        right: 0,
         zIndex: searchExpanded ? 1001 : 50,
-        background: scrolled
-          ? (isDark ? 'rgba(26, 22, 20, 0.72)' : 'rgba(250, 247, 242, 0.72)')
-          : (isDark ? 'rgba(26, 22, 20, 0.88)' : 'rgba(250, 247, 242, 0.88)'),
-        backdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'blur(12px) saturate(140%)',
-        WebkitBackdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'blur(12px) saturate(140%)',
-        borderBottom: `1px solid ${scrolled
-          ? (isDark ? 'rgba(224, 115, 86, 0.22)' : 'rgba(196, 92, 62, 0.18)')
-          : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)')}`,
-        boxShadow: scrolled
-          ? (isDark ? '0 4px 20px rgba(0, 0, 0, 0.45)' : '0 4px 20px rgba(26, 22, 20, 0.08)')
-          : 'none',
+        background: searchExpanded
+          ? 'transparent'
+          : (scrolled
+              ? (isDark ? 'rgba(26, 22, 20, 0.55)' : 'rgba(250, 247, 242, 0.55)')
+              : (isDark ? 'rgba(26, 22, 20, 0.72)' : 'rgba(250, 247, 242, 0.72)')),
+        backdropFilter: searchExpanded ? 'none' : 'blur(20px) saturate(160%)',
+        WebkitBackdropFilter: searchExpanded ? 'none' : 'blur(20px) saturate(160%)',
+        borderBottom: searchExpanded
+          ? 'none'
+          : `1px solid ${scrolled
+              ? (isDark ? 'rgba(224, 115, 86, 0.22)' : 'rgba(196, 92, 62, 0.18)')
+              : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)')}`,
+        boxShadow: searchExpanded
+          ? 'none'
+          : (scrolled
+              ? (isDark 
+                  ? 'inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 20px rgba(0, 0, 0, 0.45)' 
+                  : 'inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 4px 20px rgba(26, 22, 20, 0.08)')
+              : (isDark 
+                  ? 'inset 0 1px 0 rgba(255, 255, 255, 0.04)' 
+                  : 'inset 0 1px 0 rgba(255, 255, 255, 0.45)')),
         transition: searchExpanded ? 'none' : 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
       }}>
         {/* ─── DESKTOP HEADER ROW ─────────────────────────────────────── */}
@@ -697,72 +728,74 @@ function HomePage() {
             transition: 'padding 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
           }}>
             {/* Left - Logo + Greeting */}
-            <div className="header-left" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div style={{
-                fontFamily: fonts.display,
-                fontSize: 'clamp(1.05rem, 3.5vw, 1.25rem)',
-                fontWeight: 800,
-                color: colors.ink,
-                letterSpacing: '-0.03em',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-                transition: 'transform 0.2s ease',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
-              >
+            {!searchExpanded && (
+              <div className="header-left" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '14px' }}>
                 <div style={{
-                  width: '26px',
-                  height: '26px',
-                  borderRadius: '8px',
-                  background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`,
+                  fontFamily: fonts.display,
+                  fontSize: 'clamp(1.05rem, 3.5vw, 1.25rem)',
+                  fontWeight: 800,
+                  color: colors.ink,
+                  letterSpacing: '-0.03em',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  boxShadow: `0 4px 12px ${colors.accent}30, var(--shadow-ske-xs)`,
-                }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff">
-                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-                  </svg>
+                  gap: '8px',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+                >
+                  <div style={{
+                    width: '26px',
+                    height: '26px',
+                    borderRadius: '8px',
+                    background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    boxShadow: `0 4px 12px ${colors.accent}30, var(--shadow-ske-xs)`,
+                  }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff">
+                      <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                    </svg>
+                  </div>
+                  SAAFY
                 </div>
-                SAAFY
-              </div>
 
-              <div className="header-divider" style={{
-                width: '1.5px',
-                height: '24px',
-                background: isDark
-                  ? 'linear-gradient(to bottom, rgba(255,255,255,0.01), rgba(255,255,255,0.12), rgba(255,255,255,0.01))'
-                  : 'linear-gradient(to bottom, rgba(0,0,0,0.01), rgba(0,0,0,0.08), rgba(0,0,0,0.01))'
-              }} />
+                <div className="header-divider" style={{
+                  width: '1.5px',
+                  height: '24px',
+                  background: isDark
+                    ? 'linear-gradient(to bottom, rgba(255,255,255,0.01), rgba(255,255,255,0.12), rgba(255,255,255,0.01))'
+                    : 'linear-gradient(to bottom, rgba(0,0,0,0.01), rgba(0,0,0,0.08), rgba(0,0,0,0.01))'
+                }} />
 
-              <div className="header-greeting" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <div style={{
-                  fontFamily: fonts.primary,
-                  fontSize: 'clamp(0.72rem, 1.8vw, 0.85rem)',
-                  fontWeight: 650,
-                  color: colors.ink,
-                  lineHeight: 1.2,
-                  letterSpacing: '-0.01em',
-                }}>
-                  {getGreeting()}
-                </div>
-                <div style={{
-                  fontFamily: fonts.mono,
-                  fontSize: 'clamp(0.58rem, 1.3vw, 0.6rem)',
-                  color: colors.inkLight,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  marginTop: '1px',
-                  opacity: 0.85,
-                }}>
-                  {formatDate()}
+                <div className="header-greeting" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <div style={{
+                    fontFamily: fonts.primary,
+                    fontSize: 'clamp(0.72rem, 1.8vw, 0.85rem)',
+                    fontWeight: 650,
+                    color: colors.ink,
+                    lineHeight: 1.2,
+                    letterSpacing: '-0.01em',
+                  }}>
+                    {getGreeting()}
+                  </div>
+                  <div style={{
+                    fontFamily: fonts.mono,
+                    fontSize: 'clamp(0.58rem, 1.3vw, 0.6rem)',
+                    color: colors.inkLight,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    marginTop: '1px',
+                    opacity: 0.85,
+                  }}>
+                    {formatDate()}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Center - Search (Desktop only) */}
             <div className="header-search" style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: 0, position: 'relative' }}>
@@ -777,7 +810,8 @@ function HomePage() {
             </div>
 
           {/* Desktop: Right - Actions (hidden on mobile) */}
-          <div className="header-actions" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap' }}>
+          {!searchExpanded && (
+            <div className="header-actions" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap' }}>
             {/* Queue Button */}
             <button
               onClick={() => setShowQueue(!showQueue)}
@@ -1146,6 +1180,7 @@ function HomePage() {
               )}
             </div>
           </div>
+          )}
         </div>
         )}
 
@@ -1871,8 +1906,11 @@ function HomePage() {
       <main className="main-content" style={{
         maxWidth: '1400px',
         margin: '0 auto',
-        padding: 'clamp(12px, 3.5vw, 32px)',
+        paddingLeft: 'clamp(12px, 3.5vw, 32px)',
+        paddingRight: 'clamp(12px, 3.5vw, 32px)',
+        paddingTop: isMobile ? '78px' : (!isSearching ? '135px' : '90px'),
         paddingBottom: 'clamp(120px, 25vw, 160px)',
+        display: searchExpanded ? 'none' : 'block',
       }} id="main-content">
         {/* Mobile Category Navigation Ribbon */}
         {isMobile && !isSearching && !searchExpanded && (
@@ -3507,7 +3545,7 @@ function HomePage() {
       </main>
 
       <BasicPlayer showQueue={showQueue} setShowQueue={setShowQueue} />
-      <QueuePanel isOpen={showQueue} onClose={() => setShowQueue(false)} />
+      <QueuePanel isOpen={showQueue && !searchExpanded} onClose={() => setShowQueue(false)} />
 
 
       {/* Backdrop for history panel */}

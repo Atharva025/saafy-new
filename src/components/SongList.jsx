@@ -99,8 +99,8 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
                                 : hoveredIndex === index
                                     ? `1px 2px 6px var(--ske-shadow), -1px -1px 4px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight)`
                                     : 'none',
-                            backdropFilter: isCurrentSong ? 'blur(8px)' : 'none',
-                            WebkitBackdropFilter: isCurrentSong ? 'blur(8px)' : 'none',
+                            backdropFilter: isCurrentSong ? 'blur(12px) saturate(140%)' : 'none',
+                            WebkitBackdropFilter: isCurrentSong ? 'blur(12px) saturate(140%)' : 'none',
                             opacity: isCurrentSong ? 1 : hoveredIndex === index ? 1 : isPlaying && currentSong ? 0.6 : 1,
                             transition: 'background 0.2s ease, box-shadow 150ms ease-out, border 0.25s ease, opacity 0.25s ease, transform 0.25s var(--ease-spring)',
                             transform: hoveredIndex === index && !isCurrentSong ? 'translateY(-1px)' : 'none',
