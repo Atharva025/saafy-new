@@ -266,8 +266,21 @@ const formatSongs = (songs) => {
 
             if (song.downloadUrl && Array.isArray(song.downloadUrl) && song.downloadUrl.length > 0) {
                 downloadUrlArray = song.downloadUrl
-                const urlItem = song.downloadUrl[song.downloadUrl.length - 1]
-                downloadUrl = urlItem?.url || urlItem?.link || null
+                // Find highest quality audio item robustly (by numeric bitrate comparison)
+                let highestItem = song.downloadUrl[0]
+                let highestBitrate = 0
+                for (const item of song.downloadUrl) {
+                    const qualityStr = item.quality || ''
+                    const match = qualityStr.match(/(\d+)/)
+                    if (match) {
+                        const bitrate = parseInt(match[1], 10)
+                        if (bitrate > highestBitrate) {
+                            highestBitrate = bitrate
+                            highestItem = item
+                        }
+                    }
+                }
+                downloadUrl = highestItem?.url || highestItem?.link || null
             } else {
                 downloadUrl = song.download_url ||
                     song.downloadLink ||

@@ -106,27 +106,23 @@ export default function Settings() {
         }
     }
 
-    /* ── Shared style helpers ───────────────────────────────────────────── */
+    /* ── Shared style helpers (Simplified to layout-only props) ──────────────── */
     const cardStyle = {
         background: colors.paperDark,
-        backgroundImage: 'var(--background-image-ske-surface)',
         padding: '20px',
         borderRadius: '16px',
         border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.80)'}`,
-        boxShadow: `2px 3px 8px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px var(--ske-inner-highlight), inset 0 -1px 1px var(--ske-inner-shadow)`,
     }
 
     const inputStyle = {
         width: '100%',
         padding: '10px 12px',
         backgroundColor: colors.paperDarker,
-        backgroundImage: 'var(--background-image-ske-recessed)',
         color: colors.ink,
         border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.65)'}`,
         borderRadius: '10px',
         fontSize: '14px',
         fontFamily: fonts.primary,
-        boxShadow: `inset 1px 2px 5px var(--ske-inner-shadow), inset -1px -1px 3px var(--ske-inner-highlight)`,
         cursor: 'pointer',
         outline: 'none',
         boxSizing: 'border-box',
@@ -135,7 +131,6 @@ export default function Settings() {
     const btnRaisedStyle = {
         padding: '10px 24px',
         background: `linear-gradient(145deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`,
-        backgroundImage: 'var(--background-image-ske-button)',
         color: '#fff',
         border: '1px solid rgba(255,255,255,0.22)',
         borderRadius: '10px',
@@ -143,15 +138,12 @@ export default function Settings() {
         fontSize: '14px',
         fontWeight: 600,
         fontFamily: fonts.primary,
-        boxShadow: `3px 4px 8px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px rgba(255,255,255,0.3), inset 0 -1px 2px rgba(0,0,0,0.18), 0 4px 12px ${colors.accent}40`,
-        transition: 'box-shadow 80ms ease-out, transform 80ms ease-out',
         textShadow: '0 1px 2px rgba(0,0,0,0.25)',
     }
 
     const btnSecondaryStyle = {
         padding: '12px 20px',
         background: colors.paperDarker,
-        backgroundImage: 'var(--background-image-ske-button)',
         color: colors.ink,
         border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'}`,
         borderRadius: '10px',
@@ -160,15 +152,12 @@ export default function Settings() {
         fontWeight: 500,
         fontFamily: fonts.primary,
         textAlign: 'left',
-        boxShadow: 'var(--shadow-ske-xs)',
-        transition: 'box-shadow 80ms ease-out, transform 80ms ease-out',
     }
 
     const btnDangerStyle = {
         ...btnSecondaryStyle,
         color: '#FF6B6B',
         border: '1px solid rgba(255,75,75,0.28)',
-        boxShadow: `var(--shadow-ske-xs), inset 0 0 0 0 transparent`,
     }
 
     return (
@@ -196,10 +185,13 @@ export default function Settings() {
 
                 {/* System Info */}
                 {systemInfo && (
-                    <div style={{
-                        ...cardStyle,
-                        marginBottom: '30px',
-                    }}>
+                    <div 
+                        className="ske-card ske-textured"
+                        style={{
+                            ...cardStyle,
+                            marginBottom: '30px',
+                        }}
+                    >
                         <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '12px' }}>
                             System Information
                         </h3>
@@ -216,7 +208,7 @@ export default function Settings() {
                     <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '20px', fontFamily: fonts.display }}>
                         Appearance
                     </h2>
-                    <div style={{ ...cardStyle }}>
+                    <div className="ske-card ske-textured" style={{ ...cardStyle }}>
                         <div style={{
                             display: 'flex',
                             justifyContent: 'space-between',
@@ -238,11 +230,8 @@ export default function Settings() {
                                         theme: !isDark ? 'dark' : 'light'
                                     }))
                                 }}
+                                className="ske-raised ske-spring-btn"
                                 style={{ ...btnRaisedStyle }}
-                                onMouseDown={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-ske-pressed)'; e.currentTarget.style.transform = 'translateY(1px)' }}
-                                onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `3px 4px 8px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px rgba(255,255,255,0.3), inset 0 -1px 2px rgba(0,0,0,0.18), 0 4px 12px ${colors.accent}40` }}
-                                onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.08)' }}
-                                onMouseLeave={(e) => { e.currentTarget.style.filter = '' }}
                             >
                                 {isDark ? 'Switch to Light' : 'Switch to Dark'}
                             </button>
@@ -255,7 +244,7 @@ export default function Settings() {
                     <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '20px', fontFamily: fonts.display }}>
                         Audio
                     </h2>
-                    <div style={{ ...cardStyle }}>
+                    <div className="ske-card ske-textured" style={{ ...cardStyle }}>
                         <div style={{ marginBottom: '20px' }}>
                             <label style={{ fontSize: '16px', fontWeight: '500', display: 'block', marginBottom: '10px' }}>
                                 Streaming Quality
@@ -263,6 +252,7 @@ export default function Settings() {
                             <select
                                 value={settings.audioQuality}
                                 onChange={(e) => setSettings(prev => ({ ...prev, audioQuality: e.target.value }))}
+                                className="ske-recessed"
                                 style={{ ...inputStyle }}
                             >
                                 <option value="low">Low (96 kbps) - Save bandwidth</option>
@@ -282,6 +272,7 @@ export default function Settings() {
                                         value={settings.downloadLocation}
                                         readOnly
                                         placeholder="Select a folder..."
+                                        className="ske-recessed"
                                         style={{
                                             ...inputStyle,
                                             flex: 1,
@@ -290,9 +281,8 @@ export default function Settings() {
                                     />
                                     <button
                                         onClick={handleSelectDownloadLocation}
+                                        className="ske-raised ske-spring-btn"
                                         style={{ ...btnRaisedStyle, whiteSpace: 'nowrap' }}
-                                        onMouseDown={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-ske-pressed)'; e.currentTarget.style.transform = 'translateY(1px)' }}
-                                        onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `3px 4px 8px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px rgba(255,255,255,0.3), inset 0 -1px 2px rgba(0,0,0,0.18), 0 4px 12px ${colors.accent}40` }}
                                     >
                                         Browse
                                     </button>
@@ -308,12 +298,15 @@ export default function Settings() {
                         <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '20px', fontFamily: fonts.display }}>
                             Desktop App
                         </h2>
-                        <div style={{
-                            ...cardStyle,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '16px'
-                        }}>
+                        <div 
+                            className="ske-card ske-textured"
+                            style={{
+                                ...cardStyle,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '16px'
+                            }}
+                        >
                             {[
                                 { key: 'startMinimized', label: 'Start app minimized' },
                                 { key: 'minimizeToTray', label: 'Minimize to system tray' },
@@ -380,30 +373,27 @@ export default function Settings() {
                     <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '20px', fontFamily: fonts.display }}>
                         Data &amp; Privacy
                     </h2>
-                    <div style={{
-                        ...cardStyle,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '12px'
-                    }}>
+                    <div 
+                        className="ske-card ske-textured"
+                        style={{
+                            ...cardStyle,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '12px'
+                        }}
+                    >
                         <button
                             onClick={handleExportData}
+                            className="ske-raised-xs ske-spring-btn"
                             style={{ ...btnSecondaryStyle }}
-                            onMouseDown={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-ske-pressed)'; e.currentTarget.style.transform = 'translateY(1px)' }}
-                            onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-ske-sm)' }}
-                            onMouseEnter={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-ske-sm)' }}
-                            onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-ske-xs)' }}
                         >
                             Export My Data
                         </button>
 
                         <button
                             onClick={handleClearCache}
+                            className="ske-raised-xs ske-spring-btn"
                             style={{ ...btnDangerStyle }}
-                            onMouseDown={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-ske-pressed)'; e.currentTarget.style.transform = 'translateY(1px)' }}
-                            onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-ske-xs)' }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,75,75,0.08)'; e.currentTarget.style.boxShadow = 'var(--shadow-ske-sm)' }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = colors.paperDarker; e.currentTarget.style.boxShadow = 'var(--shadow-ske-xs)' }}
                         >
                             Clear All Cache
                         </button>
@@ -415,10 +405,10 @@ export default function Settings() {
                     <button
                         onClick={saveSettings}
                         disabled={isSaving}
+                        className="ske-raised ske-spring-btn"
                         style={{
                             padding: '14px 36px',
                             background: `linear-gradient(145deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`,
-                            backgroundImage: 'var(--background-image-ske-button)',
                             color: '#fff',
                             border: '1px solid rgba(255,255,255,0.22)',
                             borderRadius: '12px',
@@ -427,14 +417,8 @@ export default function Settings() {
                             fontWeight: '600',
                             fontFamily: fonts.primary,
                             opacity: isSaving ? 0.6 : 1,
-                            boxShadow: `4px 5px 10px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px rgba(255,255,255,0.3), inset 0 -1px 2px rgba(0,0,0,0.18), 0 4px 16px ${colors.accent}40`,
-                            transition: 'box-shadow 80ms ease-out, transform 80ms ease-out, opacity 0.2s',
                             textShadow: '0 1px 2px rgba(0,0,0,0.25)',
                         }}
-                        onMouseDown={(e) => { if (!isSaving) { e.currentTarget.style.boxShadow = 'var(--shadow-ske-pressed)'; e.currentTarget.style.transform = 'translateY(1px)' } }}
-                        onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `4px 5px 10px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px rgba(255,255,255,0.3), inset 0 -1px 2px rgba(0,0,0,0.18), 0 4px 16px ${colors.accent}40` }}
-                        onMouseEnter={(e) => { if (!isSaving) { e.currentTarget.style.filter = 'brightness(1.08)'; e.currentTarget.style.boxShadow = `6px 8px 16px var(--ske-shadow), -3px -3px 8px var(--ske-highlight), inset 0 1px 1px rgba(255,255,255,0.3), inset 0 -1px 2px rgba(0,0,0,0.18), 0 8px 24px ${colors.accent}55` } }}
-                        onMouseLeave={(e) => { e.currentTarget.style.filter = ''; e.currentTarget.style.boxShadow = `4px 5px 10px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px rgba(255,255,255,0.3), inset 0 -1px 2px rgba(0,0,0,0.18), 0 4px 16px ${colors.accent}40` }}
                     >
                         {isSaving ? 'Saving...' : 'Save Settings'}
                     </button>

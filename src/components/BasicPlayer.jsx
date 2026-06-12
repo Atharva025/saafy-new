@@ -14,7 +14,8 @@ import {
     Volume1, 
     VolumeX, 
     Music,
-    ListMusic
+    ListMusic,
+    Maximize2
 } from 'lucide-react'
 
 export default function BasicPlayer({ showQueue, setShowQueue }) {
@@ -34,7 +35,8 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
         repeatMode,
         toggleShuffle,
         toggleRepeat,
-        dominantColor
+        dominantColor,
+        setIsImmersiveOpen
     } = usePlayer()
 
     const [isHovered, setIsHovered] = useState(false)
@@ -177,6 +179,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                             }}>
                                 {/* Album Art */}
                                 <div 
+                                    onClick={() => setIsImmersiveOpen(true)}
                                     onMouseEnter={() => setArtHovered(true)}
                                     onMouseLeave={() => setArtHovered(false)}
                                     className="ske-art"
@@ -190,20 +193,36 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                         position: 'relative',
                                         transition: 'transform 0.4s ease',
                                         transform: artHovered ? 'scale(1.05)' : 'scale(1)',
+                                        cursor: 'pointer',
                                     }}
                                 >
                                     {currentSong && imageUrl ? (
-                                        <img 
-                                            src={imageUrl} 
-                                            alt="" 
-                                            style={{ 
-                                                width: '100%', 
-                                                height: '100%', 
-                                                objectFit: 'cover',
-                                                transform: artHovered ? 'scale(1.12)' : 'scale(1)',
-                                                transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                                            }} 
-                                        />
+                                        <>
+                                            <img 
+                                                src={imageUrl} 
+                                                alt="" 
+                                                style={{ 
+                                                    width: '100%', 
+                                                    height: '100%', 
+                                                    objectFit: 'cover',
+                                                    transform: artHovered ? 'scale(1.12)' : 'scale(1)',
+                                                    transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                                                }} 
+                                            />
+                                            <div style={{
+                                                position: 'absolute',
+                                                inset: 0,
+                                                background: 'rgba(0,0,0,0.35)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                opacity: artHovered ? 1 : 0,
+                                                transition: 'opacity 0.2s ease',
+                                                color: '#fff',
+                                            }}>
+                                                <Maximize2 size={12} />
+                                            </div>
+                                        </>
                                     ) : (
                                         <div style={{
                                             width: '100%',
@@ -517,7 +536,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                             {/* Shuffle */}
                             <button
                                 onClick={toggleShuffle}
-                                className={`icon-btn ${shuffleMode ? 'active' : ''}`}
+                                className={`icon-btn ske-spring-btn ${shuffleMode ? 'active' : ''}`}
                                 style={{
                                     width: '42px',
                                     height: '42px',
@@ -549,7 +568,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                             <button
                                 onClick={handlePrevious}
                                 disabled={!currentSong}
-                                className="icon-btn"
+                                className="icon-btn ske-spring-btn"
                                 style={{
                                     width: '42px',
                                     height: '42px',
@@ -564,10 +583,10 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                             </button>
 
                             {/* Play/Pause */}
-                            <button
+                             <button
                                 onClick={togglePlay}
                                 disabled={!currentSong}
-                                className="ske-raised"
+                                className="ske-raised ske-spring-btn"
                                 style={{
                                     width: '50px',
                                     height: '50px',
@@ -578,7 +597,6 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    transition: 'all 0.2s ease',
                                     cursor: currentSong ? 'pointer' : 'default',
                                 }}
                                 title={isPlaying ? "Pause" : "Play"}
@@ -594,7 +612,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                             <button
                                 onClick={handleNext}
                                 disabled={!currentSong}
-                                className="icon-btn"
+                                className="icon-btn ske-spring-btn"
                                 style={{
                                     width: '42px',
                                     height: '42px',
@@ -611,7 +629,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                             {/* Repeat */}
                             <button
                                 onClick={toggleRepeat}
-                                className={`icon-btn ${repeatMode !== 'none' ? 'active' : ''}`}
+                                className={`icon-btn ske-spring-btn ${repeatMode !== 'none' ? 'active' : ''}`}
                                 style={{
                                     width: '42px',
                                     height: '42px',
@@ -655,8 +673,9 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                             padding: 'clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 18px)',
                             flexWrap: 'nowrap',
                         }}>
-                            {/* Album Art */}
+                             {/* Album Art */}
                             <div 
+                                onClick={() => setIsImmersiveOpen(true)}
                                 onMouseEnter={() => setArtHovered(true)}
                                 onMouseLeave={() => setArtHovered(false)}
                                 className="ske-art"
@@ -670,6 +689,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                     position: 'relative',
                                     transition: 'box-shadow 0.4s ease, transform 0.4s ease',
                                     transform: artHovered ? 'scale(1.05)' : 'scale(1)',
+                                    cursor: 'pointer',
                                 }}
                             >
                                 {currentSong && imageUrl ? (
@@ -685,6 +705,19 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                                 transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
                                             }} 
                                         />
+                                        <div style={{
+                                            position: 'absolute',
+                                            inset: 0,
+                                            background: 'rgba(0,0,0,0.35)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            opacity: artHovered ? 1 : 0,
+                                            transition: 'opacity 0.2s ease',
+                                            color: '#fff',
+                                        }}>
+                                            <Maximize2 size={14} />
+                                        </div>
                                     </>
                                 ) : (
                                     <div style={{
@@ -778,7 +811,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                 {/* Shuffle */}
                                 <button
                                     onClick={toggleShuffle}
-                                    className={`icon-btn ${shuffleMode ? 'active' : ''}`}
+                                    className={`icon-btn ske-spring-btn ${shuffleMode ? 'active' : ''}`}
                                     style={{
                                         width: '32px',
                                         height: '32px',
@@ -810,7 +843,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                 <button
                                     onClick={handlePrevious}
                                     disabled={!currentSong}
-                                    className="icon-btn"
+                                    className="icon-btn ske-spring-btn"
                                     style={{
                                         width: '32px',
                                         height: '32px',
@@ -825,10 +858,10 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                 </button>
 
                                 {/* Play/Pause */}
-                                <button
+                                 <button
                                     onClick={togglePlay}
                                     disabled={!currentSong}
-                                    className="ske-raised"
+                                    className="ske-raised ske-spring-btn"
                                     style={{
                                         width: '38px',
                                         height: '38px',
@@ -839,7 +872,6 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        transition: 'all 0.2s ease',
                                         cursor: currentSong ? 'pointer' : 'default',
                                     }}
                                     title={isPlaying ? "Pause" : "Play"}
@@ -855,7 +887,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                 <button
                                     onClick={handleNext}
                                     disabled={!currentSong}
-                                    className="icon-btn"
+                                    className="icon-btn ske-spring-btn"
                                     style={{
                                         width: '32px',
                                         height: '32px',
@@ -872,7 +904,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                 {/* Repeat */}
                                 <button
                                     onClick={toggleRepeat}
-                                    className={`icon-btn ${repeatMode !== 'none' ? 'active' : ''}`}
+                                    className={`icon-btn ske-spring-btn ${repeatMode !== 'none' ? 'active' : ''}`}
                                     style={{
                                         width: '32px',
                                         height: '32px',

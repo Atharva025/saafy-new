@@ -197,7 +197,7 @@ export default function LocalMusicPlayer() {
                         <button
                             onClick={handleAddFiles}
                             disabled={isScanning}
-                            className="ske-raised"
+                            className="ske-raised ske-spring-btn"
                             style={{
                                 padding: '12px 24px',
                                 background: isScanning ? colors.paperDarker : `linear-gradient(145deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`,
@@ -208,7 +208,6 @@ export default function LocalMusicPlayer() {
                                 fontSize: '14px',
                                 fontWeight: '600',
                                 textShadow: '0 1px 2px rgba(0,0,0,0.25)',
-                                boxShadow: isScanning ? 'none' : `3px 4px 8px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px rgba(255,255,255,0.3), inset 0 -1px 2px rgba(0,0,0,0.18), 0 4px 12px ${colors.accent}40`,
                                 opacity: isScanning ? 0.5 : 1
                             }}
                         >
@@ -218,7 +217,7 @@ export default function LocalMusicPlayer() {
                         <button
                             onClick={handleAddFolder}
                             disabled={isScanning}
-                            className="ske-raised"
+                            className="ske-raised ske-spring-btn"
                             style={{
                                 padding: '12px 24px',
                                 background: isScanning ? colors.paperDarker : `linear-gradient(145deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`,
@@ -229,7 +228,6 @@ export default function LocalMusicPlayer() {
                                 fontSize: '14px',
                                 fontWeight: '600',
                                 textShadow: '0 1px 2px rgba(0,0,0,0.25)',
-                                boxShadow: isScanning ? 'none' : `3px 4px 8px var(--ske-shadow), -2px -2px 6px var(--ske-highlight), inset 0 1px 1px rgba(255,255,255,0.3), inset 0 -1px 2px rgba(0,0,0,0.18), 0 4px 12px ${colors.accent}40`,
                                 opacity: isScanning ? 0.5 : 1
                             }}
                         >
@@ -240,18 +238,16 @@ export default function LocalMusicPlayer() {
                             <button
                                 onClick={handleRescanFolders}
                                 disabled={isScanning}
-                                className="ske-raised"
+                                className="ske-raised-xs ske-spring-btn"
                                 style={{
                                     padding: '12px 24px',
                                     backgroundColor: colors.paperDark,
-                                    backgroundImage: 'var(--background-image-ske-button)',
                                     color: colors.ink,
                                     border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'}`,
                                     borderRadius: '8px',
                                     cursor: isScanning ? 'not-allowed' : 'pointer',
                                     fontSize: '14px',
                                     fontWeight: '600',
-                                    boxShadow: 'var(--shadow-ske-xs)',
                                     opacity: isScanning ? 0.5 : 1
                                 }}
                             >
@@ -263,18 +259,16 @@ export default function LocalMusicPlayer() {
                             <button
                                 onClick={handleClearLibrary}
                                 disabled={isScanning}
-                                className="ske-raised"
+                                className="ske-raised-xs ske-spring-btn"
                                 style={{
                                     padding: '12px 24px',
                                     backgroundColor: colors.paperDark,
-                                    backgroundImage: 'var(--background-image-ske-button)',
                                     color: '#FF4F4F',
                                     border: '1px solid rgba(255,75,75,0.28)',
                                     borderRadius: '8px',
                                     cursor: isScanning ? 'not-allowed' : 'pointer',
                                     fontSize: '14px',
                                     fontWeight: '600',
-                                    boxShadow: 'var(--shadow-ske-xs)',
                                     opacity: isScanning ? 0.5 : 1
                                 }}
                             >
@@ -293,7 +287,6 @@ export default function LocalMusicPlayer() {
                             borderRadius: '12px',
                             marginBottom: '30px',
                             border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.80)'}`,
-                            boxShadow: 'var(--shadow-ske-sm)',
                         }}
                     >
                         <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>
@@ -314,12 +307,15 @@ export default function LocalMusicPlayer() {
                                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
                             }}
                         >
-                            <div style={{
-                                width: `${(scanProgress.current / scanProgress.total) * 100}%`,
-                                height: '100%',
-                                backgroundColor: colors.accent,
-                                transition: 'width 0.3s ease'
-                            }} />
+                            <div 
+                                className="ske-progress-fill"
+                                style={{
+                                    width: `${(scanProgress.current / scanProgress.total) * 100}%`,
+                                    height: '100%',
+                                    backgroundColor: colors.accent,
+                                    transition: 'width 0.3s ease'
+                                }} 
+                            />
                         </div>
                     </div>
                 )}
@@ -355,14 +351,16 @@ export default function LocalMusicPlayer() {
                 {/* Stats */}
                 {localSongs.length > 0 && (
                     <div style={{ marginBottom: '30px' }}>
-                        <div style={{
-                            backgroundColor: colors.paperDark,
-                            padding: '16px 20px',
-                            borderRadius: '12px',
-                            border: `1px solid ${colors.rule}`,
-                            fontSize: '14px',
-                            color: colors.inkMuted
-                        }}>
+                        <div 
+                            className="ske-recessed ske-textured"
+                            style={{
+                                padding: '16px 20px',
+                                borderRadius: '12px',
+                                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.65)'}`,
+                                fontSize: '14px',
+                                color: colors.inkMuted
+                            }}
+                        >
                             {localSongs.length} songs in your local library
                         </div>
                     </div>

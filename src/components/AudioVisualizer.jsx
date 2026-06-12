@@ -3,39 +3,26 @@ import { usePlayer } from '@/context/PlayerContext'
 import { useTheme } from '@/context/ThemeContext'
 
 export default function AudioVisualizer({ compact = false }) {
-    const { audioRef, isPlaying } = usePlayer()
+    const { isPlaying, analyserNode } = usePlayer()
     const { colors } = useTheme()
     const canvasRef = useRef(null)
     const animationRef = useRef(null)
-    const analyzerRef = useRef(null)
     const dataArrayRef = useRef(null)
-    const [isInitialized, setIsInitialized] = useState(false)
 
     useEffect(() => {
-        if (!audioRef?.current || isInitialized) return
+        if (!analyserNode) return
 
         try {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)()
-            const analyzer = audioContext.createAnalyser()
-            const source = audioContext.createMediaElementSource(audioRef.current)
-
-            source.connect(analyzer)
-            analyzer.connect(audioContext.destination)
-
-            analyzer.fftSize = compact ? 64 : 128
-            const bufferLength = analyzer.frequencyBinCount
-            const dataArray = new Uint8Array(bufferLength)
-
-            analyzerRef.current = analyzer
-            dataArrayRef.current = dataArray
-            setIsInitialized(true)
+            analyserNode.fftSize = compact ? 64 : 128
+            const bufferLength = analyserNode.frequencyBinCount
+            dataArrayRef.current = new Uint8Array(bufferLength)
         } catch (err) {
-            console.warn('AudioVisualizer: Could not initialize', err)
+            console.warn('AudioVisualizer initialization error:', err)
         }
-    }, [audioRef, isInitialized, compact])
+    }, [analyserNode, compact])
 
     useEffect(() => {
-        if (!isPlaying || !analyzerRef.current || !canvasRef.current) {
+        if (!isPlaying || !analyserNode || !canvasRef.current || !dataArrayRef.current) {
             if (animationRef.current) {
                 cancelAnimationFrame(animationRef.current)
             }
@@ -44,7 +31,7 @@ export default function AudioVisualizer({ compact = false }) {
 
         const canvas = canvasRef.current
         const ctx = canvas.getContext('2d')
-        const analyzer = analyzerRef.current
+        const analyzer = analyserNode
         const dataArray = dataArrayRef.current
 
         const draw = () => {
@@ -114,7 +101,7 @@ export default function AudioVisualizer({ compact = false }) {
                 cancelAnimationFrame(animationRef.current)
             }
         }
-    }, [isPlaying, colors.accent, compact])
+    }, [isPlaying, analyserNode, colors.accent, compact])
 
     // Fallback animation when audio analysis unavailable
     const FallbackBars = () => (
@@ -149,7 +136,7 @@ export default function AudioVisualizer({ compact = false }) {
             height: compact ? '12px' : '40px',
             position: 'relative',
         }}>
-            {isInitialized && isPlaying ? (
+            {analyserNode && isPlaying ? (
                 <canvas
                     ref={canvasRef}
                     width={compact ? 150 : 300}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { HashRouter as Router, Routes, Route } from 'react-router-dom'
+import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { PlayerProvider, usePlayer } from '@/context/PlayerContext'
 import { ThemeProvider, useTheme } from '@/context/ThemeContext'
 import { ToastProvider, useToast } from '@/context/ToastContext'
@@ -7,7 +7,7 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import UserAuthModal from '@/components/UserAuthModal'
 import CreatePlaylistModal from '@/components/CreatePlaylistModal'
 import SpotifyImportModal from '@/components/SpotifyImportModal'
-import { AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import BasicSearch from '@/components/BasicSearch'
 import SongList from '@/components/SongList'
 import BasicPlayer from '@/components/BasicPlayer'
@@ -17,6 +17,7 @@ import QueuePanel from '@/components/QueuePanel'
 import SkeletonLoader from '@/components/SkeletonLoader'
 import Settings from '@/components/Settings'
 import LocalMusicPlayer from '@/components/LocalMusicPlayer'
+import ImmersivePlayer from '@/components/ImmersivePlayer'
 import { getAllDiscoveryContent, getForYouMix, getAllThemedContent, refreshDiscovery, getFreshSongsForCategory, getMoreSongsForCategory } from '@/lib/discovery'
 import { encryptedGetItem, encryptedSetItem } from '@/lib/encryption'
 import { validateSong } from '@/lib/security'
@@ -3826,6 +3827,40 @@ function PlaylistSongCard({
   )
 }
 
+function PageWrapper({ children }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -15 }}
+      transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+      style={{ width: '100%', minHeight: '100vh', position: 'relative' }}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+function AppContent() {
+  const { isImmersiveOpen, setIsImmersiveOpen } = usePlayer()
+  const location = useLocation()
+
+  return (
+    <>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<ErrorBoundary><PageWrapper><HomePage /></PageWrapper></ErrorBoundary>} />
+          <Route path="/artist/:id" element={<ErrorBoundary><PageWrapper><ArtistPage /></PageWrapper></ErrorBoundary>} />
+          <Route path="/settings" element={<ErrorBoundary><PageWrapper><Settings /></PageWrapper></ErrorBoundary>} />
+          <Route path="/local-music" element={<ErrorBoundary><PageWrapper><LocalMusicPlayer /></PageWrapper></ErrorBoundary>} />
+        </Routes>
+      </AnimatePresence>
+
+      <ImmersivePlayer isOpen={isImmersiveOpen} onClose={() => setIsImmersiveOpen(false)} />
+    </>
+  )
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -3833,12 +3868,7 @@ function App() {
         <ToastProvider>
           <PlayerProvider>
             <Router>
-              <Routes>
-                <Route path="/" element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
-                <Route path="/artist/:id" element={<ErrorBoundary><ArtistPage /></ErrorBoundary>} />
-                <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
-                <Route path="/local-music" element={<ErrorBoundary><LocalMusicPlayer /></ErrorBoundary>} />
-              </Routes>
+              <AppContent />
             </Router>
           </PlayerProvider>
         </ToastProvider>

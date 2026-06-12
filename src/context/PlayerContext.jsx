@@ -24,20 +24,48 @@ const log = {
 
 const PlayerContext = createContext()
 
-const initialState = {
-    currentSong: null,
-    isPlaying: false,
-    queue: [], // Upcoming songs
-    history: [], // Previously played songs
-    originalQueue: [], // For shuffle/unshuffle
-    volume: 0.7,
-    progress: 0,
-    duration: 0,
-    repeatMode: 'none', // 'none', 'one', 'all'
-    shuffleMode: false,
-    contextQueue: [], // The source playlist/album that was played
-    error: null
+const getSafeLocalStorage = (key, fallback) => {
+    try {
+        const item = localStorage.getItem(key)
+        return item ? JSON.parse(item) : fallback
+    } catch {
+        return fallback
+    }
 }
+
+const getInitialState = () => {
+    const currentSong = getSafeLocalStorage('saafy_current_song', null)
+    const queue = getSafeLocalStorage('saafy_queue', [])
+    
+    let volume = 0.7
+    try {
+        const storedVolume = localStorage.getItem('saafy_volume')
+        if (storedVolume !== null) {
+            volume = parseFloat(storedVolume)
+            if (isNaN(volume)) volume = 0.7
+        }
+    } catch {}
+
+    const repeatMode = localStorage.getItem('saafy_repeat_mode') || 'none'
+    const shuffleMode = localStorage.getItem('saafy_shuffle_mode') === 'true'
+
+    return {
+        currentSong,
+        isPlaying: false,
+        queue,
+        history: [], // Previously played songs
+        originalQueue: [], // For shuffle/unshuffle
+        volume,
+        progress: 0,
+        duration: 0,
+        repeatMode,
+        shuffleMode,
+        contextQueue: [], // The source playlist/album that was played
+        error: null
+    }
+}
+
+const initialState = getInitialState()
 
 // ============================================================================
 // REDUCER
@@ -313,6 +341,98 @@ export function PlayerProvider({ children }) {
     // Listening History state
     const [listeningHistory, setListeningHistory] = useState([])
 
+    // Fullscreen Immersive Playback Mode state
+    const [isImmersiveOpen, setIsImmersiveOpen] = useState(false)
+
+    // Global Web Audio Analyser references
+    const audioContextRef = useRef(null)
+    const analyserRef = useRef(null)
+    const [analyserNode, setAnalyserNode] = useState(null)
+
+    // Setup visualizer analyser logic safely
+    const initAudioAnalyser = () => {
+        if (analyserRef.current) return
+        try {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext
+            if (!AudioContextClass) return
+
+            const audioContext = new AudioContextClass()
+            const analyser = audioContext.createAnalyser()
+
+            // Connect element source
+            const source = audioContext.createMediaElementSource(audioRef.current)
+            source.connect(analyser)
+            analyser.connect(audioContext.destination)
+
+            analyserRef.current = analyser
+            setAnalyserNode(analyser)
+            audioContextRef.current = audioContext
+            log.info('✅ Global Audio Analyser successfully initialized')
+        } catch (err) {
+            log.error('❌ Failed to initialize Web Audio Analyser:', err)
+        }
+    }
+
+    const resumeAudioContext = async () => {
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+            try {
+                await audioContextRef.current.resume()
+                log.info('🔊 AudioContext resumed successfully')
+            } catch (err) {
+                log.warn('Failed to resume AudioContext:', err)
+            }
+        }
+    }
+
+    // Persist volume, repeat, shuffle and state changes in localStorage
+    useEffect(() => {
+        try {
+            if (state.currentSong) {
+                localStorage.setItem('saafy_current_song', JSON.stringify(state.currentSong))
+            } else {
+                localStorage.removeItem('saafy_current_song')
+            }
+        } catch {}
+    }, [state.currentSong])
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('saafy_queue', JSON.stringify(state.queue))
+        } catch {}
+    }, [state.queue])
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('saafy_volume', String(state.volume))
+        } catch {}
+    }, [state.volume])
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('saafy_repeat_mode', state.repeatMode)
+        } catch {}
+    }, [state.repeatMode])
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('saafy_shuffle_mode', String(state.shuffleMode))
+        } catch {}
+    }, [state.shuffleMode])
+
+    // Prime the audio element on mount if a song was persisted
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.volume = state.volume
+            if (state.currentSong) {
+                const url = extractAudioUrl(state.currentSong)
+                if (url) {
+                    audioRef.current.src = url
+                    audioRef.current.load()
+                }
+            }
+        }
+    }, [])
+
     const loadListeningHistory = (userId) => {
         const id = userId || 'guest'
         const key = `listening_history_${id}`
@@ -401,10 +521,22 @@ export function PlayerProvider({ children }) {
     function extractAudioUrl(song) {
         if (!song) return null
 
-        // Try downloadUrl array (highest quality last)
+        // Try downloadUrl array (highest quality select)
         if (song.downloadUrl && Array.isArray(song.downloadUrl) && song.downloadUrl.length > 0) {
-            const highQuality = song.downloadUrl[song.downloadUrl.length - 1]
-            return highQuality?.url || highQuality?.link || null
+            let highestItem = song.downloadUrl[0]
+            let highestBitrate = 0
+            for (const item of song.downloadUrl) {
+                const qualityStr = item.quality || ''
+                const match = qualityStr.match(/(\d+)/)
+                if (match) {
+                    const bitrate = parseInt(match[1], 10)
+                    if (bitrate > highestBitrate) {
+                        highestBitrate = bitrate
+                        highestItem = item
+                    }
+                }
+            }
+            return highestItem?.url || highestItem?.link || null
         }
 
         // Fallback chain
@@ -955,6 +1087,9 @@ export function PlayerProvider({ children }) {
                 audio.src = audioUrl
                 audio.load()
 
+                initAudioAnalyser()
+                resumeAudioContext()
+
                 dispatch({ type: 'SET_PLAYING', payload: true })
 
                 try {
@@ -976,6 +1111,9 @@ export function PlayerProvider({ children }) {
 
     const togglePlay = () => {
         if (!audioRef.current || !state.currentSong) return
+
+        initAudioAnalyser()
+        resumeAudioContext()
 
         if (state.isPlaying) {
             audioRef.current.pause()
@@ -1250,7 +1388,12 @@ export function PlayerProvider({ children }) {
         importSpotifyPlaylist,
         // Listening History
         listeningHistory,
-        loadListeningHistory
+        loadListeningHistory,
+        // Immersive Player Overlay State
+        isImmersiveOpen,
+        setIsImmersiveOpen,
+        // Global Audio Analyser Node
+        analyserNode
     }
 
 
@@ -1259,6 +1402,7 @@ export function PlayerProvider({ children }) {
             {children}
             <audio
                 ref={audioRef}
+                crossOrigin="anonymous"
                 preload="metadata"
                 onPlay={() => dispatch({ type: 'SET_PLAYING', payload: true })}
                 onPause={() => dispatch({ type: 'SET_PLAYING', payload: false })}
