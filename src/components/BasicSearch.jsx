@@ -4,6 +4,7 @@ import { searchSongs } from '@/lib/api'
 import { debounce } from '@/lib/security'
 import { useTheme } from '@/context/ThemeContext'
 import { usePlayer } from '@/context/PlayerContext'
+import Tooltip from './Tooltip'
 
 // Rotating placeholder phrases
 const placeholders = [
@@ -145,16 +146,31 @@ function TrailRow({ song, index, vibeTitle, timeString, onPlay, colors, fonts, i
                     }}>
                         {vibeTitle}
                     </div>
-                    <div style={{
-                        fontFamily: fonts.mono,
-                        fontSize: '0.72rem',
-                        color: colors.inkMuted,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                    }}>
-                        {song.name} <span style={{ opacity: 0.65 }}>· {song.primaryArtists}</span>
-                    </div>
+                    {`${song.name} · ${song.primaryArtists}`.length > 30 ? (
+                        <Tooltip text={`${song.name} · ${song.primaryArtists}`}>
+                            <div style={{
+                                fontFamily: fonts.mono,
+                                fontSize: '0.72rem',
+                                color: colors.inkMuted,
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                            }}>
+                                {song.name} <span style={{ opacity: 0.65 }}>· {song.primaryArtists}</span>
+                            </div>
+                        </Tooltip>
+                    ) : (
+                        <div style={{
+                            fontFamily: fonts.mono,
+                            fontSize: '0.72rem',
+                            color: colors.inkMuted,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                        }}>
+                            {song.name} <span style={{ opacity: 0.65 }}>· {song.primaryArtists}</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -635,28 +651,60 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                                     </div>
 
                                     <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div style={{
-                                            fontFamily: fonts.primary,
-                                            fontWeight: 500,
-                                            fontSize: isExpanded ? '0.875rem' : '0.8rem',
-                                            color: colors.ink,
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                        }}>
-                                            {song.name}
-                                        </div>
-                                        <div style={{
-                                            fontFamily: fonts.mono,
-                                            fontSize: isExpanded ? '0.75rem' : '0.65rem',
-                                            color: colors.inkMuted,
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            marginTop: '1px',
-                                        }}>
-                                            {song.primaryArtists}
-                                        </div>
+                                        {song.name && song.name.length > 20 ? (
+                                            <Tooltip text={song.name}>
+                                                <div style={{
+                                                    fontFamily: fonts.primary,
+                                                    fontWeight: 500,
+                                                    fontSize: isExpanded ? '0.875rem' : '0.8rem',
+                                                    color: colors.ink,
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                }}>
+                                                    {song.name}
+                                                </div>
+                                            </Tooltip>
+                                        ) : (
+                                            <div style={{
+                                                fontFamily: fonts.primary,
+                                                fontWeight: 500,
+                                                fontSize: isExpanded ? '0.875rem' : '0.8rem',
+                                                color: colors.ink,
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                            }}>
+                                                {song.name}
+                                            </div>
+                                        )}
+                                        {song.primaryArtists && song.primaryArtists.length > 28 ? (
+                                            <Tooltip text={song.primaryArtists}>
+                                                <div style={{
+                                                    fontFamily: fonts.mono,
+                                                    fontSize: isExpanded ? '0.75rem' : '0.65rem',
+                                                    color: colors.inkMuted,
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    marginTop: '1px',
+                                                }}>
+                                                    {song.primaryArtists}
+                                                </div>
+                                            </Tooltip>
+                                        ) : (
+                                            <div style={{
+                                                fontFamily: fonts.mono,
+                                                fontSize: isExpanded ? '0.75rem' : '0.65rem',
+                                                color: colors.inkMuted,
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                marginTop: '1px',
+                                            }}>
+                                                {song.primaryArtists}
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto', flexShrink: 0 }}>

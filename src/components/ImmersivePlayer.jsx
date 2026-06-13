@@ -34,32 +34,6 @@ import { Client, parseLocalLyrics } from 'lrclib-api'
 
 const client = new Client()
 
-// Helper to clean track name (removes feat, remaster, live, edit, etc.)
-const cleanTrackName = (name) => {
-    if (!name) return ''
-    return name
-        .replace(/\s*\(feat\..*?\)/gi, '')
-        .replace(/\s*\(with.*?\)/gi, '')
-        .replace(/\s*\[from.*?\].*/gi, '')
-        .replace(/\s*\(from.*?\).*/gi, '')
-        .replace(/\s*-\s*remastered.*/gi, '')
-        .replace(/\s*-\s*live.*/gi, '')
-        .replace(/\s*-\s*edit.*/gi, '')
-        .replace(/\s*-\s*single.*/gi, '')
-        .replace(/\s*-\s*radio edit.*/gi, '')
-        .replace(/\s*-\s*from\s+.*/gi, '')
-        .replace(/\s+-\s+From\s+.*/gi, '')
-        .replace(/\s{2,}/g, ' ')
-        .trim()
-}
-
-// Helper to clean artist name (takes the first/primary artist)
-const cleanArtistName = (artist) => {
-    if (!artist) return ''
-    const parts = artist.split(/,|\s+&\s+|\s+vs\.?\s+|\s+ft\.?\s+|\s+feat\.?\s+/i)
-    return parts[0].trim()
-}
-
 // ─────────────────────────────────────────────────────────────
 // UTILITIES
 // ─────────────────────────────────────────────────────────────
@@ -468,7 +442,7 @@ function LyricsPanel({
     lyricsContainerRef, activeLyricRef,
     showManualSearch, setShowManualSearch,
     manualSearchQuery, setManualSearchQuery,
-    handleManualSearch, seekTo
+    handleManualSearch, seekTo, isMobile
 }) {
     return (
         <GlassPanel screws={true} style={{ borderRadius: '20px', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
@@ -541,7 +515,7 @@ function LyricsPanel({
                                 type="text"
                                 value={manualSearchQuery}
                                 onChange={e => setManualSearchQuery(e.target.value)}
-                                placeholder="Song name + artist…"
+                                placeholder="Song name…"
                                 autoFocus
                                 style={{
                                     flex: 1, padding: '9px 14px', borderRadius: '10px',
@@ -567,7 +541,7 @@ function LyricsPanel({
             <div
                 ref={lyricsContainerRef}
                 style={{
-                    flex: 1, overflowY: 'auto', padding: '28px 24px',
+                    flex: 1, overflowY: 'auto', padding: isMobile ? '20px 16px' : '28px 24px',
                     scrollbarWidth: 'none',
                     maskImage: 'linear-gradient(to bottom, transparent 0%, black 12%, black 82%, transparent 100%)',
                     WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 12%, black 82%, transparent 100%)'
@@ -635,7 +609,7 @@ function LyricsPanel({
 // ─────────────────────────────────────────────────────────────
 function ImmersiveQueuePanel({
     queue, currentSong, playSong, removeFromQueue, reorderQueue, clearQueue,
-    accentColor, accentRgba, fonts
+    accentColor, accentRgba, fonts, isMobile
 }) {
     const [draggedIndex, setDraggedIndex] = useState(null)
     const [dragOverIndex, setDragOverIndex] = useState(null)
@@ -672,23 +646,28 @@ function ImmersiveQueuePanel({
     }
 
     return (
-        <GlassPanel screws={true} style={{ borderRadius: '20px', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+        <GlassPanel screws={true} style={{ borderRadius: '20px', display: 'flex', flexDirection: 'column', height: '100%', width: '100%', minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}>
             {/* Header */}
             <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '14px 20px',
+                padding: isMobile ? '12px 14px' : '14px 20px',
                 borderBottom: '1px solid rgba(255,255,255,0.06)',
-                flexShrink: 0
+                flexShrink: 0,
+                width: '100%',
+                boxSizing: 'border-box'
             }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <ListMusic size={14} color={accentColor} />
+                        <ListMusic size={14} color={accentColor} style={{ flexShrink: 0 }} />
                         <span style={{
                             fontSize: '11px', fontWeight: '800',
                             letterSpacing: '0.12em', textTransform: 'uppercase',
-                            color: 'rgba(255,255,255,0.55)'
+                            color: 'rgba(255,255,255,0.55)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
                         }}>
                             Up Next
                         </span>
@@ -699,7 +678,8 @@ function ImmersiveQueuePanel({
                         marginTop: '3px',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '6px'
+                        gap: '6px',
+                        whiteSpace: 'nowrap'
                     }}>
                         <span>{(queue.length + (currentSong ? 1 : 0))} track{(queue.length + (currentSong ? 1 : 0)) !== 1 ? 's' : ''}</span>
                         {(queue.length > 0 || currentSong) && (
@@ -725,7 +705,8 @@ function ImmersiveQueuePanel({
                             color: 'rgba(255,107,107,0.8)',
                             fontSize: '11px', fontWeight: '600',
                             cursor: 'pointer', transition: 'all 0.2s',
-                            boxShadow: '0 1px 4px rgba(0,0,0,0.25)'
+                            boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
+                            flexShrink: 0
                         }}
                         onMouseEnter={(e) => {
                             e.currentTarget.style.background = 'rgba(255,75,75,0.12)'
@@ -748,14 +729,17 @@ function ImmersiveQueuePanel({
             <div style={{
                 flex: 1,
                 overflowY: 'auto',
-                padding: '16px 20px',
+                padding: isMobile ? '12px 14px' : '16px 20px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '16px'
+                gap: isMobile ? '12px' : '16px',
+                width: '100%',
+                minWidth: 0,
+                boxSizing: 'border-box'
             }}>
                 {/* Now Playing Header Card */}
                 {currentSong && (
-                    <div>
+                    <div style={{ width: '100%', minWidth: 0 }}>
                         <div style={{
                             fontSize: '9px',
                             color: accentColor,
@@ -773,6 +757,8 @@ function ImmersiveQueuePanel({
                             background: accentRgba(0.06),
                             border: `1px solid ${accentRgba(0.22)}`,
                             boxShadow: `inset 1px 2px 4px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.1)`,
+                            width: '100%',
+                            boxSizing: 'border-box'
                         }}>
                             {/* Album Art */}
                             <div style={{
@@ -794,14 +780,14 @@ function ImmersiveQueuePanel({
                             <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{
                                     fontWeight: 700,
-                                    fontSize: '0.82rem',
+                                    fontSize: isMobile ? '0.86rem' : '0.82rem',
                                     color: '#fff',
                                     whiteSpace: 'nowrap',
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
                                 }}>{currentSong.name || currentSong.title}</div>
                                 <div style={{
-                                    fontSize: '0.66rem',
+                                    fontSize: isMobile ? '0.70rem' : '0.66rem',
                                     color: 'rgba(255,255,255,0.4)',
                                     whiteSpace: 'nowrap',
                                     overflow: 'hidden',
@@ -831,7 +817,7 @@ function ImmersiveQueuePanel({
                 )}
 
                 {/* Queue Tracks */}
-                <div>
+                <div style={{ width: '100%', minWidth: 0 }}>
                     <div style={{
                         fontSize: '9px',
                         color: 'rgba(255,255,255,0.35)',
@@ -853,6 +839,8 @@ function ImmersiveQueuePanel({
                             background: 'rgba(255,255,255,0.015)',
                             borderRadius: '12px',
                             border: `1px dashed rgba(255,255,255,0.08)`,
+                            width: '100%',
+                            boxSizing: 'border-box'
                         }}>
                             <Music2 size={30} strokeWidth={1.5} style={{ opacity: 0.7 }} />
                             <div style={{
@@ -873,7 +861,7 @@ function ImmersiveQueuePanel({
                             </div>
                         </div>
                     ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', minWidth: 0 }}>
                             {queue.map((song, index) => {
                                 const imageUrl = song.image?.[2]?.link || song.image?.[2]?.url ||
                                     song.image?.[1]?.link || song.image?.[1]?.url ||
@@ -886,11 +874,11 @@ function ImmersiveQueuePanel({
                                 return (
                                     <div
                                         key={`${song.id}-${index}`}
-                                        draggable="true"
-                                        onDragStart={(e) => handleDragStart(e, index)}
-                                        onDragOver={(e) => handleDragOver(e, index)}
-                                        onDragEnd={handleDragEnd}
-                                        onDrop={(e) => handleDrop(e, index)}
+                                        draggable={!isMobile ? "true" : "false"}
+                                        onDragStart={(e) => !isMobile && handleDragStart(e, index)}
+                                        onDragOver={(e) => !isMobile && handleDragOver(e, index)}
+                                        onDragEnd={!isMobile && handleDragEnd}
+                                        onDrop={(e) => !isMobile && handleDrop(e, index)}
                                         style={{
                                             display: 'flex',
                                             alignItems: 'center',
@@ -910,36 +898,41 @@ function ImmersiveQueuePanel({
                                             opacity: isBeingDragged ? 0.5 : 1,
                                             transform: isDragTarget ? 'scale(1.01)' : 'scale(1)',
                                             transition: 'all 200ms cubic-bezier(0.16, 1, 0.3, 1)',
-                                            cursor: 'grab',
+                                            cursor: !isMobile ? 'grab' : 'default',
+                                            width: '100%',
+                                            boxSizing: 'border-box'
                                         }}
                                         onMouseEnter={(e) => {
-                                            if (draggedIndex === null) {
+                                            if (!isMobile && draggedIndex === null) {
                                                 e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
                                                 e.currentTarget.style.boxShadow = `inset 0 1px 0 rgba(255,255,255,0.05)`
                                             }
                                         }}
                                         onMouseLeave={(e) => {
-                                            if (draggedIndex === null) {
+                                            if (!isMobile && draggedIndex === null) {
                                                 e.currentTarget.style.background = 'transparent'
                                                 e.currentTarget.style.boxShadow = 'none'
                                             }
                                         }}
                                     >
-                                        {/* Drag handle */}
-                                        <div style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: 'rgba(255,255,255,0.3)',
-                                            cursor: 'grab',
-                                            opacity: 0.6,
-                                            transition: 'opacity 0.15s',
-                                        }}
-                                            onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
-                                            onMouseLeave={(e) => e.currentTarget.style.opacity = 0.6}
-                                        >
-                                            <GripVertical size={14} />
-                                        </div>
+                                        {/* Drag handle - Desktop only to save space and avoid scroll blocking on touch screen */}
+                                        {!isMobile && (
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                color: 'rgba(255,255,255,0.3)',
+                                                cursor: 'grab',
+                                                opacity: 0.6,
+                                                transition: 'opacity 0.15s',
+                                                flexShrink: 0
+                                            }}
+                                                onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+                                                onMouseLeave={(e) => e.currentTarget.style.opacity = 0.6}
+                                            >
+                                                <GripVertical size={14} />
+                                            </div>
+                                        )}
 
                                         {/* Album Art */}
                                         <div
@@ -993,14 +986,14 @@ function ImmersiveQueuePanel({
                                         >
                                             <div style={{
                                                 fontWeight: 600,
-                                                fontSize: '0.82rem',
+                                                fontSize: isMobile ? '0.86rem' : '0.82rem',
                                                 color: '#fff',
                                                 whiteSpace: 'nowrap',
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis',
                                             }}>{song.name}</div>
                                             <div style={{
-                                                fontSize: '0.66rem',
+                                                fontSize: isMobile ? '0.70rem' : '0.66rem',
                                                 color: 'rgba(255,255,255,0.4)',
                                                 whiteSpace: 'nowrap',
                                                 overflow: 'hidden',
@@ -1016,8 +1009,8 @@ function ImmersiveQueuePanel({
                                                 removeFromQueue(index)
                                             }}
                                             style={{
-                                                width: '26px',
-                                                height: '26px',
+                                                width: isMobile ? '30px' : '26px',
+                                                height: isMobile ? '30px' : '26px',
                                                 borderRadius: '6px',
                                                 background: 'rgba(255,255,255,0.03)',
                                                 border: `1px solid rgba(255,255,255,0.06)`,
@@ -1027,6 +1020,7 @@ function ImmersiveQueuePanel({
                                                 justifyContent: 'center',
                                                 color: 'rgba(255,255,255,0.35)',
                                                 transition: 'all 0.15s',
+                                                flexShrink: 0
                                             }}
                                             onMouseEnter={(e) => {
                                                 e.currentTarget.style.background = 'rgba(255,75,75,0.12)'
@@ -1039,7 +1033,7 @@ function ImmersiveQueuePanel({
                                                 e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
                                             }}
                                         >
-                                            <Trash2 size={12} />
+                                            <Trash2 size={isMobile ? 13 : 12} />
                                         </button>
                                     </div>
                                 )
@@ -1085,6 +1079,15 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
         return () => window.removeEventListener('resize', h)
     }, [])
 
+    // Reset tab when screen size shifts
+    useEffect(() => {
+        if (isMobile) {
+            setTab('player')
+        } else {
+            setTab('lyrics')
+        }
+    }, [isMobile])
+
     // Lyrics fetch
     useEffect(() => {
         if (!isOpen || !currentSong) return
@@ -1099,140 +1102,54 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
         setShowManualSearch(false)
 
         const rawSongName = currentSong.name || currentSong.title || ''
-        let rawArtistName = currentSong.primaryArtists || ''
-        if (!rawArtistName && Array.isArray(currentSong.artists)) {
-            rawArtistName = currentSong.artists.map(a => a.name).join(', ')
-        }
-
-        const songName = cleanTrackName(rawSongName)
-        const artistName = cleanArtistName(rawArtistName)
         const dur = parseFloat(currentSong.duration) || 0
 
-        if (!songName && !customQuery) {
+        const queryStr = customQuery ? customQuery : rawSongName
+
+        if (!queryStr && !customQuery) {
             setLyricsError('Song title is missing. Try a manual search.')
             setIsLoadingLyrics(false)
             return
         }
 
-        // 1. Manual search custom override
         if (customQuery) {
             setManualSearchQuery(customQuery)
-            try {
-                const results = await client.searchLyrics({ query: customQuery })
-                if (results && results.length > 0) {
-                    const bestMatch = results.find(r => r.syncedLyrics || r.plainLyrics) || results[0]
-                    parseLyrics(bestMatch)
-                    return
-                }
-                setLyricsError('No lyrics found for your search. Try adjusting the query.')
-            } catch (err) {
-                console.error('Manual search failed:', err)
-                setLyricsError('No lyrics found. Try another manual search.')
-            } finally {
-                setIsLoadingLyrics(false)
-            }
-            return
+        } else {
+            setManualSearchQuery(rawSongName)
         }
 
-        const queryParams = {
-            track_name: songName,
-            artist_name: artistName,
-        }
-        if (dur > 0) {
-            queryParams.duration = Math.round(dur * 1000)
-        }
-
-        setManualSearchQuery(`${songName} ${artistName}`.trim())
-
-        // 2. Exact signature match using user's requested logic
         try {
-            console.log("Fetching exact lyrics with metadata:", queryParams)
-            const metadata = await client.findLyrics(queryParams)
-            console.log("Metadata:", metadata)
-
-            const synced = await client.getSynced(queryParams)
-            console.log("Synced Lyrics:", synced)
-
-            if (synced && synced.length > 0) {
-                const parsed = synced.map(line => ({
-                    time: line.startTime,
-                    text: line.text || '·  ·  ·'
-                }))
-                setParsedLyrics(parsed)
-                setIsSynced(true)
-                setIsLoadingLyrics(false)
-                return
-            }
-
-            const unsynced = await client.getUnsynced(queryParams)
-            console.log("Unsynced Lyrics:", unsynced)
-
-            if (unsynced && unsynced.length > 0) {
-                const parsed = unsynced.map((line, i) => ({
-                    time: i * 4,
-                    text: line.text || '·  ·  ·'
-                }))
-                setParsedLyrics(parsed)
-                setIsSynced(false)
-                setIsLoadingLyrics(false)
-                return
-            }
-        } catch (e) {
-            console.log('Step 1 (Exact signature Match / getSynced / getUnsynced) failed, moving to Step 2:', e)
-        }
-
-        // 3. Step 2: Search with cleaned song & artist names (Client.searchLyrics)
-        try {
-            const searchParams = {
-                track_name: songName,
-                artist_name: artistName,
+            console.log("Searching lyrics with song name and artist:", queryStr, "by", currentSong.primaryArtists || 'Unknown Artist')
+            
+            // Build search parameters with track name and artist name
+            const searchParams = {}
+            if (customQuery) {
+                searchParams.query = queryStr
+            } else {
+                searchParams.track_name = rawSongName
+                searchParams.artist_name = currentSong.primaryArtists || ''
             }
             if (dur > 0) {
                 searchParams.duration = Math.round(dur * 1000)
             }
+
             const results = await client.searchLyrics(searchParams)
+            console.log("Search results:", results)
+
             if (results && results.length > 0) {
+                // Find the first result that has synced or plain lyrics
                 const bestMatch = results.find(r => r.syncedLyrics || r.plainLyrics) || results[0]
                 parseLyrics(bestMatch)
                 return
             }
-        } catch (e) {
-            console.log('Step 2 (Cleaned Search) failed, moving to Step 3:', e)
-        }
 
-        // 4. Step 3: Fuzzy broad search with cleaned track and artist in query
-        try {
-            const queryStr = `${songName} ${artistName}`.trim()
-            if (queryStr) {
-                const results = await client.searchLyrics({ query: queryStr })
-                if (results && results.length > 0) {
-                    const bestMatch = results.find(r => r.syncedLyrics || r.plainLyrics) || results[0]
-                    parseLyrics(bestMatch)
-                    return
-                }
-            }
+            setLyricsError('No lyrics found for this song.')
         } catch (e) {
-            console.log('Step 3 (Cleaned Broad Search) failed, moving to Step 4:', e)
+            console.error('Lyrics search failed:', e)
+            setLyricsError('No lyrics found. Try a manual search.')
+        } finally {
+            setIsLoadingLyrics(false)
         }
-
-        // 5. Step 4: Fuzzy broad search with raw (uncleaned) track and artist in query
-        try {
-            const queryStr = `${rawSongName} ${rawArtistName}`.trim()
-            if (queryStr) {
-                const results = await client.searchLyrics({ query: queryStr })
-                if (results && results.length > 0) {
-                    const bestMatch = results.find(r => r.syncedLyrics || r.plainLyrics) || results[0]
-                    parseLyrics(bestMatch)
-                    return
-                }
-            }
-        } catch (e) {
-            console.log('Step 4 (Raw Broad Search) failed:', e)
-        }
-
-        // 6. If all failed
-        setLyricsError('No lyrics found. Try a manual search.')
-        setIsLoadingLyrics(false)
     }
 
     const parseLyrics = (data) => {
@@ -1406,12 +1323,13 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                         boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.55), 0 1px 1px rgba(255,255,255,0.06)'
                     }}>
                         {[
+                            ...(isMobile ? [{ id: 'player', icon: <Music2 size={12} />, label: 'Player' }] : []),
                             { id: 'lyrics', icon: <Mic2 size={12} />, label: 'Lyrics' },
-                            { id: 'queue', icon: <ListMusic size={12} />, label: 'Up Next' }
+                            { id: 'queue', icon: <ListMusic size={12} />, label: isMobile ? 'Queue' : 'Up Next' }
                         ].map(({ id, icon, label }) => (
                             <button key={id} onClick={() => setTab(id)} style={{
                                 display: 'flex', alignItems: 'center', gap: '5px',
-                                padding: '6px 14px', borderRadius: '10px',
+                                padding: isMobile ? '6px 10px' : '6px 14px', borderRadius: '10px',
                                 border: tab === id ? '1px solid rgba(255,255,255,0.1)' : '1px solid transparent',
                                 background: tab === id
                                     ? `linear-gradient(145deg, ${accentColor}cc, ${accentColor}99)`
@@ -1420,7 +1338,7 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                                     ? `0 2px 8px ${accentColor}44, inset 0 1px 1px rgba(255,255,255,0.18)`
                                     : 'none',
                                 color: tab === id ? '#fff' : 'rgba(255,255,255,0.4)',
-                                fontSize: '12px', fontWeight: '700',
+                                fontSize: isMobile ? '11px' : '12px', fontWeight: '700',
                                 letterSpacing: '0.03em', cursor: 'pointer',
                                 transition: 'all 0.2s ease'
                             }}>
@@ -1429,10 +1347,14 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                         ))}
                     </div>
 
-                    {/* Radio mode indicator */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.3)' }}>
-                        <Radio size={15} />
-                    </div>
+                    {/* Right spacer or Radio mode indicator */}
+                    {isMobile ? (
+                        <div style={{ width: '38px' }} />
+                    ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.3)' }}>
+                            <Radio size={15} />
+                        </div>
+                    )}
                 </div>
 
                 {/* ═══════════════════════════════════════════
@@ -1441,7 +1363,7 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                 <div style={{
                     position: 'relative', zIndex: 5,
                     display: 'grid',
-                    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                    gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(0, 1fr)',
                     gap: '20px',
                     height: 'calc(100vh - 76px)',
                     padding: isMobile ? '8px 16px 20px' : '8px 28px 24px',
@@ -1452,13 +1374,17 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                     {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                         LEFT COLUMN: ARTWORK + CONTROLS
                     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-                    <div style={{
-                        display: 'flex', flexDirection: 'column',
-                        alignItems: 'center', justifyContent: 'center',
-                        height: '100%', gap: 'clamp(8px, 2.5vh, 18px)',
-                        paddingBottom: '12px',
-                        paddingRight: isMobile ? 0 : '12px'
-                    }}>
+                    {(!isMobile || tab === 'player') && (
+                        <div style={{
+                            display: 'flex', flexDirection: 'column',
+                            alignItems: 'center', justifyContent: 'center',
+                            height: '100%', gap: 'clamp(8px, 2.5vh, 18px)',
+                            paddingBottom: '12px',
+                            paddingRight: isMobile ? 0 : '12px',
+                            width: '100%',
+                            minWidth: 0,
+                            boxSizing: 'border-box'
+                        }}>
 
                         {/* ── Artwork + Vinyl ── */}
                         <div style={{
@@ -1481,7 +1407,9 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                             <div style={{
                                 position: 'absolute', top: '6%', left: '6%',
                                 width: '88%', height: '88%', zIndex: 1,
-                                transform: isPlaying ? 'translateX(46%)' : 'translateX(0)',
+                                transform: isPlaying 
+                                    ? (isMobile ? 'translateX(28%)' : 'translateX(46%)') 
+                                    : 'translateX(0)',
                                 transition: 'transform 1s cubic-bezier(0.22, 1, 0.36, 1)',
                                 pointerEvents: 'none'
                             }}>
@@ -1618,13 +1546,15 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                         </div>
 
                         {/* ── Visualizer ── */}
-                        <div style={{
-                            width: '85%', maxWidth: '280px', height: 'clamp(20px, 2.5vh, 28px)',
-                            opacity: isPlaying ? 0.65 : 0,
-                            transition: 'opacity 0.6s ease'
-                        }}>
-                            <AudioVisualizer />
-                        </div>
+                        {!isMobile && (
+                            <div style={{
+                                width: '85%', maxWidth: '280px', height: 'clamp(20px, 2.5vh, 28px)',
+                                opacity: isPlaying ? 0.65 : 0,
+                                transition: 'opacity 0.6s ease'
+                            }}>
+                                <AudioVisualizer />
+                            </div>
+                        )}
 
                         {/* ── Controls Panel ── */}
                         <GlassPanel screws={true} style={{
@@ -1822,15 +1752,19 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                             <SkeuoVolume volume={volume} setVolume={setVolume} accentColor={accentColor} />
                         </GlassPanel>
                     </div>
+                )}
 
                     {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                         RIGHT COLUMN: LYRICS / QUEUE
                     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-                    {!isMobile && (
+                    {(!isMobile || tab === 'lyrics' || tab === 'queue') && (
                         <div style={{
-                            height: 'calc(100% - 8px)', minHeight: 0,
+                            height: isMobile ? '100%' : 'calc(100% - 8px)', minHeight: 0,
                             display: 'flex', flexDirection: 'column',
-                            paddingLeft: '8px'
+                            paddingLeft: isMobile ? 0 : '8px',
+                            width: '100%',
+                            minWidth: 0,
+                            boxSizing: 'border-box'
                         }}>
                             {tab === 'lyrics' ? (
                                 <LyricsPanel
@@ -1849,6 +1783,7 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                                     setManualSearchQuery={setManualSearchQuery}
                                     handleManualSearch={handleManualSearch}
                                     seekTo={seekTo}
+                                    isMobile={isMobile}
                                 />
                             ) : (
                                 <ImmersiveQueuePanel
@@ -1861,6 +1796,7 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                                     accentColor={accentColor}
                                     accentRgba={accentRgba}
                                     fonts={fonts}
+                                    isMobile={isMobile}
                                 />
                             )}
                         </div>

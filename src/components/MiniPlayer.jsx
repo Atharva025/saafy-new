@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { usePlayer } from '@/context/PlayerContext'
 import { useTheme } from '@/context/ThemeContext'
 import AudioVisualizer from './AudioVisualizer'
+import Tooltip from './Tooltip'
 
 export default function MiniPlayer({ onExpand }) {
     const { colors, fonts, isDark } = useTheme()
@@ -105,27 +106,58 @@ export default function MiniPlayer({ onExpand }) {
 
                 {/* Song Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                        fontFamily: fonts.primary,
-                        fontWeight: 600,
-                        fontSize: '0.85rem',
-                        color: colors.ink,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                    }}>
-                        {currentSong.name}
-                    </div>
-                    <div style={{
-                        fontFamily: fonts.mono,
-                        fontSize: '0.7rem',
-                        color: colors.inkMuted,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                    }}>
-                        {currentSong.primaryArtists}
-                    </div>
+                    {currentSong.name && currentSong.name.length > 20 ? (
+                        <Tooltip text={currentSong.name}>
+                            <div style={{
+                                fontFamily: fonts.primary,
+                                fontWeight: 600,
+                                fontSize: '0.85rem',
+                                color: colors.ink,
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                            }}>
+                                {currentSong.name}
+                            </div>
+                        </Tooltip>
+                    ) : (
+                        <div style={{
+                            fontFamily: fonts.primary,
+                            fontWeight: 600,
+                            fontSize: '0.85rem',
+                            color: colors.ink,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                        }}>
+                            {currentSong.name}
+                        </div>
+                    )}
+                    {currentSong.primaryArtists && currentSong.primaryArtists.length > 28 ? (
+                        <Tooltip text={currentSong.primaryArtists}>
+                            <div style={{
+                                fontFamily: fonts.mono,
+                                fontSize: '0.7rem',
+                                color: colors.inkMuted,
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                            }}>
+                                {currentSong.primaryArtists}
+                            </div>
+                        </Tooltip>
+                    ) : (
+                        <div style={{
+                            fontFamily: fonts.mono,
+                            fontSize: '0.7rem',
+                            color: colors.inkMuted,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                        }}>
+                            {currentSong.primaryArtists}
+                        </div>
+                    )}
                 </div>
 
                 {/* Controls */}

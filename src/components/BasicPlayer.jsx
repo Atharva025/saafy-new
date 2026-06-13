@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { usePlayer } from '@/context/PlayerContext'
 import { useTheme } from '@/context/ThemeContext'
 import { adjustColorForTheme } from '@/lib/utils'
+import Tooltip from './Tooltip'
 import { 
     Shuffle, 
     Repeat, 
@@ -240,21 +241,41 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                 <div style={{ minWidth: 0, flex: 1 }}>
                                     {currentSong ? (
                                         <>
-                                            <div 
-                                                className="ske-text-raised"
-                                                style={{
-                                                    fontFamily: fonts.primary,
-                                                    fontWeight: 600,
-                                                    fontSize: '0.8rem',
-                                                    color: colors.ink,
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    lineHeight: 1.3,
-                                                }}
-                                            >
-                                                {currentSong.name}
-                                            </div>
+                                            {currentSong.name && currentSong.name.length > 20 ? (
+                                                <Tooltip text={currentSong.name}>
+                                                    <div 
+                                                        className="ske-text-raised"
+                                                        style={{
+                                                            fontFamily: fonts.primary,
+                                                            fontWeight: 600,
+                                                            fontSize: '0.8rem',
+                                                            color: colors.ink,
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            lineHeight: 1.3,
+                                                        }}
+                                                    >
+                                                        {currentSong.name}
+                                                    </div>
+                                                </Tooltip>
+                                            ) : (
+                                                <div 
+                                                    className="ske-text-raised"
+                                                    style={{
+                                                        fontFamily: fonts.primary,
+                                                        fontWeight: 600,
+                                                        fontSize: '0.8rem',
+                                                        color: colors.ink,
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        lineHeight: 1.3,
+                                                    }}
+                                                >
+                                                    {currentSong.name}
+                                                </div>
+                                            )}
                                             <div style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
@@ -262,17 +283,33 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                                 marginTop: '1px',
                                                 minWidth: 0,
                                             }}>
-                                                <div style={{
-                                                    fontFamily: fonts.mono,
-                                                    fontSize: '0.65rem',
-                                                    color: colors.inkMuted,
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    flex: 1,
-                                                }}>
-                                                    {currentSong.primaryArtists}
-                                                </div>
+                                                {currentSong.primaryArtists && currentSong.primaryArtists.length > 28 ? (
+                                                    <Tooltip text={currentSong.primaryArtists}>
+                                                        <div style={{
+                                                            fontFamily: fonts.mono,
+                                                            fontSize: '0.65rem',
+                                                            color: colors.inkMuted,
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            flex: 1,
+                                                        }}>
+                                                            {currentSong.primaryArtists}
+                                                        </div>
+                                                    </Tooltip>
+                                                ) : (
+                                                    <div style={{
+                                                        fontFamily: fonts.mono,
+                                                        fontSize: '0.65rem',
+                                                        color: colors.inkMuted,
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        flex: 1,
+                                                    }}>
+                                                        {currentSong.primaryArtists}
+                                                    </div>
+                                                )}
                                                 {isPlaying && (
                                                     <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.5px', height: '8px', flexShrink: 0, paddingBottom: '1px' }}>
                                                         {[0.6, 1, 0.4].map((h, i) => (
@@ -741,21 +778,41 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                             }}>
                                 {currentSong ? (
                                     <>
-                                        <div 
-                                            className="ske-text-raised"
-                                            style={{
-                                                fontFamily: fonts.primary,
-                                                fontWeight: 600,
-                                                fontSize: 'clamp(0.72rem, 2vw, 0.85rem)',
-                                                color: colors.ink,
-                                                whiteSpace: 'nowrap',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                lineHeight: 1.3,
-                                            }}
-                                        >
-                                            {currentSong.name}
-                                        </div>
+                                        {currentSong.name && currentSong.name.length > 20 ? (
+                                            <Tooltip text={currentSong.name}>
+                                                <div 
+                                                    className="ske-text-raised"
+                                                    style={{
+                                                        fontFamily: fonts.primary,
+                                                        fontWeight: 600,
+                                                        fontSize: 'clamp(0.72rem, 2vw, 0.85rem)',
+                                                        color: colors.ink,
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        lineHeight: 1.3,
+                                                    }}
+                                                >
+                                                    {currentSong.name}
+                                                </div>
+                                            </Tooltip>
+                                        ) : (
+                                            <div 
+                                                className="ske-text-raised"
+                                                style={{
+                                                    fontFamily: fonts.primary,
+                                                    fontWeight: 600,
+                                                    fontSize: 'clamp(0.72rem, 2vw, 0.85rem)',
+                                                    color: colors.ink,
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    lineHeight: 1.3,
+                                                }}
+                                            >
+                                                {currentSong.name}
+                                            </div>
+                                        )}
                                         <div style={{
                                             display: 'flex',
                                             alignItems: 'center',
@@ -763,17 +820,33 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                             marginTop: '2px',
                                             minWidth: 0,
                                         }}>
-                                            <div style={{
-                                                fontFamily: fonts.mono,
-                                                fontSize: 'clamp(0.62rem, 1.8vw, 0.7rem)',
-                                                color: colors.inkMuted,
-                                                whiteSpace: 'nowrap',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                flex: 1,
-                                            }}>
-                                                {currentSong.primaryArtists}
-                                            </div>
+                                            {currentSong.primaryArtists && currentSong.primaryArtists.length > 28 ? (
+                                                <Tooltip text={currentSong.primaryArtists}>
+                                                    <div style={{
+                                                        fontFamily: fonts.mono,
+                                                        fontSize: 'clamp(0.62rem, 1.8vw, 0.7rem)',
+                                                        color: colors.inkMuted,
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        flex: 1,
+                                                    }}>
+                                                        {currentSong.primaryArtists}
+                                                    </div>
+                                                </Tooltip>
+                                            ) : (
+                                                <div style={{
+                                                    fontFamily: fonts.mono,
+                                                    fontSize: 'clamp(0.62rem, 1.8vw, 0.7rem)',
+                                                    color: colors.inkMuted,
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    flex: 1,
+                                                }}>
+                                                    {currentSong.primaryArtists}
+                                                </div>
+                                            )}
                                             {isPlaying && (
                                                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.5px', height: '8px', flexShrink: 0, paddingBottom: '1px' }}>
                                                     {[0.6, 1, 0.4].map((h, i) => (

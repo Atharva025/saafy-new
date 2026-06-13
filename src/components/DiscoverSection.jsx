@@ -6,6 +6,7 @@ import { useToast } from '@/context/ToastContext'
 import { encryptedGetItem } from '@/lib/encryption'
 import SkeletonLoader from './SkeletonLoader'
 import { adjustColorForTheme } from '@/lib/utils'
+import Tooltip from './Tooltip'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function getImageUrl(song) {
@@ -450,30 +451,64 @@ function HeroCard({ song, onPlay, onAddToQueue, onAddToPlaylist, currentUser, cu
                     transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
                 }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{
-                            fontFamily: fonts.display,
-                            fontWeight: 800,
-                            fontSize: 'clamp(0.95rem, 2.5vw, 1.3rem)',
-                            color: colors.ink,
-                            marginBottom: '4px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            lineHeight: 1.2,
-                        }}>
-                            {song.name}
-                        </div>
-                        <div style={{
-                            fontFamily: fonts.mono,
-                            fontSize: 'clamp(0.68rem, 1.8vw, 0.75rem)',
-                            color: colors.inkMuted,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            letterSpacing: '0.01em',
-                        }}>
-                            {song.primaryArtists}
-                        </div>
+                        {song.name && song.name.length > 20 ? (
+                            <Tooltip text={song.name}>
+                                <div style={{
+                                    fontFamily: fonts.display,
+                                    fontWeight: 800,
+                                    fontSize: 'clamp(0.95rem, 2.5vw, 1.3rem)',
+                                    color: colors.ink,
+                                    marginBottom: '4px',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    lineHeight: 1.2,
+                                }}>
+                                    {song.name}
+                                </div>
+                            </Tooltip>
+                        ) : (
+                            <div style={{
+                                fontFamily: fonts.display,
+                                fontWeight: 800,
+                                fontSize: 'clamp(0.95rem, 2.5vw, 1.3rem)',
+                                color: colors.ink,
+                                marginBottom: '4px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                lineHeight: 1.2,
+                             }}>
+                                {song.name}
+                            </div>
+                        )}
+                        {song.primaryArtists && song.primaryArtists.length > 28 ? (
+                            <Tooltip text={song.primaryArtists}>
+                                <div style={{
+                                    fontFamily: fonts.mono,
+                                    fontSize: 'clamp(0.68rem, 1.8vw, 0.75rem)',
+                                    color: colors.inkMuted,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    letterSpacing: '0.01em',
+                                }}>
+                                    {song.primaryArtists}
+                                </div>
+                            </Tooltip>
+                        ) : (
+                            <div style={{
+                                fontFamily: fonts.mono,
+                                fontSize: 'clamp(0.68rem, 1.8vw, 0.75rem)',
+                                color: colors.inkMuted,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                letterSpacing: '0.01em',
+                            }}>
+                                {song.primaryArtists}
+                            </div>
+                        )}
                     </div>
                     <PlayCircle isActive={isActive} isPlaying={isPlaying} accentColor={colors.accent} size={isMobile ? 40 : 46} hovered={hovered} />
                 </div>
@@ -610,31 +645,66 @@ function SmallCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, current
                 padding: '12px',
                 background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%)',
             }}>
-                <div style={{
-                    fontFamily: fonts.primary,
-                    fontWeight: 700,
-                    fontSize: 'var(--text-sm)',
-                    color: '#fff',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    lineHeight: 1.3,
-                    textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-                }}>
-                    {song.name}
-                </div>
-                <div style={{
-                    fontFamily: fonts.mono,
-                    fontSize: 'var(--text-xs)',
-                    color: 'rgba(255,255,255,0.65)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    marginTop: '2px',
-                    letterSpacing: '0.01em',
-                }}>
-                    {song.primaryArtists}
-                </div>
+                {song.name && song.name.length > 20 ? (
+                    <Tooltip text={song.name}>
+                        <div style={{
+                            fontFamily: fonts.primary,
+                            fontWeight: 700,
+                            fontSize: 'var(--text-sm)',
+                            color: '#fff',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            lineHeight: 1.3,
+                            textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                        }}>
+                            {song.name}
+                        </div>
+                    </Tooltip>
+                ) : (
+                    <div style={{
+                        fontFamily: fonts.primary,
+                        fontWeight: 700,
+                        fontSize: 'var(--text-sm)',
+                        color: '#fff',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        lineHeight: 1.3,
+                        textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                    }}>
+                        {song.name}
+                    </div>
+                )}
+                {song.primaryArtists && song.primaryArtists.length > 28 ? (
+                    <Tooltip text={song.primaryArtists}>
+                        <div style={{
+                            fontFamily: fonts.mono,
+                            fontSize: 'var(--text-xs)',
+                            color: 'rgba(255,255,255,0.65)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            marginTop: '2px',
+                            letterSpacing: '0.01em',
+                        }}>
+                            {song.primaryArtists}
+                        </div>
+                    </Tooltip>
+                ) : (
+                    <div style={{
+                        fontFamily: fonts.mono,
+                        fontSize: 'var(--text-xs)',
+                        color: 'rgba(255,255,255,0.65)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        marginTop: '2px',
+                        letterSpacing: '0.01em',
+                    }}>
+                        {song.primaryArtists}
+                    </div>
+                )}
             </div>
         </div>
     )
@@ -804,29 +874,62 @@ function MobileFeaturedRow({ song, index, onPlay, onAddToQueue, onAddToPlaylist,
 
             {/* Song details */}
             <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{
-                    fontFamily: fonts.primary,
-                    fontWeight: 700,
-                    fontSize: '0.85rem',
-                    color: isActive ? colors.accent : colors.ink,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    lineHeight: 1.25,
-                }}>
-                    {song.name}
-                </div>
-                <div style={{
-                    fontFamily: fonts.mono,
-                    fontSize: '0.72rem',
-                    color: colors.inkMuted,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    marginTop: '2px',
-                }}>
-                    {song.primaryArtists}
-                </div>
+                {song.name && song.name.length > 20 ? (
+                    <Tooltip text={song.name}>
+                        <div style={{
+                            fontFamily: fonts.primary,
+                            fontWeight: 700,
+                            fontSize: '0.85rem',
+                            color: isActive ? colors.accent : colors.ink,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            lineHeight: 1.25,
+                        }}>
+                            {song.name}
+                        </div>
+                    </Tooltip>
+                ) : (
+                    <div style={{
+                        fontFamily: fonts.primary,
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        color: isActive ? colors.accent : colors.ink,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        lineHeight: 1.25,
+                    }}>
+                        {song.name}
+                    </div>
+                )}
+                {song.primaryArtists && song.primaryArtists.length > 28 ? (
+                    <Tooltip text={song.primaryArtists}>
+                        <div style={{
+                            fontFamily: fonts.mono,
+                            fontSize: '0.72rem',
+                            color: colors.inkMuted,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            marginTop: '2px',
+                        }}>
+                            {song.primaryArtists}
+                        </div>
+                    </Tooltip>
+                ) : (
+                    <div style={{
+                        fontFamily: fonts.mono,
+                        fontSize: '0.72rem',
+                        color: colors.inkMuted,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        marginTop: '2px',
+                    }}>
+                        {song.primaryArtists}
+                    </div>
+                )}
             </div>
 
             {/* Actions button */}
@@ -1021,31 +1124,66 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, curren
                 {/* Metadata block below */}
                 <div style={{ padding: '8px 2px 2px 2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{
-                            fontFamily: fonts.primary,
-                            fontWeight: 700,
-                            fontSize: '0.875rem',
-                            color: isActive ? colors.accent : colors.ink,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            transition: 'color 0.22s ease',
-                            lineHeight: 1.3,
-                        }}>
-                            {song.name || song.title}
-                        </div>
-                        <div style={{
-                            fontFamily: fonts.mono,
-                            fontSize: '0.72rem',
-                            color: colors.inkMuted,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            letterSpacing: '0.02em',
-                            textTransform: 'uppercase',
-                        }}>
-                            {song.primaryArtists || 'Unknown Artist'}
-                        </div>
+                        {(song.name || song.title) && (song.name || song.title).length > 20 ? (
+                            <Tooltip text={song.name || song.title}>
+                                <div style={{
+                                    fontFamily: fonts.primary,
+                                    fontWeight: 600,
+                                    fontSize: 'var(--text-sm)',
+                                    color: isActive ? colors.accent : colors.ink,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    transition: 'color 0.22s ease',
+                                    lineHeight: 1.3,
+                                }}>
+                                    {song.name || song.title}
+                                </div>
+                            </Tooltip>
+                        ) : (
+                            <div style={{
+                                fontFamily: fonts.primary,
+                                fontWeight: 600,
+                                fontSize: 'var(--text-sm)',
+                                color: isActive ? colors.accent : colors.ink,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                transition: 'color 0.22s ease',
+                                lineHeight: 1.3,
+                            }}>
+                                {song.name || song.title}
+                            </div>
+                        )}
+                        {(song.primaryArtists || 'Unknown Artist') && (song.primaryArtists || 'Unknown Artist').length > 28 ? (
+                            <Tooltip text={song.primaryArtists || 'Unknown Artist'}>
+                                <div style={{
+                                    fontFamily: fonts.mono,
+                                    fontSize: '0.72rem',
+                                    color: colors.inkMuted,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    letterSpacing: '0.02em',
+                                    textTransform: 'uppercase',
+                                }}>
+                                    {song.primaryArtists || 'Unknown Artist'}
+                                </div>
+                            </Tooltip>
+                        ) : (
+                            <div style={{
+                                fontFamily: fonts.mono,
+                                fontSize: '0.72rem',
+                                color: colors.inkMuted,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                letterSpacing: '0.02em',
+                                textTransform: 'uppercase',
+                            }}>
+                                {song.primaryArtists || 'Unknown Artist'}
+                            </div>
+                        )}
                     </div>
 
                     {isMobile && (
@@ -1205,31 +1343,66 @@ function ScrollCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, curren
             {/* Sleeve Text Description */}
             <div style={{ padding: '0 2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                        fontFamily: fonts.primary,
-                        fontWeight: 700,
-                        fontSize: 'var(--text-sm)',
-                        color: isActive ? colors.accent : colors.ink,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        marginBottom: '3px',
-                        transition: 'color 0.22s ease',
-                        lineHeight: 1.3,
-                    }}>
-                        {song.name || song.title}
-                    </div>
-                    <div style={{
-                        fontFamily: fonts.mono,
-                        fontSize: 'var(--text-xs)',
-                        color: colors.inkMuted,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        letterSpacing: '0.01em',
-                    }}>
-                        {song.primaryArtists || 'Unknown Artist'}
-                    </div>
+                    {(song.name || song.title) && (song.name || song.title).length > 20 ? (
+                        <Tooltip text={song.name || song.title}>
+                            <div style={{
+                                fontFamily: fonts.primary,
+                                fontWeight: 700,
+                                fontSize: 'var(--text-sm)',
+                                color: isActive ? colors.accent : colors.ink,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                marginBottom: '3px',
+                                transition: 'color 0.22s ease',
+                                lineHeight: 1.3,
+                            }}>
+                                {song.name || song.title}
+                            </div>
+                        </Tooltip>
+                    ) : (
+                        <div style={{
+                            fontFamily: fonts.primary,
+                            fontWeight: 700,
+                            fontSize: 'var(--text-sm)',
+                            color: isActive ? colors.accent : colors.ink,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            marginBottom: '3px',
+                            transition: 'color 0.22s ease',
+                            lineHeight: 1.3,
+                        }}>
+                            {song.name || song.title}
+                        </div>
+                    )}
+                    {(song.primaryArtists || 'Unknown Artist') && (song.primaryArtists || 'Unknown Artist').length > 28 ? (
+                        <Tooltip text={song.primaryArtists || 'Unknown Artist'}>
+                            <div style={{
+                                fontFamily: fonts.mono,
+                                fontSize: 'var(--text-xs)',
+                                color: colors.inkMuted,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                letterSpacing: '0.01em',
+                            }}>
+                                {song.primaryArtists || 'Unknown Artist'}
+                            </div>
+                        </Tooltip>
+                    ) : (
+                        <div style={{
+                            fontFamily: fonts.mono,
+                            fontSize: 'var(--text-xs)',
+                            color: colors.inkMuted,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            letterSpacing: '0.01em',
+                        }}>
+                            {song.primaryArtists || 'Unknown Artist'}
+                        </div>
+                    )}
                 </div>
 
                 {isMobile && (

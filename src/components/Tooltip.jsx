@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useTheme } from '@/context/ThemeContext'
 
 export default function Tooltip({ children, text, delay = 300 }) {
@@ -6,12 +6,12 @@ export default function Tooltip({ children, text, delay = 300 }) {
     const [isVisible, setIsVisible] = useState(false)
     const [position, setPosition] = useState({ top: 0, left: 0, placement: 'top' })
     const timeoutRef = useRef(null)
-    const containerRef = useRef(null)
+    const childRef = useRef(null)
     const tooltipRef = useRef(null)
 
     const updatePosition = () => {
-        if (containerRef.current && tooltipRef.current) {
-            const rect = containerRef.current.getBoundingClientRect()
+        if (childRef.current && tooltipRef.current) {
+            const rect = childRef.current.getBoundingClientRect()
             const tooltipRect = tooltipRef.current.getBoundingClientRect()
             const scrollY = window.scrollY || window.pageYOffset
             const scrollX = window.scrollX || window.pageXOffset
@@ -45,7 +45,16 @@ export default function Tooltip({ children, text, delay = 300 }) {
         }
     }
 
-    const handleMouseEnter = () => {
+    const handleMouseEnter = (e) => {
+        const targetEl = e.currentTarget
+        
+        // Detect horizontal overflow (meaning CSS text-overflow: ellipsis "..." is active)
+        const isOverflowing = targetEl.scrollWidth > targetEl.clientWidth + 0.5
+        
+        if (!isOverflowing) {
+            return // Only show tooltip if text is truncated
+        }
+
         timeoutRef.current = setTimeout(() => {
             setIsVisible(true)
         }, delay)
@@ -61,10 +70,8 @@ export default function Tooltip({ children, text, delay = 300 }) {
     // Update position when tooltip becomes visible or on scroll
     useEffect(() => {
         if (isVisible) {
-            // Initial position calculation
             updatePosition()
 
-            // Recalculate on scroll
             const handleScroll = () => {
                 if (isVisible) {
                     updatePosition()
@@ -89,16 +96,35 @@ export default function Tooltip({ children, text, delay = 300 }) {
         }
     }, [])
 
+    const setRef = (node) => {
+        childRef.current = node
+        if (children) {
+            if (typeof children.ref === 'function') {
+                children.ref(node)
+            } else if (children.ref && typeof children.ref === 'object') {
+                children.ref.current = node
+            }
+        }
+    }
+
+    // Clone element to intercept mouse events directly on the target element
+    const clonedChild = React.isValidElement(children)
+        ? React.cloneElement(React.Children.only(children), {
+            ref: setRef,
+            onMouseEnter: (e) => {
+                if (children.props.onMouseEnter) children.props.onMouseEnter(e)
+                handleMouseEnter(e)
+            },
+            onMouseLeave: (e) => {
+                if (children.props.onMouseLeave) children.props.onMouseLeave(e)
+                handleMouseLeave(e)
+            }
+        })
+        : children
+
     return (
         <>
-            <div
-                ref={containerRef}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-                style={{ display: 'inline-block', width: '100%' }}
-            >
-                {children}
-            </div>
+            {clonedChild}
 
             {isVisible && (
                 <div

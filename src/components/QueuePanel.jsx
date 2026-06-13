@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { usePlayer } from '@/context/PlayerContext'
 import { useTheme } from '@/context/ThemeContext'
 import { formatDuration } from '@/lib/utils'
+import Tooltip from './Tooltip'
 import { X, Music, Play, Trash2, Clock, GripVertical } from 'lucide-react'
 
 export default function QueuePanel({ isOpen, onClose }) {
@@ -214,24 +215,52 @@ export default function QueuePanel({ isOpen, onClose }) {
                                 
                                 {/* Info */}
                                 <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{
-                                        fontFamily: fonts.primary,
-                                        fontWeight: 700,
-                                        fontSize: '0.85rem',
-                                        color: colors.ink,
-                                        whiteSpace: 'nowrap',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                    }}>{currentSong.name || currentSong.title}</div>
-                                    <div style={{
-                                        fontFamily: fonts.mono,
-                                        fontSize: '0.68rem',
-                                        color: colors.inkMuted,
-                                        whiteSpace: 'nowrap',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        marginTop: '1px',
-                                    }}>{currentSong.primaryArtists || 'Unknown Artist'}</div>
+                                    {(currentSong.name || currentSong.title) && (currentSong.name || currentSong.title).length > 20 ? (
+                                        <Tooltip text={currentSong.name || currentSong.title}>
+                                            <div style={{
+                                                fontFamily: fonts.primary,
+                                                fontWeight: 700,
+                                                fontSize: '0.85rem',
+                                                color: colors.ink,
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                            }}>{currentSong.name || currentSong.title}</div>
+                                        </Tooltip>
+                                    ) : (
+                                        <div style={{
+                                            fontFamily: fonts.primary,
+                                            fontWeight: 700,
+                                            fontSize: '0.85rem',
+                                            color: colors.ink,
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                        }}>{currentSong.name || currentSong.title}</div>
+                                    )}
+                                    {currentSong.primaryArtists && currentSong.primaryArtists.length > 28 ? (
+                                        <Tooltip text={currentSong.primaryArtists}>
+                                            <div style={{
+                                                fontFamily: fonts.mono,
+                                                fontSize: '0.68rem',
+                                                color: colors.inkMuted,
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                marginTop: '1px',
+                                            }}>{currentSong.primaryArtists}</div>
+                                        </Tooltip>
+                                    ) : (
+                                        <div style={{
+                                            fontFamily: fonts.mono,
+                                            fontSize: '0.68rem',
+                                            color: colors.inkMuted,
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            marginTop: '1px',
+                                        }}>{currentSong.primaryArtists || 'Unknown Artist'}</div>
+                                    )}
                                 </div>
 
                                 {/* Active bars */}
@@ -418,24 +447,50 @@ export default function QueuePanel({ isOpen, onClose }) {
                                                 onClick={() => playSong(song)}
                                                 style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}
                                             >
-                                                <div style={{
-                                                    fontFamily: fonts.primary,
-                                                    fontWeight: 600,
-                                                    fontSize: '0.85rem',
-                                                    color: colors.ink,
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                }}>{song.name}</div>
-                                                <div style={{
-                                                    fontFamily: fonts.mono,
-                                                    fontSize: '0.68rem',
-                                                    color: colors.inkMuted,
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    marginTop: '1px',
-                                                }}>{song.primaryArtists || 'Unknown Artist'}</div>
+                                                {song.name && song.name.length > 20 ? (
+                                                    <Tooltip text={song.name}>
+                                                        <div style={{
+                                                            fontFamily: fonts.primary,
+                                                            fontWeight: 600,
+                                                            color: colors.ink,
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                        }}>{song.name}</div>
+                                                    </Tooltip>
+                                                ) : (
+                                                    <div style={{
+                                                        fontFamily: fonts.primary,
+                                                        fontWeight: 600,
+                                                        color: colors.ink,
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                    }}>{song.name}</div>
+                                                )}
+                                                {song.primaryArtists && song.primaryArtists.length > 28 ? (
+                                                    <Tooltip text={song.primaryArtists}>
+                                                        <div style={{
+                                                            fontFamily: fonts.mono,
+                                                            fontSize: '0.68rem',
+                                                            color: colors.inkMuted,
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            marginTop: '1px',
+                                                        }}>{song.primaryArtists}</div>
+                                                    </Tooltip>
+                                                ) : (
+                                                    <div style={{
+                                                        fontFamily: fonts.mono,
+                                                        fontSize: '0.68rem',
+                                                        color: colors.inkMuted,
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        marginTop: '1px',
+                                                    }}>{song.primaryArtists || 'Unknown Artist'}</div>
+                                                )}
                                             </div>
 
                                             {/* Remove Button */}
