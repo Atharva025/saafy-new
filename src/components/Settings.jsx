@@ -22,6 +22,7 @@ export default function Settings() {
     const [systemInfo, setSystemInfo] = useState(null)
     const [isSaving, setIsSaving] = useState(false)
     const [savedMessage, setSavedMessage] = useState('')
+    const [showClearConfirm, setShowClearConfirm] = useState(false)
 
     // Load settings on mount
     useEffect(() => {
@@ -74,11 +75,10 @@ export default function Settings() {
     }
 
     const handleClearCache = () => {
-        if (window.confirm('Are you sure you want to clear all cached data? This cannot be undone.')) {
-            clearAppStorage()
-            setSavedMessage('Cache cleared successfully!')
-            setTimeout(() => setSavedMessage(''), 3000)
-        }
+        clearAppStorage()
+        setSavedMessage('Cache cleared successfully!')
+        setShowClearConfirm(false)
+        setTimeout(() => setSavedMessage(''), 3000)
     }
 
     const handleExportData = () => {
@@ -390,13 +390,33 @@ export default function Settings() {
                             Export My Data
                         </button>
 
-                        <button
-                            onClick={handleClearCache}
-                            className="ske-raised-xs ske-spring-btn"
-                            style={{ ...btnDangerStyle }}
-                        >
-                            Clear All Cache
-                        </button>
+                        {!showClearConfirm ? (
+                            <button
+                                onClick={() => setShowClearConfirm(true)}
+                                className="ske-raised-xs ske-spring-btn"
+                                style={{ ...btnDangerStyle }}
+                            >
+                                Clear All Cache
+                            </button>
+                        ) : (
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '10px 12px', background: 'rgba(239, 68, 68, 0.08)', borderRadius: '10px', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
+                                <span style={{ fontSize: '13px', color: '#FF6B6B', fontWeight: 600, fontFamily: fonts.primary }}>Confirm clear?</span>
+                                <button
+                                    onClick={handleClearCache}
+                                    className="ske-raised-xs"
+                                    style={{ ...btnDangerStyle, padding: '6px 12px', fontSize: '12px' }}
+                                >
+                                    Yes, Clear
+                                </button>
+                                <button
+                                    onClick={() => setShowClearConfirm(false)}
+                                    className="ske-raised-xs"
+                                    style={{ ...btnSecondaryStyle, padding: '6px 12px', fontSize: '12px' }}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </section>
 

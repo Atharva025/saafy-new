@@ -12,6 +12,7 @@ export default function LocalMusicPlayer() {
     const [isScanning, setIsScanning] = useState(false)
     const [scanProgress, setScanProgress] = useState({ current: 0, total: 0 })
     const [folders, setFolders] = useState([])
+    const [showClearConfirm, setShowClearConfirm] = useState(false)
 
     // Load saved local songs on mount
     useEffect(() => {
@@ -139,10 +140,9 @@ export default function LocalMusicPlayer() {
     }
 
     const handleClearLibrary = async () => {
-        if (window.confirm('Are you sure you want to remove all local songs? This will not delete the files.')) {
-            setLocalSongs([])
-            await saveSongs([])
-        }
+        setLocalSongs([])
+        await saveSongs([])
+        setShowClearConfirm(false)
     }
 
     if (!isElectron()) {
@@ -256,24 +256,62 @@ export default function LocalMusicPlayer() {
                         )}
 
                         {localSongs.length > 0 && (
-                            <button
-                                onClick={handleClearLibrary}
-                                disabled={isScanning}
-                                className="ske-raised-xs ske-spring-btn"
-                                style={{
-                                    padding: '12px 24px',
-                                    backgroundColor: colors.paperDark,
-                                    color: '#FF4F4F',
-                                    border: '1px solid rgba(255,75,75,0.28)',
-                                    borderRadius: '8px',
-                                    cursor: isScanning ? 'not-allowed' : 'pointer',
-                                    fontSize: '14px',
-                                    fontWeight: '600',
-                                    opacity: isScanning ? 0.5 : 1
-                                }}
-                            >
-                                Clear Library
-                            </button>
+                            !showClearConfirm ? (
+                                <button
+                                    onClick={() => setShowClearConfirm(true)}
+                                    disabled={isScanning}
+                                    className="ske-raised-xs ske-spring-btn"
+                                    style={{
+                                        padding: '12px 24px',
+                                        backgroundColor: colors.paperDark,
+                                        color: '#FF4F4F',
+                                        border: '1px solid rgba(255,75,75,0.28)',
+                                        borderRadius: '8px',
+                                        cursor: isScanning ? 'not-allowed' : 'pointer',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        opacity: isScanning ? 0.5 : 1
+                                    }}
+                                >
+                                    Clear Library
+                                </button>
+                            ) : (
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '6px 12px', background: 'rgba(255, 75, 75, 0.08)', borderRadius: '8px', border: '1px solid rgba(255, 75, 75, 0.2)' }}>
+                                    <span style={{ fontSize: '12px', color: '#FF4F4F', fontWeight: 600 }}>Confirm library clear?</span>
+                                    <button
+                                        onClick={handleClearLibrary}
+                                        className="ske-raised-xs"
+                                        style={{
+                                            padding: '6px 12px',
+                                            backgroundColor: colors.paperDark,
+                                            color: '#FF4F4F',
+                                            border: '1px solid rgba(255,75,75,0.28)',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            fontSize: '12px',
+                                            fontWeight: '600'
+                                        }}
+                                    >
+                                        Yes, Clear
+                                    </button>
+                                    <button
+                                        onClick={() => setShowClearConfirm(false)}
+                                        className="ske-raised-xs"
+                                        style={{
+                                            padding: '6px 12px',
+                                            backgroundColor: colors.paperDark,
+                                            color: colors.ink,
+                                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'}`,
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            fontSize: '12px',
+                                            fontWeight: '600'
+                                        }}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            )
                         )}
                     </div>
                 </div>

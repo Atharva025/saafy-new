@@ -1,7 +1,8 @@
 import mongoose from 'mongoose'
-import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 import fs from 'fs'
 import path from 'path'
+import bcrypt from 'bcryptjs'
 
 // Load .env manually to ensure environment variables are present
 try {
@@ -64,12 +65,30 @@ const userSchema = new mongoose.Schema({
 // Hash password before saving
 userSchema.pre('save', async function() {
   if (!this.isModified('password')) return
-  const salt = await bcrypt.genSalt(10)
-  this.password = await bcrypt.hash(this.password, salt)
+  const salt = crypto.randomBytes(16).toString('hex')
+  const hash = crypto.pbkdf2Sync(this.password, salt, 1000, 64, 'sha512').toString('hex')
+  this.password = `${salt}:${hash}`
 })
 
 userSchema.methods.comparePassword = async function(candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password)
+  if (!this.password) return false
+
+  // Check if it is a bcrypt hash
+  if (this.password.startsWith('$2a$') || this.password.startsWith('$2b$') || this.password.startsWith('$2y$')) {
+    try {
+      return bcrypt.compareSync(candidatePassword, this.password)
+    } catch (e) {
+      console.error('Bcrypt comparison error:', e)
+      return false
+    }
+  }
+
+  if (!this.password.includes(':')) {
+    return candidatePassword === this.password
+  }
+  const [salt, hash] = this.password.split(':')
+  const verifyHash = crypto.pbkdf2Sync(candidatePassword, salt, 1000, 64, 'sha512').toString('hex')
+  return hash === verifyHash
 }
 
 // Clear cached model to prevent stale schemas when Vite reloads config in the same process

@@ -586,7 +586,9 @@ export const addSongToRecommender = async (songName, artist) => {
         })
 
         const url = `${RECOMMENDER_BASE_URL}/add-song?${params}`
-        console.log('📤 API Call: Adding song to recommender (POST):', url)
+        if (import.meta.env.DEV) {
+            console.log('📤 API Call: Adding song to recommender (POST):', url)
+        }
 
         const response = await fetch(url, {
             method: 'POST',
@@ -595,11 +597,15 @@ export const addSongToRecommender = async (songName, artist) => {
             },
         })
 
-        console.log('📥 Response status:', response.status, response.statusText)
+        if (import.meta.env.DEV) {
+            console.log('📥 Response status:', response.status, response.statusText)
+        }
 
         if (!response.ok) {
             const errorText = await response.text()
-            console.error('❌ API Error response:', errorText)
+            if (import.meta.env.DEV) {
+                console.error('❌ API Error response:', errorText)
+            }
             return {
                 success: false,
                 error: `Failed to add song: ${response.statusText}`,
@@ -608,10 +614,14 @@ export const addSongToRecommender = async (songName, artist) => {
         }
 
         const data = await response.json()
-        console.log('✅ Song added successfully:', data)
+        if (import.meta.env.DEV) {
+            console.log('✅ Song added successfully:', data)
+        }
         return { success: true, data, status: response.status }
     } catch (error) {
-        console.error('❌ Error in addSongToRecommender:', error)
+        if (import.meta.env.DEV) {
+            console.error('❌ Error in addSongToRecommender:', error)
+        }
         return { success: false, error: error.message, status: 0 }
     }
 }
@@ -630,7 +640,9 @@ export const getRecommendations = async (songId, limit = 10) => {
         const validLimit = Math.min(50, Math.max(1, Number(limit) || 10))
 
         const url = `${RECOMMENDER_BASE_URL}/recommend/${sanitizedId}?limit=${validLimit}`
-        console.log('🔍 API Call: Fetching recommendations:', url)
+        if (import.meta.env.DEV) {
+            console.log('🔍 API Call: Fetching recommendations:', url)
+        }
 
         const response = await fetch(url, {
             method: 'GET',
@@ -639,7 +651,9 @@ export const getRecommendations = async (songId, limit = 10) => {
             },
         })
 
-        console.log('📥 Response status:', response.status, response.statusText)
+        if (import.meta.env.DEV) {
+            console.log('📥 Response status:', response.status, response.statusText)
+        }
 
         if (!response.ok) {
             let errorDetail = response.statusText
@@ -650,13 +664,17 @@ export const getRecommendations = async (songId, limit = 10) => {
             } catch (e) {
                 // If parsing fails, use statusText
             }
-            console.warn('⚠️ Song not in recommendations database:', sanitizedId)
+            if (import.meta.env.DEV) {
+                console.warn('⚠️ Song not in recommendations database:', sanitizedId)
+            }
             // Return graceful failure instead of throwing
             return { success: false, recommendations: [], error: errorDetail }
         }
 
         const data = await response.json()
-        console.log('✅ Recommendations received:', data.count, 'songs')
+        if (import.meta.env.DEV) {
+            console.log('✅ Recommendations received:', data.count, 'songs')
+        }
 
         if (data.success && data.recommendations) {
             return {

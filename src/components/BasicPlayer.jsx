@@ -19,7 +19,7 @@ import {
     Maximize2
 } from 'lucide-react'
 
-export default function BasicPlayer({ showQueue, setShowQueue }) {
+export default function BasicPlayer({ showQueue, setShowQueue, isHidden }) {
     const { colors, fonts, isDark } = useTheme()
     const {
         currentSong,
@@ -37,7 +37,9 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
         toggleShuffle,
         toggleRepeat,
         dominantColor,
-        setIsImmersiveOpen
+        setIsImmersiveOpen,
+        error,
+        clearError
     } = usePlayer()
 
     const [isHovered, setIsHovered] = useState(false)
@@ -100,6 +102,26 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
         }
     }
 
+    const handleVolumeKeyDown = (e) => {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
+            setVolume(Math.min(1, volume + 0.05))
+            e.preventDefault()
+        } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
+            setVolume(Math.max(0, volume - 0.05))
+            e.preventDefault()
+        }
+    }
+
+    const handleProgressKeyDown = (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+            seekTo(Math.min(duration, progress + 5))
+            e.preventDefault()
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+            seekTo(Math.max(0, progress - 5))
+            e.preventDefault()
+        }
+    }
+
     const progressPercent = duration ? (progress / duration) * 100 : 0
     // Use highest quality image available - check both .link and .url
     const imageUrl = currentSong?.image?.[2]?.link || currentSong?.image?.[2]?.url ||
@@ -118,10 +140,81 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                 zIndex: 100,
                 width: 'min(96vw, 620px)',
                 maxWidth: '620px',
+                display: isHidden ? 'none' : 'block',
             }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
+            {error && (
+                <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: 200,
+                    background: isDark ? 'rgba(28, 24, 22, 0.96)' : 'rgba(252, 249, 244, 0.97)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
+                    borderRadius: 'clamp(14px, 3vw, 18px)',
+                    border: `1.5px solid ${colors.accent || '#c45c3e'}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0 20px',
+                    boxShadow: 'var(--shadow-ske-sm)',
+                    animation: 'fadeIn 0.25s ease-out',
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                        <div style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '6px',
+                            background: '#EF4444',
+                            color: '#fff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                        }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="12" />
+                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                            </svg>
+                        </div>
+                        <div style={{
+                            fontFamily: fonts.primary,
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            color: colors.ink,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                        }}>
+                            {error}
+                        </div>
+                    </div>
+                    <button
+                        onClick={clearError}
+                        style={{
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            background: colors.accent || '#c45c3e',
+                            color: '#fff',
+                            border: 'none',
+                            fontFamily: fonts.primary,
+                            fontWeight: 700,
+                            fontSize: '0.75rem',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 6px rgba(196, 92, 62, 0.2)',
+                            flexShrink: 0,
+                            transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.08)'}
+                        onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}
+                    >
+                        Dismiss
+                    </button>
+                </div>
+            )}
             <div 
                 className="ske-textured ske-float"
                 style={{
@@ -312,6 +405,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                                 )}
                                                 {isPlaying && (
                                                     <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.5px', height: '8px', flexShrink: 0, paddingBottom: '1px' }}>
+                                                        <span className="sr-only">Now playing</span>
                                                         {[0.6, 1, 0.4].map((h, i) => (
                                                             <div
                                                                 key={i}
@@ -382,6 +476,13 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                     >
                                         <div
                                             onClick={handleVolumeClick}
+                                            role="slider"
+                                            aria-label="Volume"
+                                            aria-valuenow={Math.round(volume * 100)}
+                                            aria-valuemin={0}
+                                            aria-valuemax={100}
+                                            tabIndex={0}
+                                            onKeyDown={handleVolumeKeyDown}
                                             style={{
                                                 position: 'relative',
                                                 width: '24px',
@@ -389,6 +490,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                                 cursor: 'pointer',
                                                 display: 'flex',
                                                 justifyContent: 'center',
+                                                outline: 'none',
                                             }}
                                         >
                                             {/* Track background */}
@@ -434,6 +536,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                 <button
                                     onClick={() => setVolumeExpanded(!volumeExpanded)}
                                     className={`icon-btn ${volumeExpanded ? 'active' : ''}`}
+                                    aria-label="Toggle volume controls"
                                     style={{
                                         width: '42px',
                                         height: '42px',
@@ -472,6 +575,13 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                         onMouseEnter={() => setProgressHovered(true)}
                                         onMouseLeave={() => setProgressHovered(false)}
                                         onMouseMove={handleProgressMouseMove}
+                                        role="slider"
+                                        aria-label="Playback progress"
+                                        aria-valuenow={Math.round(progress)}
+                                        aria-valuemin={0}
+                                        aria-valuemax={Math.round(duration) || 100}
+                                        tabIndex={0}
+                                        onKeyDown={handleProgressKeyDown}
                                         style={{
                                             flex: 1,
                                             height: '24px',
@@ -479,6 +589,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                             alignItems: 'center',
                                             cursor: 'pointer',
                                             position: 'relative',
+                                            outline: 'none',
                                         }}
                                     >
                                         <div
@@ -849,6 +960,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                             )}
                                             {isPlaying && (
                                                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.5px', height: '8px', flexShrink: 0, paddingBottom: '1px' }}>
+                                                    <span className="sr-only">Now playing</span>
                                                     {[0.6, 1, 0.4].map((h, i) => (
                                                         <div
                                                             key={i}
@@ -1026,6 +1138,15 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                             >
                                 <div
                                     onClick={handleVolumeClick}
+                                    onFocus={() => setVolumeHovered(true)}
+                                    onBlur={() => setVolumeHovered(false)}
+                                    role="slider"
+                                    aria-label="Volume"
+                                    aria-valuenow={Math.round(volume * 100)}
+                                    aria-valuemin={0}
+                                    aria-valuemax={100}
+                                    tabIndex={0}
+                                    onKeyDown={handleVolumeKeyDown}
                                     style={{
                                         width: volumeHovered ? '80px' : '0px',
                                         height: '24px',
@@ -1036,6 +1157,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                         alignItems: 'center',
                                         justifyContent: 'flex-end',
                                         paddingRight: volumeHovered ? '8px' : '0',
+                                        outline: 'none',
                                     }}
                                 >
                                     <div style={{
@@ -1091,6 +1213,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                 <button
                                     onClick={() => setVolume(volume > 0 ? 0 : 0.7)}
                                     className="icon-btn"
+                                    aria-label={volume === 0 ? "Unmute" : "Mute"}
                                     style={{
                                         width: '32px',
                                         height: '32px',
@@ -1129,6 +1252,13 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                         onMouseEnter={() => setProgressHovered(true)}
                                         onMouseLeave={() => setProgressHovered(false)}
                                         onMouseMove={handleProgressMouseMove}
+                                        role="slider"
+                                        aria-label="Playback progress"
+                                        aria-valuenow={Math.round(progress)}
+                                        aria-valuemin={0}
+                                        aria-valuemax={Math.round(duration) || 100}
+                                        tabIndex={0}
+                                        onKeyDown={handleProgressKeyDown}
                                         style={{
                                             flex: 1,
                                             height: '24px',
@@ -1136,6 +1266,7 @@ export default function BasicPlayer({ showQueue, setShowQueue }) {
                                             alignItems: 'center',
                                             cursor: 'pointer',
                                             position: 'relative',
+                                            outline: 'none',
                                         }}
                                     >
                                         <div

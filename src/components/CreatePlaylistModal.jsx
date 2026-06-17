@@ -106,7 +106,7 @@ export default function CreatePlaylistModal({ isOpen, onClose, currentUser, crea
     background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#e07356' : '#c45c3e'} 100%)`,
     color: '#fff',
     fontFamily: fonts.primary,
-    fontWeight: 650,
+    fontWeight: 700,
     fontSize: '0.9rem',
     cursor: isLoading ? 'not-allowed' : 'pointer',
     opacity: (!name.trim() || isLoading) ? 0.6 : 1,

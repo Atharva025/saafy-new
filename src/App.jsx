@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { PlayerProvider, usePlayer } from '@/context/PlayerContext'
 import { ThemeProvider, useTheme } from '@/context/ThemeContext'
@@ -7,6 +7,9 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import UserAuthModal from '@/components/UserAuthModal'
 import CreatePlaylistModal from '@/components/CreatePlaylistModal'
 import SpotifyImportModal from '@/components/SpotifyImportModal'
+import CategoryRibbon from '@/components/CategoryRibbon'
+import UserProfileDropdown from '@/components/UserProfileDropdown'
+import IconButton from '@/components/IconButton'
 import { motion, AnimatePresence } from 'framer-motion'
 import BasicSearch from '@/components/BasicSearch'
 import SongList from '@/components/SongList'
@@ -24,7 +27,53 @@ import { validateSong } from '@/lib/security'
 import { getSong, searchSongs, getRecommendations } from '@/lib/api'
 import { compressImage } from '@/utils/image'
 import { generateGradient } from '@/utils/colorExtractor'
-import { Sparkles, TrendingUp, Languages, BookText, Drum, Landmark, PartyPopper, CloudMoon, Heart, Dumbbell, ListMusic, Pencil, Check, Shuffle, Clock, Menu, List, Grid } from 'lucide-react'
+import { Sparkles, TrendingUp, Languages, BookText, Drum, Landmark, PartyPopper, CloudMoon, Heart, Dumbbell, ListMusic, Pencil, Check, Shuffle, Clock, Menu, List, Grid, Sun, Moon, History } from 'lucide-react'
+
+const formatDuration = (secs) => {
+  if (!secs) return '0:00'
+  const m = Math.floor(secs / 60)
+  const s = Math.floor(secs % 60)
+  return `${m}:${s < 10 ? '0' : ''}${s}`
+}
+
+const getPlaylistSongImage = (song) => {
+  if (!song) return '/placeholder.png'
+  const isImageString = (val) => typeof val === 'string' && val.startsWith('http')
+  
+  if (isImageString(song.imageUrl)) {
+    return song.imageUrl
+  }
+  if (isImageString(song.image)) {
+    return song.image
+  }
+  if (Array.isArray(song.image) && song.image.length > 0) {
+    for (let i = song.image.length - 1; i >= 0; i--) {
+      const item = song.image[i]
+      if (item) {
+        if (typeof item === 'string' && item.startsWith('http')) {
+          return item
+        }
+        if (typeof item === 'object') {
+          if (typeof item.link === 'string' && item.link.startsWith('http')) {
+            return item.link
+          }
+          if (typeof item.url === 'string' && item.url.startsWith('http')) {
+            return item.url
+          }
+        }
+      }
+    }
+  }
+  if (typeof song.image === 'object' && song.image !== null) {
+    if (typeof song.image.link === 'string' && song.image.link.startsWith('http')) {
+      return song.image.link
+    }
+    if (typeof song.image.url === 'string' && song.image.url.startsWith('http')) {
+      return song.image.url
+    }
+  }
+  return '/placeholder.png'
+}
 
 function HomePage() {
   const { isDark, colors, fonts, toggleTheme } = useTheme()
@@ -39,6 +88,10 @@ function HomePage() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showUserDropdown, setShowUserDropdown] = useState(false)
   const userDropdownRef = useRef(null)
+  const mobileMenuRef = useRef(null)
+  const mobileHistorySheetRef = useRef(null)
+  const [isOffline, setIsOffline] = useState(!navigator.onLine)
+  const [playlistToDelete, setPlaylistToDelete] = useState(null)
 
   // Playlist states
   const [selectedPlaylist, setSelectedPlaylist] = useState(null)
@@ -177,65 +230,10 @@ function HomePage() {
     }
   }
 
-  const formatDuration = (secs) => {
-    if (!secs) return '0:00'
-    const m = Math.floor(secs / 60)
-    const s = Math.floor(secs % 60)
-    return `${m}:${s < 10 ? '0' : ''}${s}`
-  }
 
-  const getPlaylistSongImage = (song) => {
-    if (!song) return '/placeholder.png'
-    const isImageString = (val) => typeof val === 'string' && val.startsWith('http')
-    
-    if (isImageString(song.imageUrl)) {
-      return song.imageUrl
-    }
-    if (isImageString(song.image)) {
-      return song.image
-    }
-    if (Array.isArray(song.image) && song.image.length > 0) {
-      for (let i = song.image.length - 1; i >= 0; i--) {
-        const item = song.image[i]
-        if (item) {
-          if (typeof item === 'string' && item.startsWith('http')) {
-            return item
-          }
-          if (typeof item === 'object') {
-            if (typeof item.link === 'string' && item.link.startsWith('http')) {
-              return item.link
-            }
-            if (typeof item.url === 'string' && item.url.startsWith('http')) {
-              return item.url
-            }
-          }
-        }
-      }
-    }
-    if (typeof song.image === 'object' && song.image !== null) {
-      if (typeof song.image.link === 'string' && song.image.link.startsWith('http')) {
-        return song.image.link
-      }
-      if (typeof song.image.url === 'string' && song.image.url.startsWith('http')) {
-        return song.image.url
-      }
-    }
-    return '/placeholder.png'
-  }
-
-
-  const handleDeletePlaylist = async (playlistId) => {
+  const handleDeletePlaylist = (playlistId) => {
     if (!currentUser) return
-    if (!window.confirm("Are you sure you want to delete this playlist?")) return
-    
-    const userId = currentUser.id || currentUser._id
-    const success = await deletePlaylist(userId, playlistId)
-    if (success) {
-      toast.success("Playlist deleted")
-      setSelectedPlaylist(null)
-    } else {
-      toast.error("Failed to delete playlist")
-    }
+    setPlaylistToDelete(playlistId)
   }
 
   const handlePlayPlaylist = () => {
@@ -256,9 +254,17 @@ function HomePage() {
   }
 
 
-  // Computed once per render — consistent with BasicPlayer / BasicSearch patterns
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
-  const isTiny = typeof window !== 'undefined' && window.innerWidth < 390
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 640 : false)
+  const [isTiny, setIsTiny] = useState(typeof window !== 'undefined' ? window.innerWidth < 390 : false)
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640)
+      setIsTiny(window.innerWidth < 390)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
 
 
@@ -278,11 +284,11 @@ function HomePage() {
   const [scrolled, setScrolled] = useState(false)
   const historyRef = useRef(null)
 
-  const getStaggerStyle = (index, marginBottom = isMobile ? '20px' : 'clamp(32px, 6vw, 48px)') => ({
+  const getStaggerStyle = useCallback((index, marginBottom = isMobile ? '20px' : 'clamp(32px, 6vw, 48px)') => ({
     marginBottom,
     animation: 'slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
     animationDelay: `${0.05 * index}s`,
-  })
+  }), [isMobile])
 
   useEffect(() => {
     const savedUser = encryptedGetItem('saafy_user', null)
@@ -321,7 +327,84 @@ function HomePage() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key !== 'Tab') return
 
+      let activeSheetRef = null
+      if (isMobile && showMobileMenu) {
+        activeSheetRef = mobileMenuRef
+      } else if (isMobile && showHistory) {
+        activeSheetRef = mobileHistorySheetRef
+      }
+
+      if (!activeSheetRef || !activeSheetRef.current) return
+
+      const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      const focusables = Array.from(activeSheetRef.current.querySelectorAll(focusableSelectors))
+      if (focusables.length === 0) return
+
+      const firstElement = focusables[0]
+      const lastElement = focusables[focusables.length - 1]
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement.focus()
+          e.preventDefault()
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement.focus()
+          e.preventDefault()
+        }
+      }
+    }
+
+    if ((showMobileMenu || showHistory) && isMobile) {
+      window.addEventListener('keydown', handleKeyDown)
+      setTimeout(() => {
+        let activeSheetRef = null
+        if (showMobileMenu) activeSheetRef = mobileMenuRef
+        else if (showHistory) activeSheetRef = mobileHistorySheetRef
+
+        if (activeSheetRef && activeSheetRef.current) {
+          const focusables = activeSheetRef.current.querySelectorAll('button, [href], input, select, textarea')
+          if (focusables.length > 0) {
+            focusables[0].focus()
+          }
+        }
+      }, 50)
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [showMobileMenu, showHistory, isMobile])
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false)
+    const handleOffline = () => setIsOffline(true)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  const handleSignOut = () => {
+    encryptedSetItem('saafy_user', null)
+    setCurrentUser(null)
+    loadPlaylists(null)
+    setSelectedPlaylist(null)
+    setShowUserDropdown(false)
+    setShowMobileMenu(false)
+    loadListeningHistory('guest')
+    loadDiscoveryContent(null)
+    toast.info('Signed out successfully')
+  }
 
   const loadDiscoveryContent = async (user = currentUser) => {
     setLoading(true)
@@ -422,9 +505,7 @@ function HomePage() {
     setIsSearching(false)
   }
 
-  const handlePlaySong = (song, context = null) => {
-    playSong(song, context)
-  }
+  const handlePlaySong = playSong
 
   const loadCategorySongs = async (id, forceRefresh = false) => {
     if (id === 'section-for-you' || id === 'section-playlists') {
@@ -632,14 +713,16 @@ function HomePage() {
     </div>
   )
 
-  const filteredPlaylistSongs = playlistSongs.filter(song => {
-    const query = playlistSearchQuery.toLowerCase().trim()
-    if (!query) return true
-    const nameMatch = (song.name || song.title || '').toLowerCase().includes(query)
-    const artistMatch = (song.primaryArtists || '').toLowerCase().includes(query)
-    const albumMatch = (typeof song.album === 'string' ? song.album : song.album?.name || '').toLowerCase().includes(query)
-    return nameMatch || artistMatch || albumMatch
-  })
+  const filteredPlaylistSongs = useMemo(() => {
+    return playlistSongs.filter(song => {
+      const query = playlistSearchQuery.toLowerCase().trim()
+      if (!query) return true
+      const nameMatch = (song.name || song.title || '').toLowerCase().includes(query)
+      const artistMatch = (song.primaryArtists || '').toLowerCase().includes(query)
+      const albumMatch = (typeof song.album === 'string' ? song.album : song.album?.name || '').toLowerCase().includes(query)
+      return nameMatch || artistMatch || albumMatch
+    })
+  }, [playlistSongs, playlistSearchQuery])
 
   const songImageUrl = currentSong?.image?.[2]?.link || 
                        currentSong?.image?.[2]?.url ||
@@ -657,6 +740,21 @@ function HomePage() {
       transition: 'background 0.3s ease',
       position: 'relative',
     }}>
+      <a href="#main-content" className="sr-only focus:not-sr-only" style={{
+        position: 'absolute',
+        top: '16px',
+        left: '16px',
+        background: colors.accent,
+        color: '#fff',
+        padding: '8px 16px',
+        borderRadius: '8px',
+        zIndex: 9999,
+        fontWeight: 700,
+        textDecoration: 'none',
+        boxShadow: 'var(--shadow-ske-sm)',
+      }}>
+        Skip to content
+      </a>
       {/* Dynamic ambient playing background (static iOS-style blurred cover art matching song color) */}
       <div 
         className="ambient-playing-bg"
@@ -776,7 +874,7 @@ function HomePage() {
                   <div style={{
                     fontFamily: fonts.primary,
                     fontSize: 'clamp(0.72rem, 1.8vw, 0.85rem)',
-                    fontWeight: 650,
+                    fontWeight: 700,
                     color: colors.ink,
                     lineHeight: 1.2,
                     letterSpacing: '-0.01em',
@@ -813,90 +911,41 @@ function HomePage() {
           {/* Desktop: Right - Actions (hidden on mobile) */}
           {!searchExpanded && (
             <div className="header-actions" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap' }}>
-            {/* Queue Button */}
-            <button
-              onClick={() => setShowQueue(!showQueue)}
-              style={{
-                ...iconBtnStyle(showQueue),
-                position: 'relative',
-                width: 'clamp(36px, 8vw, 40px)',
-                height: 'clamp(36px, 8vw, 40px)',
-              }}
-              title="Queue"
-            >
-              <ListMusic size={18} />
-              {queue.length > 0 && (
-                <div style={{
-                  position: 'absolute',
-                  top: '-4px',
-                  right: '-4px',
-                  minWidth: '18px',
-                  height: '18px',
-                  borderRadius: '10px',
-                  background: colors.accent,
-                  color: colors.paper,
-                  fontSize: '0.65rem',
-                  fontFamily: fonts.mono,
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0 4px',
-                }}>
-                  {queue.length}
-                </div>
-              )}
-            </button>
-
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              style={{
-                ...iconBtnStyle(isDark),
-                width: 'clamp(36px, 8vw, 40px)',
-                height: 'clamp(36px, 8vw, 40px)',
-              }}
-              title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            >
-              {isDark ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="5" />
-                  <line x1="12" y1="1" x2="12" y2="3" />
-                  <line x1="12" y1="21" x2="12" y2="23" />
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                  <line x1="1" y1="12" x2="3" y2="12" />
-                  <line x1="21" y1="12" x2="23" y2="12" />
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                </svg>
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                </svg>
-              )}
-            </button>
-
-            {/* Listening History */}
-            <div ref={historyRef} style={{ position: 'relative' }}>
-              <button
-                onClick={() => {
-                  const userId = currentUser ? (currentUser.id || currentUser._id) : 'guest'
-                  loadListeningHistory(userId)
-                  setShowHistory(!showHistory)
-                }}
-                style={{
-                  ...iconBtnStyle(showHistory),
-                  width: 'clamp(36px, 8vw, 40px)',
-                  height: 'clamp(36px, 8vw, 40px)',
-                }}
-                title="Recently Played"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-              </button>
+             {/* Queue Button */}
+             <IconButton
+               onClick={() => setShowQueue(!showQueue)}
+               isActive={showQueue}
+               title="Queue"
+               ariaLabel="Toggle play queue panel"
+               badge={queue.length > 0 ? queue.length : null}
+             >
+               <ListMusic size={18} />
+             </IconButton>
+ 
+             {/* Theme Toggle */}
+             <IconButton
+               onClick={toggleTheme}
+               isActive={isDark}
+               title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+               ariaLabel={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+             >
+               {isDark ? <Sun size={18} /> : <Moon size={18} />}
+             </IconButton>
+ 
+             {/* Listening History */}
+             <div ref={historyRef} style={{ position: 'relative' }}>
+               <IconButton
+                 onClick={() => {
+                   const userId = currentUser ? (currentUser.id || currentUser._id) : 'guest'
+                   loadListeningHistory(userId)
+                   setShowHistory(!showHistory)
+                 }}
+                 isActive={showHistory}
+                 title="Recently Played"
+                 ariaLabel="Toggle recently played history dropdown"
+               >
+                 <History size={18} />
+               </IconButton>
 
               {showHistory && (
                 <div style={{
@@ -942,7 +991,7 @@ function HomePage() {
                       listeningHistory.map((song) => {
                         const imageUrl = song.image?.[0]?.link || song.image?.[1]?.link || ''
                         return (
-                          <div
+                          <button
                             key={song.id}
                             onClick={() => handleHistorySongClick(song)}
                             style={{
@@ -953,6 +1002,10 @@ function HomePage() {
                               borderRadius: '8px',
                               cursor: 'pointer',
                               transition: 'background 0.1s',
+                              border: 'none',
+                              background: 'transparent',
+                              width: '100%',
+                              textAlign: 'left',
                             }}
                             onMouseEnter={(e) => e.currentTarget.style.background = colors.paperDark}
                             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
@@ -966,7 +1019,7 @@ function HomePage() {
                               background: colors.paperDark,
                             }}>
                               {imageUrl ? (
-                                <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <img src={imageUrl} alt={song.name || song.title || ''} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                               ) : (
                                 <div style={{
                                   width: '100%',
@@ -1004,7 +1057,7 @@ function HomePage() {
                                 {song.primaryArtists}
                               </div>
                             </div>
-                          </div>
+                          </button>
                         )
                       })
                     )}
@@ -1013,173 +1066,45 @@ function HomePage() {
               )}
             </div>
 
-            {/* Shuffle All */}
-            <button
-              onClick={handleShuffleAll}
-              style={{
-                ...iconBtnStyle(),
-                background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#e07356' : '#c45c3e'} 100%)`,
-                color: '#ffffff',
-                border: `1px solid ${colors.accent}b0`,
-                boxShadow: 'var(--shadow-ske-xs), inset 0 1px 0 rgba(255,255,255,0.15)',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.08)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.filter = 'none'; e.currentTarget.style.transform = 'translateY(0)' }}
-              title="Shuffle All - Play Random"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="16 3 21 3 21 8" />
-                <line x1="4" y1="20" x2="21" y2="3" />
-                <polyline points="21 16 21 21 16 21" />
-                <line x1="15" y1="15" x2="21" y2="21" />
-                <line x1="4" y1="4" x2="9" y2="9" />
-              </svg>
-            </button>
+             {/* Shuffle All */}
+             <IconButton
+               onClick={handleShuffleAll}
+               title="Shuffle All - Play Random"
+               ariaLabel="Shuffle all music tracks"
+               style={{
+                 background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#e07356' : '#c45c3e'} 100%)`,
+                 color: '#ffffff',
+                 border: `1px solid ${colors.accent}b0`,
+                 boxShadow: 'var(--shadow-ske-xs), inset 0 1px 0 rgba(255,255,255,0.15)',
+               }}
+             >
+               <Shuffle size={16} />
+             </IconButton>
+ 
+             {/* Refresh */}
+             <IconButton
+               onClick={handleRefresh}
+               className="header-refresh-btn"
+               title="Refresh Content"
+               ariaLabel="Refresh all contents"
+             >
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                 <polyline points="23 4 23 10 17 10" />
+                 <polyline points="1 20 1 14 7 14" />
+                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+               </svg>
+             </IconButton>
 
-            {/* Refresh */}
-            <button
-              onClick={handleRefresh}
-              className="header-refresh-btn"
-              style={{
-                ...iconBtnStyle(),
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
-              title="Refresh Content"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="23 4 23 10 17 10" />
-                <polyline points="1 20 1 14 7 14" />
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-              </svg>
-            </button>
-
-            {/* User Profile / Auth */}
-            <div ref={userDropdownRef} style={{ position: 'relative' }}>
-              <button
-                onClick={() => {
-                  if (currentUser) {
-                    setShowUserDropdown(!showUserDropdown)
-                  } else {
-                    setShowAuthModal(true)
-                  }
-                }}
-                style={{
-                  ...iconBtnStyle(showUserDropdown),
-                  width: 'clamp(36px, 8vw, 40px)',
-                  height: 'clamp(36px, 8vw, 40px)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: 0,
-                  overflow: 'hidden',
-                }}
-                title={currentUser ? `Account: ${currentUser.username}` : "Sign In"}
-              >
-                {currentUser ? (
-                  <div style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`,
-                    color: '#fff',
-                    fontWeight: 700,
-                    fontSize: '0.85rem',
-                    fontFamily: fonts.mono,
-                    textTransform: 'uppercase',
-                  }}>
-                    {currentUser.username.substring(0, 2)}
-                  </div>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                )}
-              </button>
-
-              {currentUser && showUserDropdown && (
-                <div style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 8px)',
-                  right: 0,
-                  width: '240px',
-                  background: colors.paper,
-                  borderRadius: '12px',
-                  border: `1px solid ${colors.rule}`,
-                  boxShadow: isDark
-                    ? '0 16px 48px rgba(0,0,0,0.4), 0 8px 20px rgba(0,0,0,0.3)'
-                    : '0 16px 48px rgba(26,22,20,0.12), 0 8px 20px rgba(26,22,20,0.06)',
-                  overflow: 'hidden',
-                  zIndex: 100,
-                }}>
-                  <div style={{
-                    padding: '14px',
-                    borderBottom: `1px solid ${colors.rule}`,
-                  }}>
-                    <div style={{
-                      fontFamily: fonts.primary,
-                      fontSize: '0.85rem',
-                      fontWeight: 650,
-                      color: colors.ink,
-                    }}>
-                      {currentUser.username}
-                    </div>
-                    <div style={{
-                      fontFamily: fonts.primary,
-                      fontSize: '0.72rem',
-                      color: colors.inkLight,
-                      wordBreak: 'break-all',
-                      marginTop: '2px',
-                    }}>
-                      {currentUser.email}
-                    </div>
-                  </div>
-                  <div style={{ padding: '6px' }}>
-                    <button
-                      onClick={() => {
-                        encryptedSetItem('saafy_user', null)
-                        setCurrentUser(null)
-                        loadPlaylists(null)
-                        setSelectedPlaylist(null)
-                        setShowUserDropdown(false)
-                        loadListeningHistory('guest')
-                        loadDiscoveryContent(null)
-                        toast.info('Signed out successfully')
-                      }}
-                      style={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        background: 'transparent',
-                        color: '#EF4444',
-                        fontFamily: fonts.primary,
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        transition: 'background 0.1s',
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                        <polyline points="16 17 21 12 16 7" />
-                        <line x1="21" y1="12" x2="9" y2="12" />
-                      </svg>
-                      Sign Out
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            <UserProfileDropdown
+              currentUser={currentUser}
+              showUserDropdown={showUserDropdown}
+              setShowUserDropdown={setShowUserDropdown}
+              setShowAuthModal={setShowAuthModal}
+              handleSignOut={handleSignOut}
+              dropdownRef={userDropdownRef}
+              isMobile={false}
+              iconBtnStyle={iconBtnStyle}
+            />
           </div>
           )}
         </div>
@@ -1200,121 +1125,16 @@ function HomePage() {
               position: 'relative',
             }}>
               {!searchExpanded && (
-                <div style={{ position: 'relative', flexShrink: 0 }} ref={userDropdownRef}>
-                  <button
-                    onClick={() => {
-                      if (currentUser) {
-                        setShowUserDropdown(!showUserDropdown)
-                      } else {
-                        setShowAuthModal(true)
-                      }
-                    }}
-                    style={{
-                      width: '34px',
-                      height: '34px',
-                      borderRadius: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: 0,
-                      overflow: 'hidden',
-                      border: currentUser
-                        ? `1.5px solid ${colors.accent}60`
-                        : `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
-                      background: currentUser
-                        ? `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`
-                        : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
-                      cursor: 'pointer',
-                      boxShadow: currentUser ? `0 2px 8px ${colors.accent}30` : 'none',
-                      transition: 'all 0.2s ease',
-                    }}
-                    title={currentUser ? `Account: ${currentUser.username}` : "Sign In"}
-                  >
-                    {currentUser ? (
-                      <span style={{
-                        color: '#fff',
-                        fontWeight: 700,
-                        fontSize: '0.72rem',
-                        fontFamily: fonts.mono,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.02em',
-                      }}>
-                        {currentUser.username.substring(0, 2)}
-                      </span>
-                    ) : (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.inkMuted} strokeWidth="2">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                        <circle cx="12" cy="7" r="4" />
-                      </svg>
-                    )}
-                  </button>
-
-                  {currentUser && showUserDropdown && (
-                    <div style={{
-                      position: 'absolute',
-                      top: 'calc(100% + 8px)',
-                      right: 0,
-                      width: '200px',
-                      background: isDark ? 'rgba(28,24,22,0.96)' : 'rgba(252,249,244,0.97)',
-                      backdropFilter: 'blur(20px)',
-                      WebkitBackdropFilter: 'blur(20px)',
-                      borderRadius: '14px',
-                      border: `1px solid ${colors.rule}`,
-                      boxShadow: isDark ? '0 16px 48px rgba(0,0,0,0.5)' : '0 12px 32px rgba(0,0,0,0.1)',
-                      overflow: 'hidden',
-                      zIndex: 300,
-                    }}>
-                      <div style={{ padding: '12px 14px', borderBottom: `1px solid ${colors.rule}` }}>
-                        <div style={{ fontFamily: fonts.primary, fontSize: '0.82rem', fontWeight: 650, color: colors.ink }}>
-                          {currentUser.username}
-                        </div>
-                        <div style={{ fontFamily: fonts.primary, fontSize: '0.68rem', color: colors.inkLight, wordBreak: 'break-all', marginTop: '2px' }}>
-                          {currentUser.email}
-                        </div>
-                      </div>
-                      <div style={{ padding: '6px' }}>
-                        <button
-                          onClick={() => {
-                            encryptedSetItem('saafy_user', null)
-                            setCurrentUser(null)
-                            loadPlaylists(null)
-                            setSelectedPlaylist(null)
-                            setShowUserDropdown(false)
-                            loadListeningHistory('guest')
-                            loadDiscoveryContent(null)
-                            toast.info('Signed out successfully')
-                          }}
-                          style={{
-                            width: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            padding: '9px 10px',
-                            borderRadius: '8px',
-                            border: 'none',
-                            background: 'transparent',
-                            color: '#EF4444',
-                            fontFamily: fonts.primary,
-                            fontSize: '0.78rem',
-                            fontWeight: 600,
-                            textAlign: 'left',
-                            cursor: 'pointer',
-                            transition: 'background 0.15s',
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                        >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                            <polyline points="16 17 21 12 16 7" />
-                            <line x1="21" y1="12" x2="9" y2="12" />
-                          </svg>
-                          Sign Out
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <UserProfileDropdown
+                  currentUser={currentUser}
+                  showUserDropdown={showUserDropdown}
+                  setShowUserDropdown={setShowUserDropdown}
+                  setShowAuthModal={setShowAuthModal}
+                  handleSignOut={handleSignOut}
+                  dropdownRef={userDropdownRef}
+                  isMobile={true}
+                  iconBtnStyle={iconBtnStyle}
+                />
               )}
 
               <div style={{
@@ -1364,35 +1184,13 @@ function HomePage() {
 
         {/* Quick scroll navigation category tab ribbon */}
         {!isMobile && !isSearching && !searchExpanded && (
-          <nav className="category-nav-ribbon">
-            {[
-              { id: 'section-for-you', label: 'For You', icon: Sparkles },
-              { id: 'section-playlists', label: 'My Playlists', icon: ListMusic, condition: currentUser !== null },
-              { id: 'section-trending', label: 'Trending', icon: TrendingUp, condition: themed.trending?.songs && themed.trending.songs.length > 0 },
-              { id: 'section-hindi', label: 'Hindi', icon: Languages },
-              { id: 'section-english', label: 'English', icon: BookText },
-              { id: 'section-punjabi', label: 'Punjabi', icon: Drum },
-              { id: 'section-marathi', label: 'Marathi', icon: Landmark, condition: discovery.marathi?.songs && discovery.marathi.songs.length > 0 },
-              { id: 'section-party', label: 'Party', icon: PartyPopper, condition: themed.party?.songs && themed.party.songs.length > 0 },
-              { id: 'section-chill', label: 'Chill', icon: CloudMoon, condition: themed.chill?.songs && themed.chill.songs.length > 0 },
-              { id: 'section-romantic', label: 'Romantic', icon: Heart, condition: themed.romantic?.songs && themed.romantic.songs.length > 0 },
-              { id: 'section-workout', label: 'Workout', icon: Dumbbell, condition: themed.workout?.songs && themed.workout.songs.length > 0 },
-            ].map((item) => {
-              if (item.condition === false) return null;
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  className={`mobile-nav-tab ${activeCategory === item.id ? 'active' : ''}`}
-                  onClick={() => handleCategoryClick(item.id)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                >
-                  <Icon size={16} strokeWidth={1.75} style={{ flexShrink: 0 }} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
+          <CategoryRibbon
+            currentUser={currentUser}
+            themed={themed}
+            discovery={discovery}
+            activeCategory={activeCategory}
+            handleCategoryClick={handleCategoryClick}
+          />
         )}
       </header>
 
@@ -1413,23 +1211,26 @@ function HomePage() {
             }}
           />
           {/* Sheet */}
-          <div style={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            zIndex: 201,
-            background: isDark
-              ? 'rgba(28, 24, 22, 0.96)'
-              : 'rgba(252, 249, 244, 0.97)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            borderRadius: '20px 20px 0 0',
-            borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-            padding: '12px 0 calc(env(safe-area-inset-bottom, 0px) + 20px)',
-            animation: 'slideUp 0.28s cubic-bezier(0.32,0.72,0,1)',
-            boxShadow: '0 -8px 40px rgba(0,0,0,0.3)',
-          }}>
+          <div
+            ref={mobileMenuRef}
+            style={{
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 201,
+              background: isDark
+                ? 'rgba(28, 24, 22, 0.96)'
+                : 'rgba(252, 249, 244, 0.97)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              borderRadius: '20px 20px 0 0',
+              borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+              padding: '12px 0 calc(env(safe-area-inset-bottom, 0px) + 20px)',
+              animation: 'slideUp 0.28s cubic-bezier(0.32,0.72,0,1)',
+              boxShadow: '0 -8px 40px rgba(0,0,0,0.3)',
+            }}
+          >
             {/* Drag handle */}
             <div style={{
               width: '36px',
@@ -1514,7 +1315,7 @@ function HomePage() {
                       {currentUser.username.substring(0, 2)}
                     </div>
                     <div>
-                      <div style={{ fontFamily: fonts.primary, fontWeight: 650, fontSize: '0.85rem', color: colors.ink }}>
+                      <div style={{ fontFamily: fonts.primary, fontWeight: 700, fontSize: '0.85rem', color: colors.ink }}>
                         {currentUser.username}
                       </div>
                       <div style={{ fontFamily: fonts.primary, fontSize: '0.7rem', color: colors.inkLight, wordBreak: 'break-all' }}>
@@ -1522,17 +1323,8 @@ function HomePage() {
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      encryptedSetItem('saafy_user', null)
-                      setCurrentUser(null)
-                      loadPlaylists(null)
-                      setSelectedPlaylist(null)
-                      setShowMobileMenu(false)
-                      loadListeningHistory('guest')
-                      loadDiscoveryContent(null)
-                      toast.info('Signed out successfully')
-                    }}
+                   <button
+                    onClick={handleSignOut}
                     style={{
                       width: '100%',
                       display: 'flex',
@@ -1639,7 +1431,7 @@ function HomePage() {
               <button
                 onClick={() => {
                   const userId = currentUser ? (currentUser.id || currentUser._id) : 'guest'
-                  setListeningHistory(getListeningHistory(userId))
+                  loadListeningHistory(userId)
                   setShowHistory(true)
                   setShowMobileMenu(false)
                 }}
@@ -1750,16 +1542,6 @@ function HomePage() {
               </button>
             </div>
           </div>
-          <style>{`
-            @keyframes slideUp {
-              from { transform: translateY(100%); opacity: 0; }
-              to   { transform: translateY(0);    opacity: 1; }
-            }
-            @keyframes fadeIn {
-              from { opacity: 0; }
-              to   { opacity: 1; }
-            }
-          `}</style>
         </>
       )}
 
@@ -1779,20 +1561,23 @@ function HomePage() {
             }}
           />
           {/* Sheet */}
-          <div style={{
-            position: 'fixed', bottom: 0, left: 0, right: 0,
-            zIndex: 201,
-            background: isDark ? 'rgba(28, 24, 22, 0.97)' : 'rgba(252, 249, 244, 0.98)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            borderRadius: '20px 20px 0 0',
-            borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-            padding: '12px 0 calc(env(safe-area-inset-bottom, 0px) + 20px)',
-            animation: 'slideUp 0.28s cubic-bezier(0.32,0.72,0,1)',
-            boxShadow: '0 -8px 40px rgba(0,0,0,0.3)',
-            maxHeight: '75vh',
-            display: 'flex', flexDirection: 'column',
-          }}>
+          <div
+            ref={mobileHistorySheetRef}
+            style={{
+              position: 'fixed', bottom: 0, left: 0, right: 0,
+              zIndex: 201,
+              background: isDark ? 'rgba(28, 24, 22, 0.97)' : 'rgba(252, 249, 244, 0.98)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              borderRadius: '20px 20px 0 0',
+              borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+              padding: '12px 0 calc(env(safe-area-inset-bottom, 0px) + 20px)',
+              animation: 'slideUp 0.28s cubic-bezier(0.32,0.72,0,1)',
+              boxShadow: '0 -8px 40px rgba(0,0,0,0.3)',
+              maxHeight: '75vh',
+              display: 'flex', flexDirection: 'column',
+            }}
+          >
             {/* Drag handle */}
             <div style={{
               width: '36px', height: '4px', borderRadius: '2px',
@@ -1847,7 +1632,7 @@ function HomePage() {
                     song.image?.[1]?.link || song.image?.[1]?.url ||
                     song.image?.[2]?.link || song.image?.[2]?.url || ''
                   return (
-                    <div
+                    <button
                       key={song.id || idx}
                       onClick={() => { handleHistorySongClick(song); setShowHistory(false) }}
                       style={{
@@ -1855,6 +1640,10 @@ function HomePage() {
                         padding: '10px 8px', borderRadius: '12px',
                         cursor: 'pointer',
                         transition: 'background 0.12s ease',
+                        border: 'none',
+                        background: 'transparent',
+                        width: '100%',
+                        textAlign: 'left',
                       }}
                       onTouchStart={e => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}
                       onTouchEnd={e => setTimeout(() => { if (e.currentTarget) e.currentTarget.style.background = 'transparent' }, 200)}
@@ -1867,7 +1656,7 @@ function HomePage() {
                         border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
                       }}>
                         {imageUrl ? (
-                          <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={imageUrl} alt={song.name || song.title || ''} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
                           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill={colors.inkLight}>
@@ -1894,7 +1683,7 @@ function HomePage() {
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.inkLight} strokeWidth="2">
                         <polyline points="9 18 15 12 9 6" />
                       </svg>
-                    </div>
+                    </button>
                   )
                 })
               )}
@@ -1913,37 +1702,54 @@ function HomePage() {
         paddingBottom: 'clamp(120px, 25vw, 160px)',
         display: searchExpanded ? 'none' : 'block',
       }} id="main-content">
+        {isOffline && (
+          <div style={{
+            background: isDark ? 'rgba(196, 92, 62, 0.15)' : 'rgba(196, 92, 62, 0.08)',
+            border: `1.5px solid ${colors.accent}`,
+            borderRadius: '12px',
+            padding: '12px 16px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            boxShadow: 'var(--shadow-ske-sm)',
+            animation: 'fadeIn 0.3s ease-out',
+          }}>
+            <div style={{
+              width: '24px',
+              height: '24px',
+              borderRadius: '6px',
+              background: colors.accent,
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.5M5 12.5a10.94 10.94 0 0 1 5.83-2.84M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" />
+              </svg>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: fonts.primary, fontWeight: 700, fontSize: '0.85rem', color: colors.ink }}>
+                You are currently offline
+              </div>
+              <div style={{ fontFamily: fonts.primary, fontSize: '0.72rem', color: colors.inkLight, marginTop: '2px' }}>
+                Only songs you have previously played can be listened to in offline mode.
+              </div>
+            </div>
+          </div>
+        )}
         {/* Mobile Category Navigation Ribbon */}
         {isMobile && !isSearching && !searchExpanded && (
-          <nav className="category-nav-ribbon" style={{ margin: '0 0 16px 0', padding: '0 0 12px 0' }}>
-            {[
-              { id: 'section-for-you', label: 'For You', icon: Sparkles },
-              { id: 'section-playlists', label: 'My Playlists', icon: ListMusic, condition: currentUser !== null },
-              { id: 'section-trending', label: 'Trending', icon: TrendingUp, condition: themed.trending?.songs && themed.trending.songs.length > 0 },
-              { id: 'section-hindi', label: 'Hindi', icon: Languages },
-              { id: 'section-english', label: 'English', icon: BookText },
-              { id: 'section-punjabi', label: 'Punjabi', icon: Drum },
-              { id: 'section-marathi', label: 'Marathi', icon: Landmark, condition: discovery.marathi?.songs && discovery.marathi.songs.length > 0 },
-              { id: 'section-party', label: 'Party', icon: PartyPopper, condition: themed.party?.songs && themed.party.songs.length > 0 },
-              { id: 'section-chill', label: 'Chill', icon: CloudMoon, condition: themed.chill?.songs && themed.chill.songs.length > 0 },
-              { id: 'section-romantic', label: 'Romantic', icon: Heart, condition: themed.romantic?.songs && themed.romantic.songs.length > 0 },
-              { id: 'section-workout', label: 'Workout', icon: Dumbbell, condition: themed.workout?.songs && themed.workout.songs.length > 0 },
-            ].map((item) => {
-              if (item.condition === false) return null;
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  className={`mobile-nav-tab ${activeCategory === item.id ? 'active' : ''}`}
-                  onClick={() => handleCategoryClick(item.id)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                >
-                  <Icon size={16} strokeWidth={1.75} style={{ flexShrink: 0 }} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
+          <CategoryRibbon
+            currentUser={currentUser}
+            themed={themed}
+            discovery={discovery}
+            activeCategory={activeCategory}
+            handleCategoryClick={handleCategoryClick}
+            style={{ margin: '0 0 16px 0', padding: '0 0 12px 0' }}
+          />
         )}
 
         {isSearching ? (
@@ -1987,7 +1793,33 @@ function HomePage() {
                     ← Back
                   </button>
                 </div>
-                <SongList songs={searchResults} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
+                {searchResults.length === 0 ? (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '64px 24px',
+                    textAlign: 'center',
+                    background: isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.01)',
+                    border: `1px dashed ${colors.rule}`,
+                    borderRadius: '16px',
+                    margin: '20px 0',
+                  }}>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={colors.inkMuted} strokeWidth="1.5" style={{ marginBottom: '16px', opacity: 0.7 }}>
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <h3 style={{ fontFamily: fonts.primary, fontWeight: 700, fontSize: '1.1rem', color: colors.ink, marginBottom: '8px' }}>
+                      No results found
+                    </h3>
+                    <p style={{ fontFamily: fonts.primary, fontSize: '0.88rem', color: colors.inkLight, maxWidth: '320px', margin: '0 auto' }}>
+                      We couldn't find any tracks matching your search. Try adjusting your keywords or spelling.
+                    </p>
+                  </div>
+                ) : (
+                  <SongList songs={searchResults} onPlaySong={handlePlaySong} onAddToQueue={addToQueue} />
+                )}
               </section>
             ) : activeCategory === 'section-playlists' ? (
               <section style={{ position: 'relative', animation: 'slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) both' }}>
@@ -2060,7 +1892,7 @@ function HomePage() {
                             color: '#fff',
                             fontFamily: fonts.primary,
                             fontSize: '0.85rem',
-                            fontWeight: 650,
+                            fontWeight: 700,
                             cursor: 'pointer',
                             boxShadow: `0 4px 14px ${colors.accent}20`,
                             display: 'flex',
@@ -2094,7 +1926,7 @@ function HomePage() {
                               color: colors.ink,
                               fontFamily: fonts.primary,
                               fontSize: '0.85rem',
-                              fontWeight: 650,
+                              fontWeight: 700,
                               cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
@@ -2141,7 +1973,7 @@ function HomePage() {
                           const hasSongs = playlist.songs && playlist.songs.length > 0
                           const coverImage = playlist.image || (hasSongs ? getPlaylistSongImage(playlist.songs[0]) : '')
                           return (
-                            <div
+                            <button
                               key={playlist._id}
                               onClick={() => handlePlaylistClick(playlist)}
                               style={{
@@ -2152,6 +1984,8 @@ function HomePage() {
                                 cursor: 'pointer',
                                 transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                                 boxShadow: 'var(--shadow-ske-xs)',
+                                width: '100%',
+                                textAlign: 'left',
                               }}
                               onMouseEnter={(e) => {
                                 e.currentTarget.style.transform = 'translateY(-4px)'
@@ -2178,7 +2012,7 @@ function HomePage() {
                                 boxShadow: 'var(--shadow-ske-inset-sm)',
                               }}>
                                 {coverImage ? (
-                                  <img src={coverImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  <img src={coverImage} alt={playlist.name || ''} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 ) : (
                                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="1.5" style={{ opacity: 0.6 }}>
                                     <path d="M9 18H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" />
@@ -2206,7 +2040,7 @@ function HomePage() {
                                 fontSize: '0.72rem',
                                 color: colors.inkLight,
                               }}>{playlist.songs?.length || 0} tracks</div>
-                            </div>
+                            </button>
                           )
                         })
                       )}
@@ -2249,7 +2083,8 @@ function HomePage() {
                       zIndex: 1,
                     }}>
                       {/* Large Cover Art */}
-                      <div 
+                      <button 
+                        type="button"
                         onClick={() => document.getElementById('update-playlist-image-input')?.click()}
                         style={{
                           width: '160px',
@@ -2264,6 +2099,8 @@ function HomePage() {
                           flexShrink: 0,
                           cursor: 'pointer',
                           position: 'relative',
+                          border: 'none',
+                          padding: 0,
                         }}
                         onMouseEnter={(e) => {
                           const overlay = e.currentTarget.querySelector('.cover-edit-overlay');
@@ -2273,7 +2110,16 @@ function HomePage() {
                           const overlay = e.currentTarget.querySelector('.cover-edit-overlay');
                           if (overlay) overlay.style.opacity = '0';
                         }}
+                        onFocus={(e) => {
+                          const overlay = e.currentTarget.querySelector('.cover-edit-overlay');
+                          if (overlay) overlay.style.opacity = '1';
+                        }}
+                        onBlur={(e) => {
+                          const overlay = e.currentTarget.querySelector('.cover-edit-overlay');
+                          if (overlay) overlay.style.opacity = '0';
+                        }}
                         title="Click to update playlist cover"
+                        aria-label="Upload playlist cover image"
                       >
                         {selectedPlaylist.image || (selectedPlaylist.songs && selectedPlaylist.songs.length > 0) ? (
                           <img src={selectedPlaylist.image || getPlaylistSongImage(selectedPlaylist.songs[0])} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -2306,14 +2152,14 @@ function HomePage() {
                             <circle cx="12" cy="13" r="4" />
                           </svg>
                         </div>
-                        <input 
-                          type="file" 
-                          id="update-playlist-image-input" 
-                          accept="image/*" 
-                          onChange={handleUpdatePlaylistImage} 
-                          style={{ display: 'none' }} 
-                        />
-                      </div>
+                      </button>
+                      <input 
+                        type="file" 
+                        id="update-playlist-image-input" 
+                        accept="image/*" 
+                        onChange={handleUpdatePlaylistImage} 
+                        style={{ display: 'none' }} 
+                      />
 
                       {/* Metadata & Actions */}
                       <div style={{ flex: 1, textAlign: isMobile ? 'center' : 'left' }}>
@@ -2441,7 +2287,7 @@ function HomePage() {
                               color: '#fff',
                               fontFamily: fonts.primary,
                               fontSize: '0.9rem',
-                              fontWeight: 650,
+                              fontWeight: 700,
                               cursor: 'pointer',
                               boxShadow: `0 4px 16px ${colors.accent}30`,
                               display: 'flex',
@@ -2470,7 +2316,7 @@ function HomePage() {
                               color: colors.ink,
                               fontFamily: fonts.primary,
                               fontSize: '0.9rem',
-                              fontWeight: 650,
+                              fontWeight: 700,
                               cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
@@ -3545,7 +3391,7 @@ function HomePage() {
             )}
       </main>
 
-      <BasicPlayer showQueue={showQueue} setShowQueue={setShowQueue} />
+      <BasicPlayer showQueue={showQueue} setShowQueue={setShowQueue} isHidden={showAuthModal} />
       <QueuePanel isOpen={showQueue && !searchExpanded} onClose={() => setShowQueue(false)} />
 
 
@@ -3598,6 +3444,124 @@ function HomePage() {
               setIsImportingSpotify(false)
             }}
           />
+        )}
+        {playlistToDelete && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 2000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+          }}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setPlaylistToDelete(null)}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: isDark ? 'rgba(10, 8, 8, 0.75)' : 'rgba(26, 22, 20, 0.45)',
+                backdropFilter: 'blur(20px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 15 }}
+              style={{
+                position: 'relative',
+                width: '100%',
+                maxWidth: '400px',
+                background: colors.paper,
+                borderRadius: '20px',
+                border: `1px solid ${colors.rule}`,
+                boxShadow: isDark
+                  ? '0 24px 64px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.4)'
+                  : '0 24px 64px rgba(26,22,20,0.15), 0 8px 24px rgba(26,22,20,0.06)',
+                padding: '24px',
+                zIndex: 2001,
+              }}
+            >
+              <h3 style={{
+                fontFamily: fonts.primary,
+                fontWeight: 700,
+                fontSize: '1.2rem',
+                color: colors.ink,
+                marginBottom: '10px',
+              }}>
+                Delete Playlist?
+              </h3>
+              <p style={{
+                fontFamily: fonts.primary,
+                fontSize: '0.9rem',
+                color: colors.inkLight,
+                lineHeight: '1.5',
+                marginBottom: '24px',
+              }}>
+                Are you sure you want to delete this playlist? This action cannot be undone.
+              </p>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '12px',
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setPlaylistToDelete(null)}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '10px',
+                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)'}`,
+                    background: 'transparent',
+                    color: colors.inkMuted,
+                    fontFamily: fonts.primary,
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const success = await deletePlaylist(currentUser.id || currentUser._id, playlistToDelete)
+                    if (success) {
+                      toast.success("Playlist deleted")
+                      setSelectedPlaylist(null)
+                    } else {
+                      toast.error("Failed to delete playlist")
+                    }
+                    setPlaylistToDelete(null)
+                  }}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: '#EF4444',
+                    color: '#fff',
+                    fontFamily: fonts.primary,
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)',
+                    transition: 'filter 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

@@ -1,10 +1,3 @@
-import { clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs) {
-  return twMerge(clsx(inputs))
-}
-
 // Format duration from seconds to MM:SS
 export function formatDuration(seconds) {
   if (!seconds || isNaN(seconds)) return '0:00'

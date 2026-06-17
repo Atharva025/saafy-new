@@ -1095,6 +1095,34 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
         // eslint-disable-next-line
     }, [isOpen, currentSong])
 
+    const cleanTrackName = (name) => {
+        if (!name) return ''
+        return name
+            .replace(/\(From\s+[^)]+\)/gi, '') 
+            .replace(/\(with\s+[^)]+\)/gi, '') 
+            .replace(/\[From\s+[^\]]+\]/gi, '') 
+            .replace(/\(feat\.\s+[^)]+\)/gi, '') 
+            .replace(/\[feat\.\s+[^\]]+\]/gi, '') 
+            .replace(/\(ft\.\s+[^)]+\)/gi, '') 
+            .replace(/\[ft\.\s+[^\]]+\]/gi, '') 
+            .replace(/\(Lofi[^\)]*\)/gi, '')
+            .replace(/\[Lofi[^\]]*\]/gi, '')
+            .replace(/\(Remix[^\)]*\)/gi, '')
+            .replace(/\[Remix[^\]]*\]/gi, '')
+            .replace(/\(Acoustic[^\)]*\)/gi, '')
+            .replace(/\(Live[^\)]*\)/gi, '')
+            .replace(/\(Reprise[^\)]*\)/gi, '')
+            .replace(/\s+-\s+From\s+.*$/gi, '') 
+            .replace(/\s+-\s+Single$/gi, '') 
+            .trim()
+    }
+
+    const getFirstArtist = (artistStr) => {
+        if (!artistStr) return ''
+        const parts = artistStr.split(/[,;&]|\band\b/i)
+        return parts[0] ? parts[0].trim() : ''
+    }
+
     const fetchLyrics = async (customQuery) => {
         setIsLoadingLyrics(true)
         setLyricsError('')
@@ -1119,33 +1147,77 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
         }
 
         try {
-            console.log("Searching lyrics with song name and artist:", queryStr, "by", currentSong.primaryArtists || 'Unknown Artist')
-            
-            // Build search parameters with track name and artist name
-            const searchParams = {}
+            let results = []
             if (customQuery) {
-                searchParams.query = queryStr
+                if (import.meta.env.DEV) {
+                    console.log("Searching lyrics with custom query:", queryStr)
+                }
+                results = await client.searchLyrics({ query: queryStr })
             } else {
-                searchParams.track_name = rawSongName
-                searchParams.artist_name = currentSong.primaryArtists || ''
-            }
-            if (dur > 0) {
-                searchParams.duration = Math.round(dur * 1000)
-            }
+                const cleanedName = cleanTrackName(rawSongName)
+                const fullArtists = currentSong.primaryArtists || ''
+                if (import.meta.env.DEV) {
+                    console.log("Searching lyrics with cleaned name:", cleanedName, "by", fullArtists)
+                }
+                
+                const searchParams = {
+                    track_name: cleanedName,
+                    artist_name: fullArtists
+                }
+                if (dur > 0) {
+                    searchParams.duration = Math.round(dur * 1000)
+                }
 
-            const results = await client.searchLyrics(searchParams)
-            console.log("Search results:", results)
+                results = await client.searchLyrics(searchParams)
+
+                // Fallback 1: Search with first artist name only
+                if ((!results || results.length === 0) && fullArtists) {
+                    const firstArtist = getFirstArtist(fullArtists)
+                    if (firstArtist && firstArtist !== fullArtists) {
+                        const fallbackParams = {
+                            track_name: cleanedName,
+                            artist_name: firstArtist
+                        }
+                        if (dur > 0) {
+                            fallbackParams.duration = Math.round(dur * 1000)
+                        }
+                        if (import.meta.env.DEV) {
+                            console.log("Fallback 1: Searching with first artist name:", cleanedName, "by", firstArtist)
+                        }
+                        results = await client.searchLyrics(fallbackParams)
+                    }
+                }
+
+                // Fallback 2: Search with cleaned track name alone (as a generic search query)
+                if (!results || results.length === 0) {
+                    if (import.meta.env.DEV) {
+                        console.log("Fallback 2: Searching by cleaned query alone:", cleanedName)
+                    }
+                    results = await client.searchLyrics({ query: cleanedName })
+                }
+            }
 
             if (results && results.length > 0) {
-                // Find the first result that has synced or plain lyrics
-                const bestMatch = results.find(r => r.syncedLyrics || r.plainLyrics) || results[0]
+                // Find the first result that has synced or plain lyrics and is NOT instrumental
+                let bestMatch = results.find(r => !r.instrumental && (r.syncedLyrics || r.plainLyrics))
+                if (!bestMatch) {
+                    // Fall back to first match with lyrics
+                    bestMatch = results.find(r => r.syncedLyrics || r.plainLyrics)
+                }
+                if (!bestMatch) {
+                    // Fall back to first result
+                    bestMatch = results[0]
+                }
+                
                 parseLyrics(bestMatch)
                 return
             }
 
             setLyricsError('No lyrics found for this song.')
         } catch (e) {
-            console.error('Lyrics search failed:', e)
+            if (import.meta.env.DEV) {
+                console.error('Lyrics search failed:', e)
+            }
             setLyricsError('No lyrics found. Try a manual search.')
         } finally {
             setIsLoadingLyrics(false)
@@ -1154,6 +1226,12 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
 
     const parseLyrics = (data) => {
         if (!data) return
+        
+        if (data.instrumental) {
+            setLyricsError('Instrumental track - no lyrics required.')
+            return
+        }
+
         if (data.syncedLyrics) {
             const parsedResult = parseLocalLyrics(data.syncedLyrics)
             if (parsedResult && parsedResult.synced) {

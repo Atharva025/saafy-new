@@ -79,9 +79,11 @@ export const getSessionPlayedCount = () => {
  */
 export const debugSessionSongs = () => {
     const songs = getSessionPlayedSongs()
-    console.log('🎵 Session Tracking Debug:')
-    console.log(`Total songs played this session: ${songs.length}`)
-    console.log('Song IDs:', songs)
+    if (import.meta.env.DEV) {
+        console.log('🎵 Session Tracking Debug:')
+        console.log(`Total songs played this session: ${songs.length}`)
+        console.log('Song IDs:', songs)
+    }
     return songs
 }
 

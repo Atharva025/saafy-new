@@ -1,10 +1,11 @@
-import { createContext, useContext, useReducer, useRef, useEffect, useState } from 'react'
+import { createContext, useContext, useReducer, useRef, useEffect, useState, useCallback } from 'react'
 import { getSong, addSongToRecommender, getRecommendations, searchSongs } from '@/lib/api'
 import { getForYouMix } from '@/lib/discovery'
 import { encryptedGetItem, encryptedSetItem } from '@/lib/encryption'
 import { addToSessionPlayedSongs, hasBeenPlayedInSession } from '@/utils/sessionStorage'
 import { updateTray, registerMediaControlHandler } from '@/lib/electron'
 import { extractDominantColor } from '@/utils/colorExtractor'
+import { cacheSong, getCachedSong } from '@/lib/offlineCache'
 
 
 // ============================================================================
@@ -317,11 +318,6 @@ export function PlayerProvider({ children }) {
     const handleNextRef = useRef(null)
     const handlePreviousRef = useRef(null)
 
-    useEffect(() => {
-        togglePlayRef.current = togglePlay
-        handleNextRef.current = handleNext
-        handlePreviousRef.current = handlePrevious
-    })
 
     // Recommendations state
     const [recommendations, setRecommendations] = useState([])
@@ -350,7 +346,7 @@ export function PlayerProvider({ children }) {
     const [analyserNode, setAnalyserNode] = useState(null)
 
     // Setup visualizer analyser logic safely
-    const initAudioAnalyser = () => {
+    const initAudioAnalyser = useCallback(() => {
         if (analyserRef.current) return
         try {
             const AudioContextClass = window.AudioContext || window.webkitAudioContext
@@ -371,9 +367,9 @@ export function PlayerProvider({ children }) {
         } catch (err) {
             log.error('❌ Failed to initialize Web Audio Analyser:', err)
         }
-    }
+    }, [setAnalyserNode])
 
-    const resumeAudioContext = async () => {
+    const resumeAudioContext = useCallback(async () => {
         if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
             try {
                 await audioContextRef.current.resume()
@@ -382,7 +378,7 @@ export function PlayerProvider({ children }) {
                 log.warn('Failed to resume AudioContext:', err)
             }
         }
-    }
+    }, [])
 
     // Persist volume, repeat, shuffle and state changes in localStorage
     useEffect(() => {
@@ -433,7 +429,7 @@ export function PlayerProvider({ children }) {
         }
     }, [])
 
-    const loadListeningHistory = (userId) => {
+    const loadListeningHistory = useCallback((userId) => {
         const id = userId || 'guest'
         const key = `listening_history_${id}`
         try {
@@ -442,7 +438,7 @@ export function PlayerProvider({ children }) {
         } catch {
             setListeningHistory([])
         }
-    }
+    }, [setListeningHistory])
 
     useEffect(() => {
         const user = encryptedGetItem('saafy_user', null)
@@ -578,7 +574,7 @@ export function PlayerProvider({ children }) {
     // PLAYLIST ACTIONS
     // ============================================================================
 
-    const loadPlaylists = async (userId) => {
+    const loadPlaylists = useCallback(async (userId) => {
         if (!userId) {
             setPlaylists([])
             return
@@ -595,9 +591,9 @@ export function PlayerProvider({ children }) {
         } finally {
             setPlaylistsLoading(false)
         }
-    }
+    }, [setPlaylists, setPlaylistsLoading])
 
-    const createPlaylist = async (userId, name, image = null) => {
+    const createPlaylist = useCallback(async (userId, name, image = null) => {
         if (!userId || !name) return false
         try {
             const response = await fetch('/api/playlists/create', {
@@ -615,9 +611,9 @@ export function PlayerProvider({ children }) {
             log.error('Failed to create playlist:', error)
             return false
         }
-    }
+    }, [loadPlaylists])
 
-    const updatePlaylist = async (userId, playlistId, name, image = null) => {
+    const updatePlaylist = useCallback(async (userId, playlistId, name, image = null) => {
         if (!userId || !playlistId) return false
         try {
             const response = await fetch('/api/playlists/update', {
@@ -635,9 +631,9 @@ export function PlayerProvider({ children }) {
             log.error('Failed to update playlist:', error)
             return false
         }
-    }
+    }, [loadPlaylists])
 
-    const deletePlaylist = async (userId, playlistId) => {
+    const deletePlaylist = useCallback(async (userId, playlistId) => {
         if (!userId || !playlistId) return false
         try {
             const response = await fetch('/api/playlists/delete', {
@@ -655,9 +651,9 @@ export function PlayerProvider({ children }) {
             log.error('Failed to delete playlist:', error)
             return false
         }
-    }
+    }, [loadPlaylists])
 
-    const addSongToPlaylist = async (userId, playlistId, song) => {
+    const addSongToPlaylist = useCallback(async (userId, playlistId, song) => {
         if (!userId || !playlistId || !song) return { success: false, error: 'Invalid parameters' }
         try {
             const response = await fetch('/api/playlists/add-song', {
@@ -675,9 +671,9 @@ export function PlayerProvider({ children }) {
             log.error('Failed to add song to playlist:', error)
             return { success: false, error: 'Network error occurred' }
         }
-    }
+    }, [loadPlaylists])
 
-    const removeSongFromPlaylist = async (userId, playlistId, songId) => {
+    const removeSongFromPlaylist = useCallback(async (userId, playlistId, songId) => {
         if (!userId || !playlistId || !songId) return false
         try {
             const response = await fetch('/api/playlists/remove-song', {
@@ -695,9 +691,9 @@ export function PlayerProvider({ children }) {
             log.error('Failed to remove song from playlist:', error)
             return false
         }
-    }
+    }, [loadPlaylists])
 
-    const importSpotifyPlaylist = async (userId, playlistUrl) => {
+    const importSpotifyPlaylist = useCallback(async (userId, playlistUrl) => {
         if (!userId || !playlistUrl) return { success: false, error: 'User ID and Playlist URL are required' }
         try {
             const response = await fetch('/api/playlists/import-spotify', {
@@ -715,7 +711,7 @@ export function PlayerProvider({ children }) {
             log.error('Failed to import Spotify playlist:', error)
             return { success: false, error: 'Network error occurred' }
         }
-    }
+    }, [loadPlaylists])
 
     // ============================================================================
     // AUDIO EVENT HANDLERS
@@ -753,7 +749,7 @@ export function PlayerProvider({ children }) {
             audio.removeEventListener('ended', handleEnded)
             audio.removeEventListener('error', handleError)
         }
-    }, [state.currentSong])
+    }, [])
 
     // ============================================================================
     // UPDATE PAGE TITLE WITH CURRENT SONG
@@ -842,7 +838,7 @@ export function PlayerProvider({ children }) {
     /**
      * Fetch recommendations for a given song
      */
-    const fetchRecommendations = async (songId) => {
+    const fetchRecommendations = useCallback(async (songId) => {
         if (!songId) return
 
         setRecommendationsLoading(true)
@@ -904,13 +900,13 @@ export function PlayerProvider({ children }) {
         } finally {
             setRecommendationsLoading(false)
         }
-    }
+    }, [setRecommendationsLoading, setCurrentRecommendedSongId, setRecommendations])
 
     /**
      * Handle song playback - add to recommender & fetch recommendations
      * This runs EVERY time a song is played, regardless of session history
      */
-    const handleSongPlayback = async (song) => {
+    const handleSongPlayback = useCallback(async (song) => {
         if (!song?.id) return
 
         // Add song to user-specific listening history in localStorage and state
@@ -986,14 +982,60 @@ export function PlayerProvider({ children }) {
             log.error('❌ Error adding song to recommender (non-critical):', error)
         }
 
+        // Auto-cache this song in the background for offline playback
+        const audioUrl = song.url || extractAudioUrl(song)
+        if (navigator.onLine && audioUrl && !audioUrl.startsWith('data:') && !audioUrl.startsWith('blob:')) {
+            const songToCache = {
+                ...song,
+                url: audioUrl
+            }
+            log.info('📥 Auto-caching song in the background:', song.name || song.title)
+            cacheSong(songToCache).then(success => {
+                if (success) {
+                    log.info('✅ Song successfully auto-cached:', song.name || song.title)
+                } else {
+                    log.warn('⚠️ Auto-caching failed for:', song.name || song.title)
+                }
+            }).catch(cacheError => {
+                log.error('❌ Auto-caching error:', cacheError)
+            })
+        }
+
         // Fetch recommendations for this song
         log.info('🔍 Fetching recommendations for:', song.id)
         await fetchRecommendations(song.id)
-    }
+    }, [setListeningHistory, fetchRecommendations])
 
-    const resolveSongDetails = async (song) => {
+    const resolveSongDetails = useCallback(async (song) => {
         if (!song) return null
         
+        // Check offline cache first
+        try {
+            const cachedSong = await getCachedSong(song.id)
+            if (cachedSong) {
+                let audioUrl = null
+                if (cachedSong.audioData) {
+                    audioUrl = cachedSong.audioData
+                } else if (cachedSong.audioBlob) {
+                    audioUrl = URL.createObjectURL(cachedSong.audioBlob)
+                }
+
+                if (audioUrl) {
+                    log.info('Resolved song from offline cache:', song.id)
+                    return {
+                        ...song,
+                        name: song.name || cachedSong.name,
+                        primaryArtists: song.primaryArtists || cachedSong.artist,
+                        image: song.image || cachedSong.image,
+                        url: audioUrl,
+                        isOfflineCached: true
+                    }
+                }
+            }
+        } catch (cacheErr) {
+            log.warn('Offline cache resolve failed:', cacheErr)
+        }
+
         // If it already has an audio URL, return it directly
         if (extractAudioUrl(song)) {
             return song
@@ -1036,13 +1078,63 @@ export function PlayerProvider({ children }) {
         }
 
         return song // fallback to the original song object
-    }
+    }, [])
 
     // ============================================================================
     // PLAYER ACTIONS
     // ============================================================================
 
-    const playSong = async (song, context = null) => {
+    const setVolume = useCallback((volume) => {
+        const safeVolume = Math.max(0, Math.min(1, Number(volume) || 0))
+        dispatch({ type: 'SET_VOLUME', payload: safeVolume })
+        if (audioRef.current) {
+            audioRef.current.volume = safeVolume
+        }
+    }, [])
+
+    const seekTo = useCallback((time) => {
+        if (audioRef.current && !isNaN(time)) {
+            audioRef.current.currentTime = Math.max(0, Math.min(time, state.duration))
+            dispatch({ type: 'SET_PROGRESS', payload: time })
+        }
+    }, [state.duration])
+
+    const toggleRepeat = useCallback(() => {
+        const modes = ['none', 'all', 'one']
+        const currentModeIndex = modes.indexOf(state.repeatMode)
+        const nextMode = modes[(currentModeIndex + 1) % modes.length]
+        dispatch({ type: 'SET_REPEAT_MODE', payload: nextMode })
+    }, [state.repeatMode])
+
+    const toggleShuffle = useCallback(() => {
+        dispatch({ type: 'TOGGLE_SHUFFLE' })
+    }, [])
+
+    const addToQueue = useCallback((song) => {
+        if (!song?.id) return
+        const normalized = normalizeImageForSong(song)
+        dispatch({ type: 'ADD_TO_QUEUE', payload: normalized })
+    }, [])
+
+    const removeFromQueue = useCallback((index) => {
+        if (typeof index !== 'number' || index < 0) return
+        dispatch({ type: 'REMOVE_FROM_QUEUE', payload: index })
+    }, [])
+
+    const reorderQueue = useCallback((startIndex, endIndex) => {
+        if (typeof startIndex !== 'number' || typeof endIndex !== 'number') return
+        dispatch({ type: 'REORDER_QUEUE', payload: { startIndex, endIndex } })
+    }, [])
+
+    const clearQueue = useCallback(() => {
+        dispatch({ type: 'CLEAR_QUEUE' })
+    }, [])
+
+    const clearError = useCallback(() => {
+        dispatch({ type: 'CLEAR_ERROR' })
+    }, [])
+
+    const playSong = useCallback(async (song, context = null) => {
         if (!song?.id) {
             log.warn('Invalid song object')
             return
@@ -1107,9 +1199,9 @@ export function PlayerProvider({ children }) {
             log.error('playSong error:', error)
             dispatch({ type: 'SET_ERROR', payload: 'Failed to play song' })
         }
-    }
+    }, [dispatch, resolveSongDetails, setPlaylistLoopSongs, initAudioAnalyser, resumeAudioContext, handleSongPlayback])
 
-    const togglePlay = () => {
+    const togglePlay = useCallback(() => {
         if (!audioRef.current || !state.currentSong) return
 
         initAudioAnalyser()
@@ -1124,9 +1216,9 @@ export function PlayerProvider({ children }) {
         }
 
         dispatch({ type: 'SET_PLAYING', payload: !state.isPlaying })
-    }
+    }, [dispatch, state.isPlaying, state.currentSong, initAudioAnalyser, resumeAudioContext])
 
-    const handleNext = async () => {
+    const handleNext = useCallback(async () => {
         if (state.repeatMode === 'one' && state.currentSong) {
             // Repeat current song
             if (audioRef.current) {
@@ -1220,9 +1312,9 @@ export function PlayerProvider({ children }) {
             log.error('Failed to play next song in handleNext:', err)
             dispatch({ type: 'SET_PLAYING', payload: false })
         }
-    }
+    }, [dispatch, state.repeatMode, state.currentSong, playlistLoopSongs, state.queue, recommendations, playSong, resolveSongDetails, handleSongPlayback])
 
-    const handlePrevious = async () => {
+    const handlePrevious = useCallback(async () => {
         // Restart if more than 3 seconds played
         if (state.progress > 3) {
             seekTo(0)
@@ -1264,57 +1356,8 @@ export function PlayerProvider({ children }) {
             log.error('Failed to play previous song in handlePrevious:', err)
             dispatch({ type: 'SET_PLAYING', payload: false })
         }
-    }
+    }, [dispatch, state.progress, state.history, resolveSongDetails, playSong, handleSongPlayback, seekTo])
 
-    const setVolume = (volume) => {
-        const safeVolume = Math.max(0, Math.min(1, Number(volume) || 0))
-        dispatch({ type: 'SET_VOLUME', payload: safeVolume })
-        if (audioRef.current) {
-            audioRef.current.volume = safeVolume
-        }
-    }
-
-    const seekTo = (time) => {
-        if (audioRef.current && !isNaN(time)) {
-            audioRef.current.currentTime = Math.max(0, Math.min(time, state.duration))
-            dispatch({ type: 'SET_PROGRESS', payload: time })
-        }
-    }
-
-    const toggleRepeat = () => {
-        const modes = ['none', 'all', 'one']
-        const currentModeIndex = modes.indexOf(state.repeatMode)
-        const nextMode = modes[(currentModeIndex + 1) % modes.length]
-        dispatch({ type: 'SET_REPEAT_MODE', payload: nextMode })
-    }
-
-    const toggleShuffle = () => {
-        dispatch({ type: 'TOGGLE_SHUFFLE' })
-    }
-
-    const addToQueue = (song) => {
-        if (!song?.id) return
-        const normalized = normalizeImageForSong(song)
-        dispatch({ type: 'ADD_TO_QUEUE', payload: normalized })
-    }
-
-    const removeFromQueue = (index) => {
-        if (typeof index !== 'number' || index < 0) return
-        dispatch({ type: 'REMOVE_FROM_QUEUE', payload: index })
-    }
-
-    const reorderQueue = (startIndex, endIndex) => {
-        if (typeof startIndex !== 'number' || typeof endIndex !== 'number') return
-        dispatch({ type: 'REORDER_QUEUE', payload: { startIndex, endIndex } })
-    }
-
-    const clearQueue = () => {
-        dispatch({ type: 'CLEAR_QUEUE' })
-    }
-
-    const clearError = () => {
-        dispatch({ type: 'CLEAR_ERROR' })
-    }
 
     // ============================================================================
     // ELECTRON INTEGRATION
@@ -1347,6 +1390,12 @@ export function PlayerProvider({ children }) {
 
         return cleanup
     }, [])
+
+    useEffect(() => {
+        togglePlayRef.current = togglePlay
+        handleNextRef.current = handleNext
+        handlePreviousRef.current = handlePrevious
+    }, [togglePlay, handleNext, handlePrevious])
 
     // ============================================================================
     // CONTEXT VALUE

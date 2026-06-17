@@ -88,7 +88,7 @@ export default function SpotifyImportModal({ isOpen, onClose, currentUser, impor
     background: '#1DB954', // Spotify brand green
     color: '#fff',
     fontFamily: fonts.primary,
-    fontWeight: 650,
+    fontWeight: 700,
     fontSize: '0.9rem',
     cursor: isLoading ? 'not-allowed' : 'pointer',
     opacity: (!url.trim() || isLoading) ? 0.6 : 1,
