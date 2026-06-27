@@ -56,7 +56,7 @@ function ToastContainer({ toasts, removeToast }) {
     return (
         <div style={{
             position: 'fixed',
-            bottom: '20px',
+            bottom: '96px',
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 200,
@@ -80,15 +80,17 @@ function Toast({ toast, onClose }) {
     const isDark = localStorage.getItem('theme') === 'dark'
 
     const colors = isDark ? {
-        paper: '#0D0D0D',
-        ink: '#FAFAFA',
-        accent: '#FF6B6B',
-        rule: '#2A2A2A',
+        paper: '#1A1614',
+        ink: '#FAF7F2',
+        accent: '#E07356',
+        rule: '#3A3633',
+        border: 'rgba(255, 255, 255, 0.09)',
     } : {
-        paper: '#FAFAFA',
-        ink: '#0D0D0D',
-        accent: '#FF6B6B',
-        rule: '#E5E5E5',
+        paper: 'rgba(253, 251, 249, 0.98)',
+        ink: '#1A1614',
+        accent: '#C45C3E',
+        rule: '#EAE5DB',
+        border: 'rgba(26, 22, 20, 0.09)',
     }
 
     const typeColors = {
@@ -122,21 +124,22 @@ function Toast({ toast, onClose }) {
     return (
         <div style={{
             background: colors.paper,
-            borderRadius: '14px',
-            border: `1px solid ${colors.rule}`,
+            borderRadius: '16px',
+            border: `1px solid ${colors.border}`,
             boxShadow: isDark
-                ? '0 12px 32px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.3)'
-                : '0 12px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.08)',
+                ? '0 16px 40px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)'
+                : '0 16px 40px rgba(26,22,20,0.14), 0 4px 12px rgba(26,22,20,0.08), inset 0 1px 0 rgba(255,255,255,0.8)',
             padding: '14px 16px',
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
             pointerEvents: 'auto',
-            animation: isExiting ? 'slideOut 0.25s ease-out forwards' : 'slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            animation: isExiting ? 'slideOut 0.22s ease-out forwards' : 'slideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
             minWidth: '300px',
             position: 'relative',
             overflow: 'hidden',
-            backdropFilter: 'blur(12px)',
+            backdropFilter: 'blur(20px) saturate(160%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(160%)',
         }}>
             {/* Progress Bar */}
             {toast.duration !== Infinity && (

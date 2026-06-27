@@ -74,9 +74,9 @@ export default function QueuePanel({ isOpen, onClose }) {
                 style={{
                     position: 'fixed',
                     inset: 0,
-                    background: isDark ? 'rgba(0, 0, 0, 0.65)' : 'rgba(0, 0, 0, 0.25)',
-                    backdropFilter: 'blur(8px)',
-                    WebkitBackdropFilter: 'blur(8px)',
+                    background: isDark ? 'rgba(0, 0, 0, 0.70)' : 'rgba(26, 22, 20, 0.30)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
                     zIndex: 149,
                     animation: 'fadeIn 0.25s ease-out',
                 }}
@@ -92,7 +92,11 @@ export default function QueuePanel({ isOpen, onClose }) {
                 width: isMobile ? '100%' : 'min(90vw, 390px)',
                 maxWidth: isMobile ? '100%' : '390px',
                 maxHeight: isMobile ? 'calc(100vh - 80px)' : 'calc(100vh - 120px)',
-                background: colors.paper,
+                background: isDark
+                    ? 'linear-gradient(135deg, rgba(26, 22, 20, 0.90) 0%, rgba(37, 34, 32, 0.90) 100%)'
+                    : 'linear-gradient(135deg, rgba(253, 251, 249, 0.92) 0%, rgba(245, 242, 235, 0.92) 100%)',
+                backdropFilter: 'blur(24px) saturate(185%)',
+                WebkitBackdropFilter: 'blur(24px) saturate(185%)',
                 backgroundImage: 'var(--background-image-ske-surface)',
                 borderRadius: isMobile ? '24px 24px 0 0' : '18px',
                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.80)'}`,
@@ -365,19 +369,21 @@ export default function QueuePanel({ isOpen, onClose }) {
                                                         : 'transparent',
                                                 opacity: isBeingDragged ? 0.5 : 1,
                                                 transform: isDragTarget ? 'scale(1.01)' : 'scale(1)',
-                                                transition: 'all 200ms var(--ease-premium)',
+                                                transition: 'all 250ms var(--ease-spring)',
                                                 cursor: 'grab',
                                             }}
                                             onMouseEnter={(e) => {
                                                 if (draggedIndex === null) {
                                                     e.currentTarget.style.background = colors.paperDark
-                                                    e.currentTarget.style.boxShadow = `1px 2px 4px var(--ske-shadow), -1px -1px 2px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight)`
+                                                    e.currentTarget.style.boxShadow = `0 4px 12px ${isDark ? 'rgba(0,0,0,0.25)' : 'rgba(196,92,62,0.06)'}, 1px 2px 4px var(--ske-shadow), -1px -1px 2px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight)`
+                                                    e.currentTarget.style.transform = 'translateX(2px) translateY(-1px)'
                                                 }
                                             }}
                                             onMouseLeave={(e) => {
                                                 if (draggedIndex === null) {
                                                     e.currentTarget.style.background = 'transparent'
                                                     e.currentTarget.style.boxShadow = 'none'
+                                                    e.currentTarget.style.transform = 'scale(1)'
                                                 }
                                             }}
                                         >

@@ -36,12 +36,19 @@ export default function MiniPlayer({ onExpand }) {
                 right: '16px',
                 zIndex: 150,
                 width: '280px',
-                background: colors.paper,
-                borderRadius: '14px',
+                background: isDark
+                    ? 'linear-gradient(135deg, rgba(26, 22, 20, 0.88) 0%, rgba(37, 34, 32, 0.88) 100%)'
+                    : 'linear-gradient(135deg, rgba(253, 251, 249, 0.90) 0%, rgba(245, 242, 235, 0.90) 100%)',
+                borderRadius: '16px',
                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.80)'}`,
-                overflow: 'hidden',
-                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                transform: isHovered ? 'translateY(-5px) scale(1.02)' : 'translateY(0) scale(1)',
+                backdropFilter: 'blur(24px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                boxShadow: isHovered 
+                    ? `0 16px 36px ${colors.accent}20, var(--shadow-ske-lg)` 
+                    : 'var(--shadow-ske-md)',
+                overflow: 'visible', // allow progress thumb to overflow slightly for polish
+                transition: 'all 400ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+                transform: isHovered ? 'translateY(-6px) scale(1.03)' : 'translateY(0) scale(1)',
                 cursor: 'pointer',
             }}
             onClick={onExpand}
@@ -50,10 +57,11 @@ export default function MiniPlayer({ onExpand }) {
             <div 
                 className="ske-recessed"
                 style={{
-                    height: '4px',
+                    height: isHovered ? '5px' : '4px',
                     background: colors.paperDark,
                     position: 'relative',
-                    overflow: 'hidden',
+                    borderRadius: '16px 16px 0 0',
+                    transition: 'height 200ms ease',
                 }}
             >
                 <div style={{
@@ -62,8 +70,22 @@ export default function MiniPlayer({ onExpand }) {
                     top: 0,
                     height: '100%',
                     width: `${progressPercent}%`,
-                    background: colors.accent,
+                    background: `linear-gradient(90deg, ${colors.accent} 0%, ${colors.accent}bb 100%)`,
                     transition: 'width 0.1s linear',
+                }} />
+                
+                <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: `${progressPercent}%`,
+                    transform: 'translate(-50%, -50%)' + (isHovered ? ' scale(1)' : ' scale(0)'),
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: 'var(--color-paper-dark)',
+                    border: `1.5px solid ${colors.accent}`,
+                    boxShadow: `0 1px 3px rgba(0,0,0,0.15)`,
+                    transition: 'transform 200ms var(--ease-spring)',
                 }} />
             </div>
 

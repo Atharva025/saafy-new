@@ -167,7 +167,7 @@ class ErrorBoundary extends Component {
                             marginBottom: '32px',
                             lineHeight: 1.5,
                         }}>
-                            Don't worry, your vibes are safe. Let's get you back on track.
+                            Don't worry, your playback session is safe. Let's get you back on track.
                         </p>
 
                         {/* Error Details (Collapsed) */}

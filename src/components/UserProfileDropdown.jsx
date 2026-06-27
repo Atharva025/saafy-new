@@ -109,74 +109,90 @@ export default function UserProfileDropdown({
       </button>
 
       {currentUser && showUserDropdown && (
-        <div style={{
-          position: 'absolute',
-          top: 'calc(100% + 8px)',
-          right: 0,
-          width: isMobile ? '200px' : '240px',
-          background: isMobile
-            ? (isDark ? 'rgba(28, 24, 22, 0.96)' : 'rgba(252, 249, 244, 0.97)')
-            : colors.paper,
-          backdropFilter: isMobile ? 'blur(20px)' : undefined,
-          WebkitBackdropFilter: isMobile ? 'blur(20px)' : undefined,
-          borderRadius: isMobile ? '14px' : '12px',
-          border: `1px solid ${colors.rule}`,
-          boxShadow: isDark
-            ? '0 16px 48px rgba(0,0,0,0.4), 0 8px 20px rgba(0,0,0,0.3)'
-            : '0 16px 48px rgba(26,22,20,0.12), 0 8px 20px rgba(26,22,20,0.06)',
-          overflow: 'hidden',
-          zIndex: isMobile ? 300 : 100,
-        }}>
+        <>
           <div style={{
-            padding: isMobile ? '12px 14px' : '14px',
-            borderBottom: `1px solid ${colors.rule}`,
+            position: 'absolute',
+            top: 'calc(100% + 8px)',
+            right: 0,
+            width: isMobile ? '200px' : '240px',
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(26, 22, 20, 0.90) 0%, rgba(37, 34, 32, 0.90) 100%)'
+              : 'linear-gradient(135deg, rgba(253, 251, 249, 0.92) 0%, rgba(245, 242, 235, 0.92) 100%)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            borderRadius: isMobile ? '14px' : '12px',
+            border: `1px solid ${colors.rule}`,
+            boxShadow: isDark
+              ? '0 16px 48px rgba(0,0,0,0.45), 0 8px 20px rgba(0,0,0,0.3), inset 1px 1px 0 rgba(255,255,255,0.05)'
+              : '0 16px 48px rgba(26,22,20,0.15), 0 8px 20px rgba(26,22,20,0.08), inset 1px 1px 0 rgba(255,255,255,0.60)',
+            overflow: 'hidden',
+            zIndex: isMobile ? 300 : 100,
+            animation: 'profileDropdownSlide 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both',
+            transformOrigin: 'top right',
           }}>
             <div style={{
-              fontFamily: fonts.primary,
-              fontSize: isMobile ? '0.82rem' : '0.85rem',
-              fontWeight: 700,
-              color: colors.ink,
+              padding: isMobile ? '12px 14px' : '14px',
+              borderBottom: `1px solid ${colors.rule}`,
             }}>
-              {currentUser.username}
-            </div>
-            <div style={{
-              fontFamily: fonts.primary,
-              fontSize: isMobile ? '0.68rem' : '0.72rem',
-              color: colors.inkLight,
-              wordBreak: 'break-all',
-              marginTop: '2px',
-            }}>
-              {currentUser.email}
-            </div>
-          </div>
-          <div style={{ padding: '6px' }}>
-            <button
-              onClick={handleSignOut}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: isMobile ? '9px 10px' : '10px 12px',
-                borderRadius: '8px',
-                border: 'none',
-                background: 'transparent',
-                color: '#EF4444',
+              <div style={{
                 fontFamily: fonts.primary,
-                fontSize: isMobile ? '0.78rem' : '0.8rem',
-                fontWeight: 600,
-                textAlign: 'left',
-                cursor: 'pointer',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-            >
-              <LogOut size={isMobile ? 13 : 14} />
-              Sign Out
-            </button>
+                fontSize: isMobile ? '0.82rem' : '0.85rem',
+                fontWeight: 700,
+                color: colors.ink,
+              }}>
+                {currentUser.username}
+              </div>
+              <div style={{
+                fontFamily: fonts.primary,
+                fontSize: isMobile ? '0.68rem' : '0.72rem',
+                color: colors.inkLight,
+                wordBreak: 'break-all',
+                marginTop: '2px',
+              }}>
+                {currentUser.email}
+              </div>
+            </div>
+            <div style={{ padding: '6px' }}>
+              <button
+                onClick={handleSignOut}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: isMobile ? '9px 10px' : '10px 12px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'transparent',
+                  color: '#EF4444',
+                  fontFamily: fonts.primary,
+                  fontSize: isMobile ? '0.78rem' : '0.8rem',
+                  fontWeight: 600,
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'all 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.10)'
+                  e.currentTarget.style.transform = 'scale(1.02) translateX(2px)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.transform = 'scale(1) translateX(0)'
+                }}
+              >
+                <LogOut size={isMobile ? 13 : 14} />
+                Sign Out
+              </button>
+            </div>
           </div>
-        </div>
+          <style>{`
+            @keyframes profileDropdownSlide {
+              from { opacity: 0; transform: translateY(-8px) scale(0.95); }
+              to   { opacity: 1; transform: translateY(0) scale(1); }
+            }
+          `}</style>
+        </>
       )}
     </div>
   )

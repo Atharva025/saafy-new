@@ -26,8 +26,8 @@ const lightColors = {
     border: 'rgba(26, 22, 20, 0.09)',  // Alpha-blended borders
 
     // Overlays
-    overlay: 'rgba(253, 251, 249, 0.88)',  // Frosted header/panel bg
-    overlayDeep: 'rgba(253, 251, 249, 0.96)',
+    overlay: 'rgba(253, 251, 249, 0.72)',  // Frosted header/panel bg
+    overlayDeep: 'rgba(253, 251, 249, 0.82)',
 
     // Shadows (warm-toned)
     shadowSm: '0 1px 3px rgba(26, 22, 20, 0.07)',
@@ -59,8 +59,8 @@ const darkColors = {
     border: 'rgba(255, 255, 255, 0.07)',  // Alpha-blended borders
 
     // Overlays
-    overlay: 'rgba(26, 22, 20, 0.88)',
-    overlayDeep: 'rgba(26, 22, 20, 0.96)',
+    overlay: 'rgba(26, 22, 20, 0.72)',
+    overlayDeep: 'rgba(26, 22, 20, 0.82)',
 
     // Shadows (deeper for dark mode)
     shadowSm: '0 1px 3px rgba(0, 0, 0, 0.22)',

@@ -19,53 +19,6 @@ const placeholders = [
 
 
 
-// ─── Vibe Name Mapper (Poetic Emotional Trails) ──────────────────────────────
-const getEmotionalTrailForSong = (song) => {
-    if (!song) return "Late Night Synths"
-    
-    const title = (song.name || song.title || "").toLowerCase()
-    const artist = (song.primaryArtists || song.singers || "").toLowerCase()
-    const lang = (song.language || "").toLowerCase()
-    
-    // Check artist matches
-    if (artist.includes("arijit") || artist.includes("jubin") || artist.includes("atif") || artist.includes("shreya")) {
-        return "Arijit Romance"
-    }
-    if (artist.includes("honey") || artist.includes("badshah") || artist.includes("diljit") || artist.includes("raftaar") || artist.includes("king")) {
-        return "Party Monster"
-    }
-    if (artist.includes("sidhu") || artist.includes("dhillon") || artist.includes("aujla") || artist.includes("shubh")) {
-        return "Punjabi Beats"
-    }
-    
-    // Check title / keyword / language matches
-    if (title.includes("party") || title.includes("dance") || title.includes("club") || title.includes("makhna")) {
-        return "Party Monster"
-    }
-    if (title.includes("sad") || title.includes("judai") || title.includes("lofi") || title.includes("alone") || title.includes("synths") || title.includes("night")) {
-        return "Late Night Synths"
-    }
-    if (title.includes("monsoon") || title.includes("rain") || title.includes("baaris") || title.includes("sawan") || title.includes("acoustics")) {
-        return "Monsoon Vibes"
-    }
-    if (lang === "marathi") {
-        return "Marathi Soul"
-    }
-    if (lang === "punjabi") {
-        return "Punjabi Beats"
-    }
-    
-    // Fallbacks
-    if (lang === "english") {
-        return "Late Night Synths"
-    }
-    if (lang === "hindi") {
-        return "Bollywood Melodies"
-    }
-    
-    return "Late Night Synths"
-}
-
 // ─── Relative Time Calculator ───────────────────────────────────────────────
 const getRelativeTime = (playedAt) => {
     if (!playedAt) return "Recently"
@@ -83,8 +36,8 @@ const getRelativeTime = (playedAt) => {
     return `${diffDays}d ago`
 }
 
-// ─── Trail Row Component (Premium Minimal List Row) ─────────────────────────
-function TrailRow({ song, index, vibeTitle, timeString, onPlay, colors, fonts, isDark }) {
+// ─── Recently Played Row Component (Clean, Premium List Row) ────────────────
+function RecentlyPlayedRow({ song, index, timeString, onPlay, colors, fonts, isDark }) {
     const [hovered, setHovered] = useState(false)
     
     const imageUrl = song.image?.[0]?.link || song.image?.[0]?.url ||
@@ -135,7 +88,7 @@ function TrailRow({ song, index, vibeTitle, timeString, onPlay, colors, fonts, i
                     )}
                 </div>
 
-                {/* Title and details info */}
+                {/* Song title and artist details */}
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
                     <div style={{
                         fontFamily: fonts.primary,
@@ -143,34 +96,22 @@ function TrailRow({ song, index, vibeTitle, timeString, onPlay, colors, fonts, i
                         fontWeight: 600,
                         color: colors.ink,
                         letterSpacing: '-0.01em',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
                     }}>
-                        {vibeTitle}
+                        {song.name || song.title}
                     </div>
-                    {`${song.name} · ${song.primaryArtists}`.length > 30 ? (
-                        <Tooltip text={`${song.name} · ${song.primaryArtists}`}>
-                            <div style={{
-                                fontFamily: fonts.mono,
-                                fontSize: '0.72rem',
-                                color: colors.inkMuted,
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                            }}>
-                                {song.name} <span style={{ opacity: 0.65 }}>· {song.primaryArtists}</span>
-                            </div>
-                        </Tooltip>
-                    ) : (
-                        <div style={{
-                            fontFamily: fonts.mono,
-                            fontSize: '0.72rem',
-                            color: colors.inkMuted,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                        }}>
-                            {song.name} <span style={{ opacity: 0.65 }}>· {song.primaryArtists}</span>
-                        </div>
-                    )}
+                    <div style={{
+                        fontFamily: fonts.mono,
+                        fontSize: '0.72rem',
+                        color: colors.inkMuted,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                    }}>
+                        {song.primaryArtists || song.singers || 'Unknown Artist'}
+                    </div>
                 </div>
             </div>
 
@@ -213,6 +154,7 @@ function TrailRow({ song, index, vibeTitle, timeString, onPlay, colors, fonts, i
         </div>
     )
 }
+
 
 export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearching, featuredSongs = [], listeningHistory = [], onExpandChange }) {
     const { colors, fonts, isDark } = useTheme()
@@ -391,11 +333,11 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                             ? 'inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 20px 50px rgba(0, 0, 0, 0.5)' 
                             : 'inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 20px 50px rgba(26, 22, 20, 0.12)')
                         : (isFocused
-                            ? `var(--shadow-ske-focus)`
+                            ? `0 0 0 3px ${colors.accent}24, 0 8px 24px ${colors.accent}12, var(--shadow-ske-inset-sm)`
                             : isHovered
                                 ? `inset 1px 2px 6px var(--ske-inner-shadow), 0 2px 8px ${colors.accent}12`
                                 : `inset 1px 2px 6px var(--ske-inner-shadow), inset -1px -1px 3px var(--ske-inner-highlight)`),
-                    transition: 'all 300ms cubic-bezier(0.16, 1, 0.3, 1)',
+                    transition: 'all 350ms cubic-bezier(0.34, 1.56, 0.64, 1)',
                 }}
             >
                 <div style={{
@@ -582,9 +524,11 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                     top: 'calc(100% + 10px)',
                     left: 0,
                     right: 0,
-                    background: 'var(--color-overlay-deep)',
-                    backdropFilter: 'blur(20px) saturate(180%)',
-                    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                    background: isDark
+                        ? 'linear-gradient(135deg, rgba(26, 22, 20, 0.92) 0%, rgba(37, 34, 32, 0.92) 100%)'
+                        : 'linear-gradient(135deg, rgba(253, 251, 249, 0.94) 0%, rgba(245, 242, 235, 0.94) 100%)',
+                    backdropFilter: 'blur(24px) saturate(190%)',
+                    WebkitBackdropFilter: 'blur(24px) saturate(190%)',
                     borderRadius: 'clamp(14px, 3vw, 18px)',
                     border: '1px solid var(--color-border)',
                     boxShadow: 'var(--shadow-ske-lg)',
@@ -813,7 +757,7 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                         gap: '8px',
                         paddingLeft: '4px'
                     }}>
-                        <span>You were exploring...</span>
+                        <span>Recently Played</span>
                         
                     </div>
 
@@ -854,14 +798,12 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                                 : defaultFallbacks
 
                             return items.map((song, index) => {
-                                const vibeTitle = getEmotionalTrailForSong(song)
                                 const timeString = getRelativeTime(song.playedAt)
                                 return (
-                                    <TrailRow
+                                    <RecentlyPlayedRow
                                         key={song.id || index}
                                         song={song}
                                         index={index}
-                                        vibeTitle={vibeTitle}
                                         timeString={timeString}
                                         onPlay={handleSelectSong}
                                         colors={colors}

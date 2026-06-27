@@ -3,7 +3,7 @@ async function testAPI() {
     try {
         // Test search endpoint
         console.log('Testing search endpoint...');
-        const searchResponse = await fetch('https://saafy-api.vercel.app/api/search/songs?query=blinding lights&limit=1');
+        const searchResponse = await fetch('https://saafy-api.atharva070720.workers.dev/api/search/songs?query=blinding lights&limit=1');
         const searchData = await searchResponse.json();
         console.log('Search result:', JSON.stringify(searchData, null, 2));
 
@@ -12,7 +12,7 @@ async function testAPI() {
             console.log('\nTesting song details endpoint with ID:', songId);
 
             // Test song details endpoint
-            const songResponse = await fetch(`https://saafy-api.vercel.app/api/songs/${songId}`);
+            const songResponse = await fetch(`https://saafy-api.atharva070720.workers.dev/api/songs/${songId}`);
             const songData = await songResponse.json();
             console.log('Song details:', JSON.stringify(songData, null, 2));
         }

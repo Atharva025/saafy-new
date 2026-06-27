@@ -96,15 +96,15 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
                             border: isCurrentSong ? activeBorder : '1px solid transparent',
                             borderLeft: activeBorderLeft,
                             boxShadow: isCurrentSong
-                                ? `0 8px 20px ${activeColor ? activeColor.rgba(isDark ? 0.20 : 0.12) : `${colors.accent}12`}, inset 1px 1px 0 rgba(255,255,255,${isDark ? 0.05 : 0.60})`
+                                ? `0 12px 28px ${activeColor ? activeColor.rgba(isDark ? 0.22 : 0.14) : `${colors.accent}18`}, inset 1px 1px 0 rgba(255,255,255,${isDark ? 0.05 : 0.60})`
                                 : hoveredIndex === index
-                                    ? `1px 2px 6px var(--ske-shadow), -1px -1px 4px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight)`
+                                    ? `0 6px 16px ${isDark ? 'rgba(0,0,0,0.25)' : 'rgba(196,92,62,0.06)'}, 1px 2px 6px var(--ske-shadow), -1px -1px 4px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight)`
                                     : 'none',
                             backdropFilter: isCurrentSong ? 'blur(12px) saturate(140%)' : 'none',
                             WebkitBackdropFilter: isCurrentSong ? 'blur(12px) saturate(140%)' : 'none',
-                            opacity: isCurrentSong ? 1 : hoveredIndex === index ? 1 : isPlaying && currentSong ? 0.6 : 1,
-                            transition: 'background 0.2s ease, box-shadow 150ms ease-out, border 0.25s ease, opacity 0.25s ease, transform 0.25s var(--ease-spring)',
-                            transform: hoveredIndex === index && !isCurrentSong ? 'translateY(-1px)' : 'none',
+                            opacity: isCurrentSong ? 1 : hoveredIndex === index ? 1 : isPlaying && currentSong ? 0.65 : 1,
+                            transition: 'background 0.2s ease, box-shadow 250ms ease-out, border 0.25s ease, opacity 0.25s ease, transform 300ms var(--ease-spring)',
+                            transform: hoveredIndex === index && !isCurrentSong ? 'translateY(-2px) translateX(2px)' : 'none',
                             marginBottom: '4px',
                             position: 'relative',
                         }}
@@ -485,9 +485,9 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        backgroundColor: isDark ? 'rgba(15, 12, 11, 0.65)' : 'rgba(26, 22, 20, 0.45)',
-                        backdropFilter: 'blur(12px)',
-                        WebkitBackdropFilter: 'blur(12px)',
+                        backgroundColor: isDark ? 'rgba(15, 12, 11, 0.70)' : 'rgba(26, 22, 20, 0.40)',
+                        backdropFilter: 'blur(20px) saturate(180%)',
+                        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',

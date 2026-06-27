@@ -17,7 +17,7 @@ import {
     SECURITY_CONFIG
 } from './security'
 
-const BASE_URL = import.meta.env.VITE_SAAFY_API_URL || 'https://saafy-api.vercel.app'
+const BASE_URL = import.meta.env.VITE_SAAFY_API_URL || 'https://saafy-api.atharva070720.workers.dev'
 
 // ============================================================================
 // RESPONSE CACHE

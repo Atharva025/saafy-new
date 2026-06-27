@@ -207,7 +207,7 @@ function SkeuoProgress({ progress, duration, seekTo, accentColor }) {
                 }}
             >
                 {/* Recessed track slot */}
-                <div 
+                <div
                     style={{
                         width: '100%',
                         height: '6px',
@@ -219,7 +219,7 @@ function SkeuoProgress({ progress, duration, seekTo, accentColor }) {
                     }}
                 >
                     {/* Fill */}
-                    <div 
+                    <div
                         style={{
                             position: 'absolute',
                             left: 0, top: 0, bottom: 0,
@@ -228,11 +228,11 @@ function SkeuoProgress({ progress, duration, seekTo, accentColor }) {
                             background: `linear-gradient(90deg, ${accentColor}dd, ${accentColor})`,
                             boxShadow: `0 0 6px ${accentColor}aa`,
                             transition: dragging ? 'none' : 'width 0.1s linear',
-                        }} 
+                        }}
                     />
-                    
+
                     {/* Thumb: Polished Chrome Dial Knob */}
-                    <div 
+                    <div
                         style={{
                             position: 'absolute',
                             top: '50%',
@@ -249,7 +249,7 @@ function SkeuoProgress({ progress, duration, seekTo, accentColor }) {
                             alignItems: 'center',
                             justifyContent: 'center',
                             pointerEvents: 'none'
-                        }} 
+                        }}
                     >
                         <div style={{
                             width: '3px',
@@ -341,7 +341,7 @@ function SkeuoVolume({ volume, setVolume, accentColor }) {
                 }}
             >
                 {/* Recessed track slot */}
-                <div 
+                <div
                     style={{
                         width: '100%',
                         height: '6px',
@@ -353,7 +353,7 @@ function SkeuoVolume({ volume, setVolume, accentColor }) {
                     }}
                 >
                     {/* Fill */}
-                    <div 
+                    <div
                         style={{
                             position: 'absolute',
                             left: 0, top: 0, bottom: 0,
@@ -362,11 +362,11 @@ function SkeuoVolume({ volume, setVolume, accentColor }) {
                             background: `linear-gradient(90deg, ${accentColor}dd, ${accentColor})`,
                             boxShadow: `0 0 6px ${accentColor}aa`,
                             transition: dragging ? 'none' : 'width 0.08s linear'
-                        }} 
+                        }}
                     />
-                    
+
                     {/* Thumb: Polished Chrome Dial Knob */}
-                    <div 
+                    <div
                         style={{
                             position: 'absolute',
                             top: '50%',
@@ -383,7 +383,7 @@ function SkeuoVolume({ volume, setVolume, accentColor }) {
                             alignItems: 'center',
                             justifyContent: 'center',
                             pointerEvents: 'none'
-                        }} 
+                        }}
                     >
                         <div style={{
                             width: '3px',
@@ -769,13 +769,13 @@ function ImmersiveQueuePanel({
                                 flexShrink: 0,
                                 boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
                             }}>
-                                <img 
-                                    src={currentSong.image?.[2]?.link || currentSong.image?.[1]?.link || currentSong.image?.[0]?.link || ''} 
-                                    alt="" 
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                <img
+                                    src={currentSong.image?.[2]?.link || currentSong.image?.[1]?.link || currentSong.image?.[0]?.link || ''}
+                                    alt=""
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                 />
                             </div>
-                            
+
                             {/* Info */}
                             <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{
@@ -867,7 +867,7 @@ function ImmersiveQueuePanel({
                                     song.image?.[1]?.link || song.image?.[1]?.url ||
                                     song.image?.[0]?.link || song.image?.[0]?.url ||
                                     song.imageUrl || ''
-                                
+
                                 const isBeingDragged = index === draggedIndex
                                 const isDragTarget = index === dragOverIndex
 
@@ -1098,13 +1098,13 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
     const cleanTrackName = (name) => {
         if (!name) return ''
         return name
-            .replace(/\(From\s+[^)]+\)/gi, '') 
-            .replace(/\(with\s+[^)]+\)/gi, '') 
-            .replace(/\[From\s+[^\]]+\]/gi, '') 
-            .replace(/\(feat\.\s+[^)]+\)/gi, '') 
-            .replace(/\[feat\.\s+[^\]]+\]/gi, '') 
-            .replace(/\(ft\.\s+[^)]+\)/gi, '') 
-            .replace(/\[ft\.\s+[^\]]+\]/gi, '') 
+            .replace(/\(From\s+[^)]+\)/gi, '')
+            .replace(/\(with\s+[^)]+\)/gi, '')
+            .replace(/\[From\s+[^\]]+\]/gi, '')
+            .replace(/\(feat\.\s+[^)]+\)/gi, '')
+            .replace(/\[feat\.\s+[^\]]+\]/gi, '')
+            .replace(/\(ft\.\s+[^)]+\)/gi, '')
+            .replace(/\[ft\.\s+[^\]]+\]/gi, '')
             .replace(/\(Lofi[^\)]*\)/gi, '')
             .replace(/\[Lofi[^\]]*\]/gi, '')
             .replace(/\(Remix[^\)]*\)/gi, '')
@@ -1112,8 +1112,8 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
             .replace(/\(Acoustic[^\)]*\)/gi, '')
             .replace(/\(Live[^\)]*\)/gi, '')
             .replace(/\(Reprise[^\)]*\)/gi, '')
-            .replace(/\s+-\s+From\s+.*$/gi, '') 
-            .replace(/\s+-\s+Single$/gi, '') 
+            .replace(/\s+-\s+From\s+.*$/gi, '')
+            .replace(/\s+-\s+Single$/gi, '')
             .trim()
     }
 
@@ -1159,7 +1159,7 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                 if (import.meta.env.DEV) {
                     console.log("Searching lyrics with cleaned name:", cleanedName, "by", fullArtists)
                 }
-                
+
                 const searchParams = {
                     track_name: cleanedName,
                     artist_name: fullArtists
@@ -1208,7 +1208,7 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                     // Fall back to first result
                     bestMatch = results[0]
                 }
-                
+
                 parseLyrics(bestMatch)
                 return
             }
@@ -1226,7 +1226,7 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
 
     const parseLyrics = (data) => {
         if (!data) return
-        
+
         if (data.instrumental) {
             setLyricsError('Instrumental track - no lyrics required.')
             return
@@ -1464,65 +1464,65 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                             boxSizing: 'border-box'
                         }}>
 
-                        {/* ── Artwork + Vinyl ── */}
-                        <div style={{
-                            position: 'relative',
-                            width: 'min(33vh, 280px)',
-                            height: 'min(33vh, 280px)',
-                            flexShrink: 0
-                        }}>
-                            {/* Ambient glow */}
-                            {imageUrl && (
-                                <div style={{
-                                    position: 'absolute', inset: '-20px',
-                                    borderRadius: '24px',
-                                    background: accentRgba(0.22),
-                                    filter: 'blur(32px)', zIndex: 0
-                                }} />
-                            )}
-
-                            {/* Vinyl disc */}
+                            {/* ── Artwork + Vinyl ── */}
                             <div style={{
-                                position: 'absolute', top: '6%', left: '6%',
-                                width: '88%', height: '88%', zIndex: 1,
-                                transform: isPlaying 
-                                    ? (isMobile ? 'translateX(28%)' : 'translateX(46%)') 
-                                    : 'translateX(0)',
-                                transition: 'transform 1s cubic-bezier(0.22, 1, 0.36, 1)',
-                                pointerEvents: 'none'
+                                position: 'relative',
+                                width: 'min(33vh, 280px)',
+                                height: 'min(33vh, 280px)',
+                                flexShrink: 0
                             }}>
-                                <div
-                                    className={isPlaying ? 'vinyl-spin' : ''}
-                                    style={{
-                                        width: '100%', height: '100%', borderRadius: '50%',
-                                        background: 'radial-gradient(circle at 50% 50%, #1a1a1a 30%, #111 38%, #0d0d0d 46%, #181818 58%, #0b0b0b 72%, #1c1c1c 100%)',
-                                        boxShadow: '0 8px 36px rgba(0,0,0,0.65), inset 0 0 24px rgba(0,0,0,0.8)',
-                                        position: 'relative', overflow: 'hidden', display: 'flex',
-                                        alignItems: 'center', justifyContent: 'center'
-                                    }}
-                                >
-                                    {/* Groove rings */}
-                                    {[8, 16, 24, 34, 44, 56, 70].map(r => (
-                                        <div key={r} style={{ position: 'absolute', inset: `${r}px`, border: '1px solid rgba(255,255,255,0.016)', borderRadius: '50%' }} />
-                                    ))}
-                                    {/* Sheen */}
-                                    <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'linear-gradient(130deg, rgba(255,255,255,0.08) 0%, transparent 55%)', zIndex: 2 }} />
-                                    {/* Center label */}
-                                    <div style={{ width: '33%', height: '33%', borderRadius: '50%', overflow: 'hidden', position: 'relative', zIndex: 3, border: '2.5px solid #181818', boxShadow: '0 0 0 2px rgba(255,255,255,0.04)' }}>
-                                        {imageUrl ? <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', background: accentColor }} />}
-                                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <div style={{ width: '11px', height: '11px', borderRadius: '50%', background: 'rgba(8,6,6,0.95)', border: '1.5px solid rgba(255,255,255,0.1)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.9)' }} />
+                                {/* Ambient glow */}
+                                {imageUrl && (
+                                    <div style={{
+                                        position: 'absolute', inset: '-20px',
+                                        borderRadius: '24px',
+                                        background: accentRgba(0.22),
+                                        filter: 'blur(32px)', zIndex: 0
+                                    }} />
+                                )}
+
+                                {/* Vinyl disc */}
+                                <div style={{
+                                    position: 'absolute', top: '6%', left: '6%',
+                                    width: '88%', height: '88%', zIndex: 1,
+                                    transform: isPlaying
+                                        ? (isMobile ? 'translateX(28%)' : 'translateX(46%)')
+                                        : 'translateX(0)',
+                                    transition: 'transform 1s cubic-bezier(0.22, 1, 0.36, 1)',
+                                    pointerEvents: 'none'
+                                }}>
+                                    <div
+                                        className={isPlaying ? 'vinyl-spin' : ''}
+                                        style={{
+                                            width: '100%', height: '100%', borderRadius: '50%',
+                                            background: 'radial-gradient(circle at 50% 50%, #1a1a1a 30%, #111 38%, #0d0d0d 46%, #181818 58%, #0b0b0b 72%, #1c1c1c 100%)',
+                                            boxShadow: '0 8px 36px rgba(0,0,0,0.65), inset 0 0 24px rgba(0,0,0,0.8)',
+                                            position: 'relative', overflow: 'hidden', display: 'flex',
+                                            alignItems: 'center', justifyContent: 'center'
+                                        }}
+                                    >
+                                        {/* Groove rings */}
+                                        {[8, 16, 24, 34, 44, 56, 70].map(r => (
+                                            <div key={r} style={{ position: 'absolute', inset: `${r}px`, border: '1px solid rgba(255,255,255,0.016)', borderRadius: '50%' }} />
+                                        ))}
+                                        {/* Sheen */}
+                                        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'linear-gradient(130deg, rgba(255,255,255,0.08) 0%, transparent 55%)', zIndex: 2 }} />
+                                        {/* Center label */}
+                                        <div style={{ width: '33%', height: '33%', borderRadius: '50%', overflow: 'hidden', position: 'relative', zIndex: 3, border: '2.5px solid #181818', boxShadow: '0 0 0 2px rgba(255,255,255,0.04)' }}>
+                                            {imageUrl ? <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', background: accentColor }} />}
+                                            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <div style={{ width: '11px', height: '11px', borderRadius: '50%', background: 'rgba(8,6,6,0.95)', border: '1.5px solid rgba(255,255,255,0.1)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.9)' }} />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Album Art — skeuomorphic frame */}
-                            <div style={{
-                                position: 'absolute', inset: 0, zIndex: 2,
-                                borderRadius: '18px', overflow: 'hidden',
-                                /* Deep embossed frame */
-                                boxShadow: `
+                                {/* Album Art — skeuomorphic frame */}
+                                <div style={{
+                                    position: 'absolute', inset: 0, zIndex: 2,
+                                    borderRadius: '18px', overflow: 'hidden',
+                                    /* Deep embossed frame */
+                                    boxShadow: `
                                     0 32px 80px rgba(0,0,0,0.65),
                                     0 8px 24px rgba(0,0,0,0.4),
                                     0 0 0 1px rgba(255,255,255,0.1),
@@ -1530,307 +1530,307 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                                     0 0 0 5px rgba(255,255,255,0.05),
                                     inset 0 0 0 1px rgba(255,255,255,0.08)
                                 `
-                            }}>
-                                {imageUrl
-                                    ? <img src={imageUrl} alt={songTitle} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                                    : (
-                                        <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <Music2 size={64} color="rgba(255,255,255,0.15)" />
-                                        </div>
-                                    )}
-                                {/* Gloss overlay on artwork */}
-                                <div style={{
-                                    position: 'absolute', inset: 0,
-                                    background: 'linear-gradient(155deg, rgba(255,255,255,0.07) 0%, transparent 45%, rgba(0,0,0,0.12) 100%)',
-                                    pointerEvents: 'none'
-                                }} />
-                            </div>
-                        </div>
-
-                        {/* ── Song Info ── */}
-                        <div style={{ textAlign: 'center', width: '100%', maxWidth: '320px', padding: '0 12px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '5px' }}>
-                                <h2 style={{
-                                    fontSize: 'clamp(1.25rem, 3vh, 1.65rem)',
-                                    fontWeight: '800',
-                                    margin: 0, letterSpacing: '-0.025em', color: '#fff',
-                                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                                    maxWidth: 'calc(100% - 44px)',
-                                    textShadow: '0 2px 12px rgba(0,0,0,0.4)',
-                                    display: 'flex',
-                                    alignItems: 'center'
                                 }}>
-                                    {songTitle.length > 20 ? (
-                                        <Tooltip text={songTitle}>
+                                    {imageUrl
+                                        ? <img src={imageUrl} alt={songTitle} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                                        : (
+                                            <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <Music2 size={64} color="rgba(255,255,255,0.15)" />
+                                            </div>
+                                        )}
+                                    {/* Gloss overlay on artwork */}
+                                    <div style={{
+                                        position: 'absolute', inset: 0,
+                                        background: 'linear-gradient(155deg, rgba(255,255,255,0.07) 0%, transparent 45%, rgba(0,0,0,0.12) 100%)',
+                                        pointerEvents: 'none'
+                                    }} />
+                                </div>
+                            </div>
+
+                            {/* ── Song Info ── */}
+                            <div style={{ textAlign: 'center', width: '100%', maxWidth: '320px', padding: '0 12px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '5px' }}>
+                                    <h2 style={{
+                                        fontSize: 'clamp(1.25rem, 3vh, 1.65rem)',
+                                        fontWeight: '800',
+                                        margin: 0, letterSpacing: '-0.025em', color: '#fff',
+                                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                        maxWidth: 'calc(100% - 44px)',
+                                        textShadow: '0 2px 12px rgba(0,0,0,0.4)',
+                                        display: 'flex',
+                                        alignItems: 'center'
+                                    }}>
+                                        {songTitle.length > 20 ? (
+                                            <Tooltip text={songTitle}>
+                                                <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                    {songTitle}
+                                                </span>
+                                            </Tooltip>
+                                        ) : (
+                                            songTitle
+                                        )}
+                                    </h2>
+                                    <button
+                                        onClick={() => setLiked(p => !p)}
+                                        style={{
+                                            background: 'none', border: 'none', cursor: 'pointer',
+                                            padding: '4px', flexShrink: 0, display: 'flex', transition: 'transform 0.2s'
+                                        }}
+                                        title={liked ? 'Unlike' : 'Like'}
+                                    >
+                                        <Heart
+                                            size={17}
+                                            fill={liked ? accentColor : 'none'}
+                                            color={liked ? accentColor : 'rgba(255,255,255,0.38)'}
+                                            strokeWidth={2}
+                                        />
+                                    </button>
+                                </div>
+                                <p style={{
+                                    fontSize: 'clamp(0.82rem, 1.8vh, 0.95rem)',
+                                    margin: 0, fontWeight: '500',
+                                    color: 'rgba(255,255,255,0.45)',
+                                    letterSpacing: '0.01em',
+                                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                    width: '100%'
+                                }}>
+                                    {songArtist.length > 28 ? (
+                                        <Tooltip text={songArtist}>
                                             <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                {songTitle}
+                                                {songArtist}
                                             </span>
                                         </Tooltip>
                                     ) : (
-                                        songTitle
+                                        songArtist
                                     )}
-                                </h2>
-                                <button
-                                    onClick={() => setLiked(p => !p)}
-                                    style={{
-                                        background: 'none', border: 'none', cursor: 'pointer',
-                                        padding: '4px', flexShrink: 0, display: 'flex', transition: 'transform 0.2s'
-                                    }}
-                                    title={liked ? 'Unlike' : 'Like'}
-                                >
-                                    <Heart
-                                        size={17}
-                                        fill={liked ? accentColor : 'none'}
-                                        color={liked ? accentColor : 'rgba(255,255,255,0.38)'}
-                                        strokeWidth={2}
-                                    />
-                                </button>
+                                </p>
+                                {(() => {
+                                    const albumName = typeof currentSong.album === 'object'
+                                        ? (currentSong.album?.name || '')
+                                        : (currentSong.album || '')
+                                    return albumName && (
+                                        <p style={{
+                                            fontSize: 'clamp(0.72rem, 1.5vh, 0.82rem)',
+                                            margin: '3px 0 0',
+                                            fontWeight: '500',
+                                            color: 'rgba(255,255,255,0.24)',
+                                            fontStyle: 'italic',
+                                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                                        }}>
+                                            Album: {albumName}
+                                        </p>
+                                    )
+                                })()}
                             </div>
-                            <p style={{
-                                fontSize: 'clamp(0.82rem, 1.8vh, 0.95rem)',
-                                margin: 0, fontWeight: '500',
-                                color: 'rgba(255,255,255,0.45)',
-                                letterSpacing: '0.01em',
-                                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                                width: '100%'
-                            }}>
-                                {songArtist.length > 28 ? (
-                                    <Tooltip text={songArtist}>
-                                        <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                            {songArtist}
-                                        </span>
-                                    </Tooltip>
-                                ) : (
-                                    songArtist
-                                )}
-                            </p>
-                            {(() => {
-                                const albumName = typeof currentSong.album === 'object'
-                                    ? (currentSong.album?.name || '')
-                                    : (currentSong.album || '')
-                                return albumName && (
-                                    <p style={{
-                                        fontSize: 'clamp(0.72rem, 1.5vh, 0.82rem)',
-                                        margin: '3px 0 0',
-                                        fontWeight: '500',
-                                        color: 'rgba(255,255,255,0.24)',
-                                        fontStyle: 'italic',
-                                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-                                    }}>
-                                        Album: {albumName}
-                                    </p>
-                                )
-                            })()}
-                        </div>
 
-                        {/* ── Visualizer ── */}
-                        {!isMobile && (
-                            <div style={{
-                                width: '85%', maxWidth: '280px', height: 'clamp(20px, 2.5vh, 28px)',
-                                opacity: isPlaying ? 0.65 : 0,
-                                transition: 'opacity 0.6s ease'
-                            }}>
-                                <AudioVisualizer />
-                            </div>
-                        )}
-
-                        {/* ── Controls Panel ── */}
-                        <GlassPanel screws={true} style={{
-                            borderRadius: '22px',
-                            padding: '16px 20px',
-                            width: '100%', maxWidth: '360px',
-                            display: 'flex', flexDirection: 'column', gap: '14px',
-                            boxSizing: 'border-box'
-                        }}>
-                            {/* Progress */}
-                            <SkeuoProgress
-                                progress={progress}
-                                duration={duration}
-                                seekTo={seekTo}
-                                accentColor={accentColor}
-                            />
-
-                            {/* Transport Row (Recessed Shelf) */}
-                            <div style={{
-                                width: '100%',
-                                padding: '4px 8px',
-                                borderRadius: '16px',
-                                background: 'rgba(0,0,0,0.22)',
-                                boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.65), 0 1px 1px rgba(255,255,255,0.06)',
-                                border: '1px solid rgba(0,0,0,0.35)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                boxSizing: 'border-box',
-                                position: 'relative'
-                            }}>
-                                {/* Shuffle */}
-                                <button
-                                    onClick={toggleShuffle}
-                                    className={`icon-btn ske-spring-btn ${shuffleMode ? 'active' : ''}`}
-                                    style={{
-                                        width: '40px',
-                                        height: '40px',
-                                        borderRadius: '10px',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        position: 'relative',
-                                        background: 'none',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        color: shuffleMode ? '#fff' : 'rgba(255,255,255,0.45)',
-                                    }}
-                                    title={shuffleMode ? "Shuffle: On" : "Shuffle: Off"}
-                                >
-                                    <Shuffle size={16} />
-                                    {shuffleMode && (
-                                        <div style={{
-                                            position: 'absolute',
-                                            top: '3px',
-                                            width: '4px',
-                                            height: '4px',
-                                            borderRadius: '50%',
-                                            background: accentColor,
-                                            boxShadow: `0 0 6px 1px ${accentColor}`,
-                                            animation: 'pulseGlow 1.5s infinite alternate',
-                                        }} />
-                                    )}
-                                </button>
-
-                                {/* Previous */}
-                                <button
-                                    onClick={handlePrevious}
-                                    disabled={!currentSong}
-                                    className="icon-btn ske-spring-btn"
-                                    style={{
-                                        width: '42px',
-                                        height: '42px',
-                                        borderRadius: '10px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        background: 'none',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        color: 'rgba(255,255,255,0.75)',
-                                    }}
-                                    title="Previous"
-                                >
-                                    <SkipBack size={18} fill="currentColor" color="currentColor" />
-                                </button>
-
-                                {/* Play / Pause dedicated circular recessed well */}
+                            {/* ── Visualizer ── */}
+                            {!isMobile && (
                                 <div style={{
-                                    width: '56px',
-                                    height: '56px',
-                                    borderRadius: '50%',
-                                    background: 'rgba(0,0,0,0.35)',
-                                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.6), 0 1px 1px rgba(255,255,255,0.05)',
-                                    border: '1px solid rgba(0,0,0,0.45)',
+                                    width: '85%', maxWidth: '280px', height: 'clamp(20px, 2.5vh, 28px)',
+                                    opacity: isPlaying ? 0.65 : 0,
+                                    transition: 'opacity 0.6s ease'
+                                }}>
+                                    <AudioVisualizer />
+                                </div>
+                            )}
+
+                            {/* ── Controls Panel ── */}
+                            <GlassPanel screws={true} style={{
+                                borderRadius: '22px',
+                                padding: '16px 20px',
+                                width: '100%', maxWidth: '360px',
+                                display: 'flex', flexDirection: 'column', gap: '14px',
+                                boxSizing: 'border-box'
+                            }}>
+                                {/* Progress */}
+                                <SkeuoProgress
+                                    progress={progress}
+                                    duration={duration}
+                                    seekTo={seekTo}
+                                    accentColor={accentColor}
+                                />
+
+                                {/* Transport Row (Recessed Shelf) */}
+                                <div style={{
+                                    width: '100%',
+                                    padding: '4px 8px',
+                                    borderRadius: '16px',
+                                    background: 'rgba(0,0,0,0.22)',
+                                    boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.65), 0 1px 1px rgba(255,255,255,0.06)',
+                                    border: '1px solid rgba(0,0,0,0.35)',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    justifyContent: 'center'
+                                    justifyContent: 'space-between',
+                                    boxSizing: 'border-box',
+                                    position: 'relative'
                                 }}>
+                                    {/* Shuffle */}
                                     <button
-                                        onClick={togglePlay}
-                                        disabled={!currentSong}
-                                        className="ske-raised ske-spring-btn"
+                                        onClick={toggleShuffle}
+                                        className={`icon-btn ske-spring-btn ${shuffleMode ? 'active' : ''}`}
                                         style={{
-                                            width: '44px',
-                                            height: '44px',
-                                            borderRadius: '50%',
-                                            background: isPlaying ? accentColor : 'rgba(255,255,255,0.08)',
-                                            color: isPlaying ? '#120e0c' : '#fff',
-                                            border: '1px solid rgba(255,255,255,0.12)',
+                                            width: '40px',
+                                            height: '40px',
+                                            borderRadius: '10px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            position: 'relative',
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: shuffleMode ? '#fff' : 'rgba(255,255,255,0.45)',
+                                        }}
+                                        title={shuffleMode ? "Shuffle: On" : "Shuffle: Off"}
+                                    >
+                                        <Shuffle size={16} />
+                                        {shuffleMode && (
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '3px',
+                                                width: '4px',
+                                                height: '4px',
+                                                borderRadius: '50%',
+                                                background: accentColor,
+                                                boxShadow: `0 0 6px 1px ${accentColor}`,
+                                                animation: 'pulseGlow 1.5s infinite alternate',
+                                            }} />
+                                        )}
+                                    </button>
+
+                                    {/* Previous */}
+                                    <button
+                                        onClick={handlePrevious}
+                                        disabled={!currentSong}
+                                        className="icon-btn ske-spring-btn"
+                                        style={{
+                                            width: '42px',
+                                            height: '42px',
+                                            borderRadius: '10px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            cursor: currentSong ? 'pointer' : 'default',
-                                            boxShadow: isPlaying 
-                                                ? `0 3px 10px ${accentColor}55, inset 0 1px 1px rgba(255,255,255,0.25)` 
-                                                : '0 3px 8px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.12)',
-                                            transition: 'all 0.15s ease',
-                                            outline: 'none'
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: 'rgba(255,255,255,0.75)',
                                         }}
-                                        title={isPlaying ? "Pause" : "Play"}
+                                        title="Previous"
                                     >
-                                        {isPlaying ? (
-                                            <Pause size={18} fill="currentColor" color="currentColor" />
+                                        <SkipBack size={18} fill="currentColor" color="currentColor" />
+                                    </button>
+
+                                    {/* Play / Pause dedicated circular recessed well */}
+                                    <div style={{
+                                        width: '56px',
+                                        height: '56px',
+                                        borderRadius: '50%',
+                                        background: 'rgba(0,0,0,0.35)',
+                                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.6), 0 1px 1px rgba(255,255,255,0.05)',
+                                        border: '1px solid rgba(0,0,0,0.45)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}>
+                                        <button
+                                            onClick={togglePlay}
+                                            disabled={!currentSong}
+                                            className="ske-raised ske-spring-btn"
+                                            style={{
+                                                width: '44px',
+                                                height: '44px',
+                                                borderRadius: '50%',
+                                                background: isPlaying ? accentColor : 'rgba(255,255,255,0.08)',
+                                                color: isPlaying ? '#120e0c' : '#fff',
+                                                border: '1px solid rgba(255,255,255,0.12)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: currentSong ? 'pointer' : 'default',
+                                                boxShadow: isPlaying
+                                                    ? `0 3px 10px ${accentColor}55, inset 0 1px 1px rgba(255,255,255,0.25)`
+                                                    : '0 3px 8px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.12)',
+                                                transition: 'all 0.15s ease',
+                                                outline: 'none'
+                                            }}
+                                            title={isPlaying ? "Pause" : "Play"}
+                                        >
+                                            {isPlaying ? (
+                                                <Pause size={18} fill="currentColor" color="currentColor" />
+                                            ) : (
+                                                <Play size={18} fill="currentColor" color="currentColor" style={{ marginLeft: '1.5px' }} />
+                                            )}
+                                        </button>
+                                    </div>
+
+                                    {/* Next */}
+                                    <button
+                                        onClick={handleNext}
+                                        disabled={!currentSong}
+                                        className="icon-btn ske-spring-btn"
+                                        style={{
+                                            width: '42px',
+                                            height: '42px',
+                                            borderRadius: '10px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: 'rgba(255,255,255,0.75)',
+                                        }}
+                                        title="Next"
+                                    >
+                                        <SkipForward size={18} fill="currentColor" color="currentColor" />
+                                    </button>
+
+                                    {/* Repeat */}
+                                    <button
+                                        onClick={toggleRepeat}
+                                        className={`icon-btn ske-spring-btn ${repeatMode !== 'none' ? 'active' : ''}`}
+                                        style={{
+                                            width: '40px',
+                                            height: '40px',
+                                            borderRadius: '10px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            position: 'relative',
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: repeatMode !== 'none' ? '#fff' : 'rgba(255,255,255,0.45)',
+                                        }}
+                                        title={`Repeat: ${repeatMode}`}
+                                    >
+                                        {repeatMode === 'one' ? (
+                                            <Repeat1 size={16} />
                                         ) : (
-                                            <Play size={18} fill="currentColor" color="currentColor" style={{ marginLeft: '1.5px' }} />
+                                            <Repeat size={16} />
+                                        )}
+                                        {repeatMode !== 'none' && (
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '3px',
+                                                width: '4px',
+                                                height: '4px',
+                                                borderRadius: '50%',
+                                                background: accentColor,
+                                                boxShadow: `0 0 6px 1px ${accentColor}`,
+                                                animation: 'pulseGlow 1.5s infinite alternate',
+                                            }} />
                                         )}
                                     </button>
                                 </div>
 
-                                {/* Next */}
-                                <button
-                                    onClick={handleNext}
-                                    disabled={!currentSong}
-                                    className="icon-btn ske-spring-btn"
-                                    style={{
-                                        width: '42px',
-                                        height: '42px',
-                                        borderRadius: '10px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        background: 'none',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        color: 'rgba(255,255,255,0.75)',
-                                    }}
-                                    title="Next"
-                                >
-                                    <SkipForward size={18} fill="currentColor" color="currentColor" />
-                                </button>
-
-                                {/* Repeat */}
-                                <button
-                                    onClick={toggleRepeat}
-                                    className={`icon-btn ske-spring-btn ${repeatMode !== 'none' ? 'active' : ''}`}
-                                    style={{
-                                        width: '40px',
-                                        height: '40px',
-                                        borderRadius: '10px',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        position: 'relative',
-                                        background: 'none',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        color: repeatMode !== 'none' ? '#fff' : 'rgba(255,255,255,0.45)',
-                                    }}
-                                    title={`Repeat: ${repeatMode}`}
-                                >
-                                    {repeatMode === 'one' ? (
-                                        <Repeat1 size={16} />
-                                    ) : (
-                                        <Repeat size={16} />
-                                    )}
-                                    {repeatMode !== 'none' && (
-                                        <div style={{
-                                            position: 'absolute',
-                                            top: '3px',
-                                            width: '4px',
-                                            height: '4px',
-                                            borderRadius: '50%',
-                                            background: accentColor,
-                                            boxShadow: `0 0 6px 1px ${accentColor}`,
-                                            animation: 'pulseGlow 1.5s infinite alternate',
-                                        }} />
-                                    )}
-                                </button>
-                            </div>
-
-                            {/* Volume */}
-                            <SkeuoVolume volume={volume} setVolume={setVolume} accentColor={accentColor} />
-                        </GlassPanel>
-                    </div>
-                )}
+                                {/* Volume */}
+                                <SkeuoVolume volume={volume} setVolume={setVolume} accentColor={accentColor} />
+                            </GlassPanel>
+                        </div>
+                    )}
 
                     {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                         RIGHT COLUMN: LYRICS / QUEUE

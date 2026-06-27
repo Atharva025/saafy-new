@@ -118,8 +118,8 @@ export default function ArtistPage() {
                 right: 0,
                 zIndex: 50,
                 background: isDark ? 'rgba(26, 22, 20, 0.88)' : 'rgba(250, 247, 242, 0.88)',
-                backdropFilter: 'blur(12px) saturate(140%)',
-                WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+                backdropFilter: 'blur(20px) saturate(160%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(160%)',
                 borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
                 boxShadow: `0 2px 8px var(--ske-shadow), 0 1px 0 var(--ske-inner-highlight), inset 0 1px 0 var(--ske-highlight)`,
                 transition: 'all 0.3s ease',
@@ -319,9 +319,10 @@ export default function ArtistPage() {
                                         boxShadow: isCurrentSong
                                             ? `inset 1px 2px 5px var(--ske-inner-shadow), inset -1px -1px 3px var(--ske-inner-highlight)`
                                             : hoveredIndex === index
-                                                ? `1px 2px 6px var(--ske-shadow), -1px -1px 4px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight)`
+                                                ? `0 6px 16px ${isDark ? 'rgba(0,0,0,0.25)' : 'rgba(196,92,62,0.06)'}, 1px 2px 6px var(--ske-shadow), -1px -1px 4px var(--ske-highlight), inset 0 1px 0 var(--ske-inner-highlight)`
                                                 : 'none',
-                                        transition: 'background 0.12s ease, box-shadow 100ms ease-out',
+                                        transition: 'background 0.2s ease, box-shadow 250ms ease-out, border 0.25s ease, opacity 0.25s ease, transform 300ms var(--ease-spring)',
+                                        transform: hoveredIndex === index && !isCurrentSong ? 'translateY(-2px) translateX(2px)' : 'none',
                                         marginBottom: '2px',
                                     }}
                                 >

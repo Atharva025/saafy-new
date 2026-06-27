@@ -329,12 +329,12 @@ function HeroCard({ song, onPlay, onAddToQueue, onAddToPlaylist, currentUser, cu
                         ? `2px solid ${colors.accent}`
                         : `1px solid ${colors.border}`,
                     boxShadow: isActive
-                        ? `0 24px 48px ${activeGlow}, var(--shadow-ske-sm)`
+                        ? `0 24px 56px ${activeGlow}, var(--shadow-ske-sm)`
                         : hovered
-                            ? `0 30px 60px ${hoverGlow}, 0 12px 24px var(--ske-shadow), var(--shadow-ske-md)`
+                            ? `0 36px 72px ${hoverGlow}, 0 16px 32px var(--ske-shadow), var(--shadow-ske-md)`
                             : `0 8px 24px var(--ske-shadow), var(--shadow-ske-xs)`,
-                    transform: hovered ? 'translateY(-6px) rotateX(1deg) rotateY(1deg)' : 'translateY(0) rotateX(0) rotateY(0)',
-                    transition: 'all 400ms cubic-bezier(0.16, 1, 0.3, 1)',
+                    transform: hovered ? 'translateY(-8px) rotateX(2deg) rotateY(2deg)' : 'translateY(0) rotateX(0) rotateY(0)',
+                    transition: 'all 400ms cubic-bezier(0.34, 1.56, 0.64, 1)',
                     transformStyle: 'preserve-3d',
                 }}
             >
@@ -350,7 +350,7 @@ function HeroCard({ song, onPlay, onAddToQueue, onAddToPlaylist, currentUser, cu
                             width: '100%',
                             height: '100%',
                             objectFit: 'cover',
-                            transform: hovered ? 'scale(1.05)' : 'scale(1)',
+                            transform: hovered ? 'scale(1.08)' : 'scale(1)',
                             transition: 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
                         }}
                     />
@@ -439,16 +439,16 @@ function HeroCard({ song, onPlay, onAddToQueue, onAddToPlaylist, currentUser, cu
                     padding: isMobile ? '14px' : '18px 20px',
                     borderRadius: '16px',
                     background: colors.overlay,
-                    backdropFilter: 'blur(20px) saturate(180%)',
-                    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                    backdropFilter: 'blur(24px) saturate(190%)',
+                    WebkitBackdropFilter: 'blur(24px) saturate(190%)',
                     border: `1px solid ${colors.border}`,
-                    boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
+                    boxShadow: '0 16px 40px rgba(0,0,0,0.18)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     gap: '16px',
-                    transform: 'translateZ(20px)', // Lifted 3D element
-                    transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                    transform: hovered ? 'translateZ(30px) scale(1.02)' : 'translateZ(20px) scale(1)', // Lifted 3D element
+                    transition: 'all 400ms cubic-bezier(0.34, 1.56, 0.64, 1)',
                 }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                         {song.name && song.name.length > 20 ? (
@@ -557,12 +557,12 @@ function SmallCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, current
                 background: colors.paperDark,
                 border: isActive ? `2px solid ${colors.accent}` : `1px solid ${colors.border}`,
                 boxShadow: isActive
-                    ? `0 12px 28px ${activeGlow}, var(--shadow-ske-sm)`
+                    ? `0 14px 32px ${activeGlow}, var(--shadow-ske-sm)`
                     : hovered
-                        ? `0 16px 36px ${hoverGlow}, var(--shadow-ske-md)`
+                        ? `0 24px 48px ${hoverGlow}, var(--shadow-ske-md)`
                         : `0 4px 12px var(--ske-shadow), var(--shadow-ske-xs)`,
-                transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
-                transition: 'all 350ms cubic-bezier(0.16, 1, 0.3, 1)',
+                transform: hovered ? 'translateY(-6px) scale(1.01)' : 'translateY(0) scale(1)',
+                transition: 'all 350ms cubic-bezier(0.34, 1.56, 0.64, 1)',
                 animation: 'cardFadeIn 0.4s ease-out both',
                 animationDelay: `${index * 0.06}s`,
             }}
@@ -579,7 +579,7 @@ function SmallCard({ song, index, onPlay, onAddToQueue, onAddToPlaylist, current
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
-                        transform: hovered ? 'scale(1.06)' : 'scale(1)',
+                        transform: hovered ? 'scale(1.08)' : 'scale(1)',
                         transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
                     }}
                 />

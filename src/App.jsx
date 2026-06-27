@@ -637,7 +637,7 @@ function HomePage() {
     if (hour < 12) return 'Good morning'
     if (hour < 17) return 'Good afternoon'
     if (hour < 21) return 'Good evening'
-    return 'Late night vibes'
+    return 'Late night listening'
   }
 
   const formatDate = () => {
@@ -672,19 +672,35 @@ function HomePage() {
   const renderHeading = (index, title, subtitle) => (
     <div style={{
       display: 'flex',
-      alignItems: 'baseline',
-      gap: '12px',
-      marginBottom: isMobile ? '12px' : 'clamp(14px, 3.5vw, 22px)',
-      borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
-      paddingBottom: '8px',
+      alignItems: 'center',
+      gap: '14px',
+      marginBottom: isMobile ? '14px' : 'clamp(16px, 3.5vw, 24px)',
+      paddingBottom: '10px',
+      borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.055)' : 'rgba(0,0,0,0.045)'}`,
+      position: 'relative',
     }}>
+      {/* Left accent bar */}
+      <div style={{
+        width: '3px',
+        height: '100%',
+        minHeight: '24px',
+        position: 'absolute',
+        left: '-14px',
+        top: 0,
+        background: `linear-gradient(to bottom, ${colors.accent}, ${colors.accent}60)`,
+        borderRadius: '0 2px 2px 0',
+        opacity: 0.85,
+        display: isMobile ? 'none' : 'block',
+      }} />
       <span style={{
         fontFamily: fonts.mono,
-        fontSize: '0.72rem',
-        fontWeight: 600,
+        fontSize: '0.68rem',
+        fontWeight: 700,
         color: colors.accent,
-        letterSpacing: '0.1em',
-        opacity: 0.8,
+        letterSpacing: '0.12em',
+        opacity: 0.9,
+        textTransform: 'uppercase',
+        flexShrink: 0,
       }}>
         {index}
       </span>
@@ -694,18 +710,21 @@ function HomePage() {
         fontWeight: 800,
         color: colors.ink,
         margin: 0,
-        letterSpacing: '-0.02em',
+        letterSpacing: '-0.03em',
+        lineHeight: 1.1,
       }}>
         {title}
       </h2>
       {!isMobile && subtitle && (
         <span style={{
           fontFamily: fonts.mono,
-          fontSize: '0.65rem',
+          fontSize: '0.63rem',
           color: colors.inkLight,
           textTransform: 'uppercase',
-          letterSpacing: '0.05em',
+          letterSpacing: '0.06em',
           marginLeft: 'auto',
+          opacity: 0.7,
+          flexShrink: 0,
         }}>
           {subtitle}
         </span>
@@ -1696,8 +1715,8 @@ function HomePage() {
       <main className="main-content" style={{
         maxWidth: '1400px',
         margin: '0 auto',
-        paddingLeft: 'clamp(12px, 3.5vw, 32px)',
-        paddingRight: 'clamp(12px, 3.5vw, 32px)',
+        paddingLeft: 'clamp(16px, 4vw, 40px)',
+        paddingRight: 'clamp(16px, 4vw, 40px)',
         paddingTop: isMobile ? '78px' : (!isSearching ? '135px' : '90px'),
         paddingBottom: 'clamp(120px, 25vw, 160px)',
         display: searchExpanded ? 'none' : 'block',
@@ -3270,7 +3289,7 @@ function HomePage() {
                     {/* Add themed content to fill the page when in recommendations mode */}
                     {themed.party?.songs && themed.party.songs.length > 0 && (
                       <section id="section-party" style={getStaggerStyle(3)}>
-                        {renderHeading("03", themed.party.title, "Get the vibe started")}
+                        {renderHeading("03", themed.party.title, "Start the party")}
                         <DiscoverSection
                           songs={themed.party.songs}
                           loading={loading}
@@ -3317,7 +3336,7 @@ function HomePage() {
                     {/* Party Hits */}
                     {themed.party?.songs && themed.party.songs.length > 0 && (
                       <section id="section-party" style={getStaggerStyle(3)}>
-                        {renderHeading("04", themed.party.title, "Get the vibe started")}
+                        {renderHeading("04", themed.party.title, "Start the party")}
                         <DiscoverSection
                           songs={themed.party.songs}
                           loading={loading}

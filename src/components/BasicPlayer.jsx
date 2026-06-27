@@ -219,21 +219,21 @@ export default function BasicPlayer({ showQueue, setShowQueue, isHidden }) {
                 className="ske-textured ske-float"
                 style={{
                     background: isDark
-                        ? 'var(--color-overlay-deep)'
-                        : 'var(--color-overlay-deep)',
-                    backdropFilter: 'blur(20px) saturate(180%)',
-                    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                        ? 'linear-gradient(135deg, rgba(26, 22, 20, 0.88) 0%, rgba(37, 34, 32, 0.88) 100%)'
+                        : 'linear-gradient(135deg, rgba(253, 251, 249, 0.90) 0%, rgba(245, 242, 235, 0.90) 100%)',
+                    backdropFilter: 'blur(24px) saturate(190%)',
+                    WebkitBackdropFilter: 'blur(24px) saturate(190%)',
                     borderRadius: 'clamp(14px, 3vw, 18px)',
                     border: dominantColor
-                        ? `1px solid ${adjustColorForTheme(dominantColor, isDark)?.rgba(isDark ? 0.22 : 0.16) || 'var(--color-border)'}`
+                        ? `1px solid ${adjustColorForTheme(dominantColor, isDark)?.rgba(isDark ? 0.28 : 0.20) || 'var(--color-border)'}`
                         : `1px solid var(--color-border)`,
                     boxShadow: dominantColor
-                        ? `${isHovered ? '0 16px 44px' : '0 10px 32px'} ${adjustColorForTheme(dominantColor, isDark)?.rgba(isDark ? 0.35 : 0.16) || 'rgba(0,0,0,0.15)'}`
+                        ? `${isHovered ? '0 20px 48px' : '0 12px 36px'} ${adjustColorForTheme(dominantColor, isDark)?.rgba(isDark ? 0.38 : 0.18) || 'rgba(0,0,0,0.15)'}`
                         : (isHovered ? 'var(--shadow-ske-lg)' : 'var(--shadow-ske-md)'),
                     overflow: 'hidden',
                     transition: 'box-shadow 350ms cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s ease, transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1)',
                     position: 'relative',
-                    transform: isHovered ? 'translateY(-2px) scale(1.01)' : 'translateY(0) scale(1)',
+                    transform: isHovered ? 'translateY(-3px) scale(1.01)' : 'translateY(0) scale(1)',
                 }}
             >
                 {/* Glass gloss shine reflection at the top */}
@@ -242,10 +242,12 @@ export default function BasicPlayer({ showQueue, setShowQueue, isHidden }) {
                     top: 0,
                     left: 0,
                     right: 0,
-                    height: '40%',
-                    background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 100%)',
+                    height: '48%',
+                    background: isDark 
+                        ? 'linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 60%, rgba(255, 255, 255, 0) 100%)'
+                        : 'linear-gradient(to bottom, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0) 100%)',
                     pointerEvents: 'none',
-                    zIndex: 1,
+                    zIndex: 2,
                 }} />
 
                 {isMobile ? (
@@ -636,7 +638,7 @@ export default function BasicPlayer({ showQueue, setShowQueue, isHidden }) {
                                                 style={{
                                                     height: '100%',
                                                     width: `${progressPercent}%`,
-                                                    background: accentColor,
+                                                    background: `linear-gradient(90deg, ${colors.accent} 0%, ${accentColor} 100%)`,
                                                     borderRadius: '3px',
                                                     transition: 'width 0.1s linear',
                                                 }} 
@@ -649,13 +651,14 @@ export default function BasicPlayer({ showQueue, setShowQueue, isHidden }) {
                                                     position: 'absolute',
                                                     top: '50%',
                                                     left: `${progressPercent}%`,
-                                                    transform: progressHovered ? 'translate(-50%, -50%) scale(1.3)' : 'translate(-50%, -50%) scale(1)',
+                                                    transform: progressHovered ? 'translate(-50%, -50%) scale(1.35)' : 'translate(-50%, -50%) scale(1)',
                                                     width: '10px',
                                                     height: '10px',
                                                     borderRadius: '50%',
                                                     background: 'var(--color-paper-dark)',
-                                                    border: '1px solid var(--color-border)',
-                                                    transition: 'transform 200ms var(--ease-spring)',
+                                                    border: `1.5px solid ${accentColor}`,
+                                                    boxShadow: progressHovered ? `0 2px 8px ${accentColor}50, var(--shadow-ske-xs)` : 'var(--shadow-ske-xs)',
+                                                    transition: 'transform 250ms var(--ease-spring), box-shadow 0.2s ease, border-color 0.2s ease',
                                                 }} 
                                             />
                                         </div>
@@ -1006,7 +1009,10 @@ export default function BasicPlayer({ showQueue, setShowQueue, isHidden }) {
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         position: 'relative',
+                                        transition: 'transform 250ms var(--ease-spring), color 0.2s ease',
                                     }}
+                                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.15) translateY(-1px)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
                                     title={shuffleMode ? "Shuffle: On" : "Shuffle: Off"}
                                 >
                                     <Shuffle size={14} />
@@ -1036,7 +1042,10 @@ export default function BasicPlayer({ showQueue, setShowQueue, isHidden }) {
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
+                                        transition: 'transform 250ms var(--ease-spring), color 0.2s ease, opacity 0.2s ease',
                                     }}
+                                    onMouseEnter={(e) => { if (currentSong) e.currentTarget.style.transform = 'scale(1.15) translateY(-1px)' }}
+                                    onMouseLeave={(e) => { if (currentSong) e.currentTarget.style.transform = 'scale(1) translateY(0)' }}
                                     title="Previous"
                                 >
                                     <SkipBack size={14} fill="currentColor" />
@@ -1053,12 +1062,16 @@ export default function BasicPlayer({ showQueue, setShowQueue, isHidden }) {
                                         borderRadius: '50%',
                                         background: isPlaying ? accentColor : 'var(--color-paper-dark)',
                                         color: isPlaying ? 'var(--color-paper)' : 'var(--color-ink)',
-                                        border: '1px solid var(--color-border)',
+                                        border: `1px solid ${isPlaying ? accentColor : 'var(--color-border)'}`,
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         cursor: currentSong ? 'pointer' : 'default',
+                                        transition: 'transform 250ms var(--ease-spring), background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, filter 0.2s ease',
+                                        boxShadow: isPlaying ? `0 4px 14px ${accentColor}50, var(--shadow-ske-sm)` : 'var(--shadow-ske-sm)',
                                     }}
+                                    onMouseEnter={(e) => { if (currentSong) e.currentTarget.style.transform = 'scale(1.12)' }}
+                                    onMouseLeave={(e) => { if (currentSong) e.currentTarget.style.transform = 'scale(1)' }}
                                     title={isPlaying ? "Pause" : "Play"}
                                 >
                                     {isPlaying ? (
@@ -1080,7 +1093,10 @@ export default function BasicPlayer({ showQueue, setShowQueue, isHidden }) {
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
+                                        transition: 'transform 250ms var(--ease-spring), color 0.2s ease, opacity 0.2s ease',
                                     }}
+                                    onMouseEnter={(e) => { if (currentSong) e.currentTarget.style.transform = 'scale(1.15) translateY(-1px)' }}
+                                    onMouseLeave={(e) => { if (currentSong) e.currentTarget.style.transform = 'scale(1) translateY(0)' }}
                                     title="Next"
                                 >
                                     <SkipForward size={14} fill="currentColor" />
@@ -1099,7 +1115,10 @@ export default function BasicPlayer({ showQueue, setShowQueue, isHidden }) {
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         position: 'relative',
+                                        transition: 'transform 250ms var(--ease-spring), color 0.2s ease',
                                     }}
+                                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.15) translateY(-1px)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
                                     title={`Repeat: ${repeatMode}`}
                                 >
                                     {repeatMode === 'one' ? (
@@ -1152,7 +1171,7 @@ export default function BasicPlayer({ showQueue, setShowQueue, isHidden }) {
                                         height: '24px',
                                         cursor: 'pointer',
                                         overflow: 'hidden',
-                                        transition: 'width 0.25s cubic-bezier(0.16, 1, 0.3, 1), padding 0.25s ease',
+                                        transition: 'width 300ms cubic-bezier(0.34, 1.56, 0.64, 1), padding 300ms ease',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'flex-end',
@@ -1187,7 +1206,7 @@ export default function BasicPlayer({ showQueue, setShowQueue, isHidden }) {
                                                 left: 0,
                                                 width: `${volume * 100}%`,
                                                 height: '100%',
-                                                background: accentColor,
+                                                background: `linear-gradient(90deg, ${colors.accent} 0%, ${accentColor} 100%)`,
                                                 borderRadius: '3px',
                                             }} 
                                         />
@@ -1314,7 +1333,7 @@ export default function BasicPlayer({ showQueue, setShowQueue, isHidden }) {
                                                 style={{
                                                     height: '100%',
                                                     width: `${progressPercent}%`,
-                                                    background: accentColor,
+                                                    background: `linear-gradient(90deg, ${colors.accent} 0%, ${accentColor} 100%)`,
                                                     borderRadius: '3px',
                                                     transition: 'width 0.1s linear',
                                                 }} 
@@ -1327,13 +1346,14 @@ export default function BasicPlayer({ showQueue, setShowQueue, isHidden }) {
                                                     position: 'absolute',
                                                     top: '50%',
                                                     left: `${progressPercent}%`,
-                                                    transform: progressHovered ? 'translate(-50%, -50%) scale(1.3)' : 'translate(-50%, -50%) scale(1)',
+                                                    transform: progressHovered ? 'translate(-50%, -50%) scale(1.35)' : 'translate(-50%, -50%) scale(1)',
                                                     width: '12px',
                                                     height: '12px',
                                                     borderRadius: '50%',
                                                     background: 'var(--color-paper-dark)',
-                                                    border: '1px solid var(--color-border)',
-                                                    transition: 'transform 200ms var(--ease-spring)',
+                                                    border: `1.5px solid ${accentColor}`,
+                                                    boxShadow: progressHovered ? `0 2px 8px ${accentColor}50, var(--shadow-ske-xs)` : 'var(--shadow-ske-xs)',
+                                                    transition: 'transform 250ms var(--ease-spring), box-shadow 0.2s ease, border-color 0.2s ease',
                                                 }} 
                                             />
                                         </div>
