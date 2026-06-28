@@ -810,26 +810,20 @@ function HomePage() {
         zIndex: searchExpanded ? 1001 : 50,
         background: searchExpanded
           ? 'transparent'
-          : (scrolled
-              ? (isDark ? 'rgba(26, 22, 20, 0.55)' : 'rgba(250, 247, 242, 0.55)')
-              : (isDark ? 'rgba(26, 22, 20, 0.72)' : 'rgba(250, 247, 242, 0.72)')),
-        backdropFilter: searchExpanded ? 'none' : 'blur(20px) saturate(160%)',
-        WebkitBackdropFilter: searchExpanded ? 'none' : 'blur(20px) saturate(160%)',
+          : (isDark ? 'rgba(26, 22, 20, 0.45)' : 'rgba(253, 251, 249, 0.45)'),
+        backdropFilter: searchExpanded ? 'none' : 'blur(24px) saturate(180%)',
+        WebkitBackdropFilter: searchExpanded ? 'none' : 'blur(24px) saturate(180%)',
         borderBottom: searchExpanded
           ? 'none'
-          : `1px solid ${scrolled
-              ? (isDark ? 'rgba(224, 115, 86, 0.22)' : 'rgba(196, 92, 62, 0.18)')
-              : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)')}`,
+          : (isDark ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(26, 22, 20, 0.04)'),
         boxShadow: searchExpanded
           ? 'none'
           : (scrolled
               ? (isDark 
-                  ? 'inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 20px rgba(0, 0, 0, 0.45)' 
-                  : 'inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 4px 20px rgba(26, 22, 20, 0.08)')
-              : (isDark 
-                  ? 'inset 0 1px 0 rgba(255, 255, 255, 0.04)' 
-                  : 'inset 0 1px 0 rgba(255, 255, 255, 0.45)')),
-        transition: searchExpanded ? 'none' : 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                  ? '0 10px 30px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255,255,255,0.05)' 
+                  : '0 10px 30px rgba(26, 22, 20, 0.03), inset 0 1px 0 rgba(255,255,255,0.6)')
+              : 'none'),
+        transition: 'background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease',
       }}>
         {/* ─── DESKTOP HEADER ROW ─────────────────────────────────────── */}
         {!isMobile && (
@@ -846,14 +840,17 @@ function HomePage() {
             transition: 'padding 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
           }}>
             {/* Left - Logo + Greeting */}
-            {!searchExpanded && (
-              <div className="header-left" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div className="header-left" style={{
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              opacity: searchExpanded ? 0 : 1,
+              visibility: searchExpanded ? 'hidden' : 'visible',
+              pointerEvents: searchExpanded ? 'none' : 'auto',
+              transition: 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}>
                 <div style={{
-                  fontFamily: fonts.display,
-                  fontSize: 'clamp(1.05rem, 3.5vw, 1.25rem)',
-                  fontWeight: 800,
-                  color: colors.ink,
-                  letterSpacing: '-0.03em',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
@@ -864,56 +861,66 @@ function HomePage() {
                 onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
                 >
                   <div style={{
-                    width: '26px',
-                    height: '26px',
+                    width: '28px',
+                    height: '28px',
                     borderRadius: '8px',
-                    background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`,
+                    background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#FF6B4A' : '#A84030'} 100%)`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    boxShadow: `0 4px 12px ${colors.accent}30, var(--shadow-ske-xs)`,
+                    boxShadow: `0 4px 12px ${colors.accent}25, inset 0 1px 0 rgba(255,255,255,0.25)`,
                   }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff">
                       <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
                     </svg>
                   </div>
-                  SAAFY
+                  <span className="logo-text">SAAFY</span>
                 </div>
 
                 <div className="header-divider" style={{
-                  width: '1.5px',
-                  height: '24px',
-                  background: isDark
-                    ? 'linear-gradient(to bottom, rgba(255,255,255,0.01), rgba(255,255,255,0.12), rgba(255,255,255,0.01))'
-                    : 'linear-gradient(to bottom, rgba(0,0,0,0.01), rgba(0,0,0,0.08), rgba(0,0,0,0.01))'
+                  width: '1px',
+                  height: '16px',
+                  background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'
                 }} />
 
                 <div className="header-greeting" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                   <div style={{
                     fontFamily: fonts.primary,
-                    fontSize: 'clamp(0.72rem, 1.8vw, 0.85rem)',
-                    fontWeight: 700,
+                    fontSize: 'clamp(0.72rem, 1.8vw, 0.8rem)',
+                    fontWeight: 600,
                     color: colors.ink,
                     lineHeight: 1.2,
                     letterSpacing: '-0.01em',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
                   }}>
                     {getGreeting()}
+                    <span 
+                      className="pulse-dot"
+                      style={{
+                        width: '6px',
+                        height: '6px',
+                        borderRadius: '50%',
+                        background: '#10b981',
+                        display: 'inline-block',
+                      }}
+                    />
                   </div>
                   <div style={{
                     fontFamily: fonts.mono,
-                    fontSize: 'clamp(0.58rem, 1.3vw, 0.6rem)',
+                    fontSize: '0.6rem',
                     color: colors.inkLight,
                     textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
+                    letterSpacing: '0.05em',
                     marginTop: '1px',
-                    opacity: 0.85,
+                    opacity: 0.8,
                   }}>
                     {formatDate()}
                   </div>
                 </div>
               </div>
-            )}
 
             {/* Center - Search (Desktop only) */}
             <div className="header-search" style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: 0, position: 'relative' }}>
@@ -927,206 +934,227 @@ function HomePage() {
               />
             </div>
 
-          {/* Desktop: Right - Actions (hidden on mobile) */}
-          {!searchExpanded && (
-            <div className="header-actions" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap' }}>
-             {/* Queue Button */}
-             <IconButton
-               onClick={() => setShowQueue(!showQueue)}
-               isActive={showQueue}
-               title="Queue"
-               ariaLabel="Toggle play queue panel"
-               badge={queue.length > 0 ? queue.length : null}
-             >
-               <ListMusic size={18} />
-             </IconButton>
- 
-             {/* Theme Toggle */}
-             <IconButton
-               onClick={toggleTheme}
-               isActive={isDark}
-               title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-               ariaLabel={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-             >
-               {isDark ? <Sun size={18} /> : <Moon size={18} />}
-             </IconButton>
- 
-             {/* Listening History */}
-             <div ref={historyRef} style={{ position: 'relative' }}>
-               <IconButton
-                 onClick={() => {
-                   const userId = currentUser ? (currentUser.id || currentUser._id) : 'guest'
-                   loadListeningHistory(userId)
-                   setShowHistory(!showHistory)
-                 }}
-                 isActive={showHistory}
-                 title="Recently Played"
-                 ariaLabel="Toggle recently played history dropdown"
-               >
-                 <History size={18} />
-               </IconButton>
+            {/* Desktop: Right - Actions (hidden on mobile) */}
+            <div className="header-actions" style={{
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              flexWrap: 'nowrap',
+              opacity: searchExpanded ? 0 : 1,
+              visibility: searchExpanded ? 'hidden' : 'visible',
+              pointerEvents: searchExpanded ? 'none' : 'auto',
+              transition: 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}>
+              {/* Frosted Control Capsule Dock */}
+              <div 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '3px 4px',
+                  borderRadius: '99px',
+                  background: isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
+                  border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)'}`,
+                }}
+              >
+                {/* Queue Button */}
+                <IconButton
+                  onClick={() => setShowQueue(!showQueue)}
+                  isActive={showQueue}
+                  title="Queue"
+                  ariaLabel="Toggle play queue panel"
+                  badge={queue.length > 0 ? queue.length : null}
+                >
+                  <ListMusic size={18} />
+                </IconButton>
 
-              {showHistory && (
-                <div style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 8px)',
-                  right: 0,
-                  width: '280px',
-                  background: colors.paper,
-                  borderRadius: '12px',
-                  border: `1px solid ${colors.rule}`,
-                  boxShadow: isDark
-                    ? '0 16px 48px rgba(0,0,0,0.4), 0 8px 20px rgba(0,0,0,0.3)'
-                    : '0 16px 48px rgba(26,22,20,0.12), 0 8px 20px rgba(26,22,20,0.06)',
-                  overflow: 'hidden',
-                  zIndex: 100,
-                }}>
-                  <div style={{
-                    padding: '12px 14px',
-                    borderBottom: `1px solid ${colors.rule}`,
-                  }}>
+                {/* Theme Toggle */}
+                <IconButton
+                  onClick={toggleTheme}
+                  isActive={isDark}
+                  title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                  ariaLabel={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                >
+                  {isDark ? <Sun size={18} /> : <Moon size={18} />}
+                </IconButton>
+
+                {/* Listening History */}
+                <div ref={historyRef} style={{ position: 'relative' }}>
+                  <IconButton
+                    onClick={() => {
+                      const userId = currentUser ? (currentUser.id || currentUser._id) : 'guest'
+                      loadListeningHistory(userId)
+                      setShowHistory(!showHistory)
+                    }}
+                    isActive={showHistory}
+                    title="Recently Played"
+                    ariaLabel="Toggle recently played history dropdown"
+                  >
+                    <History size={18} />
+                  </IconButton>
+
+                  {showHistory && (
                     <div style={{
-                      fontFamily: fonts.mono,
-                      fontSize: '0.7rem',
-                      color: colors.inkMuted,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
+                      position: 'absolute',
+                      top: 'calc(100% + 8px)',
+                      right: 0,
+                      width: '280px',
+                      background: colors.paper,
+                      borderRadius: '12px',
+                      border: `1px solid ${colors.rule}`,
+                      boxShadow: isDark
+                        ? '0 16px 48px rgba(0,0,0,0.4), 0 8px 20px rgba(0,0,0,0.3)'
+                        : '0 16px 48px rgba(26,22,20,0.12), 0 8px 20px rgba(26,22,20,0.06)',
+                      overflow: 'hidden',
+                      zIndex: 100,
                     }}>
-                      Recently Played
-                    </div>
-                  </div>
-                  <div style={{ maxHeight: '320px', overflowY: 'auto', padding: '6px' }}>
-                    {listeningHistory.length === 0 ? (
                       <div style={{
-                        padding: '20px',
-                        textAlign: 'center',
-                        fontFamily: fonts.primary,
-                        fontSize: '0.8rem',
-                        color: colors.inkLight,
+                        padding: '12px 14px',
+                        borderBottom: `1px solid ${colors.rule}`,
                       }}>
-                        No history yet
+                        <div style={{
+                          fontFamily: fonts.mono,
+                          fontSize: '0.7rem',
+                          color: colors.inkMuted,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                        }}>
+                          Recently Played
+                        </div>
                       </div>
-                    ) : (
-                      listeningHistory.map((song) => {
-                        const imageUrl = song.image?.[0]?.link || song.image?.[1]?.link || ''
-                        return (
-                          <button
-                            key={song.id}
-                            onClick={() => handleHistorySongClick(song)}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '10px',
-                              padding: '8px 10px',
-                              borderRadius: '8px',
-                              cursor: 'pointer',
-                              transition: 'background 0.1s',
-                              border: 'none',
-                              background: 'transparent',
-                              width: '100%',
-                              textAlign: 'left',
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = colors.paperDark}
-                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                          >
-                            <div style={{
-                              width: '32px',
-                              height: '32px',
-                              borderRadius: '6px',
-                              overflow: 'hidden',
-                              flexShrink: 0,
-                              background: colors.paperDark,
-                            }}>
-                              {imageUrl ? (
-                                <img src={imageUrl} alt={song.name || song.title || ''} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              ) : (
-                                <div style={{
-                                  width: '100%',
-                                  height: '100%',
+                      <div style={{ maxHeight: '320px', overflowY: 'auto', padding: '6px' }}>
+                        {listeningHistory.length === 0 ? (
+                          <div style={{
+                            padding: '20px',
+                            textAlign: 'center',
+                            fontFamily: fonts.primary,
+                            fontSize: '0.8rem',
+                            color: colors.inkLight,
+                          }}>
+                            No history yet
+                          </div>
+                        ) : (
+                          listeningHistory.map((song) => {
+                            const imageUrl = song.image?.[0]?.link || song.image?.[1]?.link || ''
+                            return (
+                              <button
+                                key={song.id}
+                                onClick={() => handleHistorySongClick(song)}
+                                style={{
                                   display: 'flex',
                                   alignItems: 'center',
-                                  justifyContent: 'center',
+                                  gap: '10px',
+                                  padding: '8px 10px',
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  transition: 'background 0.1s',
+                                  border: 'none',
+                                  background: 'transparent',
+                                  width: '100%',
+                                  textAlign: 'left',
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.background = colors.paperDark}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                              >
+                                <div style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  borderRadius: '6px',
+                                  overflow: 'hidden',
+                                  flexShrink: 0,
+                                  background: colors.paperDark,
                                 }}>
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill={colors.inkLight}>
-                                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-                                  </svg>
+                                  {imageUrl ? (
+                                    <img src={imageUrl} alt={song.name || song.title || ''} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  ) : (
+                                    <div style={{
+                                      width: '100%',
+                                      height: '100%',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                    }}>
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill={colors.inkLight}>
+                                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                                      </svg>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{
-                                fontFamily: fonts.primary,
-                                fontWeight: 500,
-                                fontSize: '0.75rem',
-                                color: colors.ink,
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                              }}>
-                                {song.name}
-                              </div>
-                              <div style={{
-                                fontFamily: fonts.mono,
-                                fontSize: '0.6rem',
-                                color: colors.inkMuted,
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                              }}>
-                                {song.primaryArtists}
-                              </div>
-                            </div>
-                          </button>
-                        )
-                      })
-                    )}
-                  </div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{
+                                    fontFamily: fonts.primary,
+                                    fontWeight: 500,
+                                    fontSize: '0.75rem',
+                                    color: colors.ink,
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                  }}>
+                                    {song.name}
+                                  </div>
+                                  <div style={{
+                                    fontFamily: fonts.mono,
+                                    fontSize: '0.6rem',
+                                    color: colors.inkMuted,
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                  }}>
+                                    {song.primaryArtists}
+                                  </div>
+                                </div>
+                              </button>
+                            )
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {/* Shuffle All */}
+                <IconButton
+                  onClick={handleShuffleAll}
+                  title="Shuffle All - Play Random"
+                  ariaLabel="Shuffle all music tracks"
+                  style={{
+                    background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#FF6B4A' : '#A84030'} 100%)`,
+                    color: '#ffffff',
+                    border: 'none',
+                    boxShadow: `0 4px 12px ${colors.accent}30`,
+                  }}
+                >
+                  <Shuffle size={16} />
+                </IconButton>
+
+                {/* Refresh */}
+                <IconButton
+                  onClick={handleRefresh}
+                  className="header-refresh-btn"
+                  title="Refresh Content"
+                  ariaLabel="Refresh all contents"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="23 4 23 10 17 10" />
+                    <polyline points="1 20 1 14 7 14" />
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                  </svg>
+                </IconButton>
+              </div>
+
+              <UserProfileDropdown
+                currentUser={currentUser}
+                showUserDropdown={showUserDropdown}
+                setShowUserDropdown={setShowUserDropdown}
+                setShowAuthModal={setShowAuthModal}
+                handleSignOut={handleSignOut}
+                dropdownRef={userDropdownRef}
+                isMobile={false}
+                iconBtnStyle={iconBtnStyle}
+              />
             </div>
-
-             {/* Shuffle All */}
-             <IconButton
-               onClick={handleShuffleAll}
-               title="Shuffle All - Play Random"
-               ariaLabel="Shuffle all music tracks"
-               style={{
-                 background: `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#e07356' : '#c45c3e'} 100%)`,
-                 color: '#ffffff',
-                 border: `1px solid ${colors.accent}b0`,
-                 boxShadow: 'var(--shadow-ske-xs), inset 0 1px 0 rgba(255,255,255,0.15)',
-               }}
-             >
-               <Shuffle size={16} />
-             </IconButton>
- 
-             {/* Refresh */}
-             <IconButton
-               onClick={handleRefresh}
-               className="header-refresh-btn"
-               title="Refresh Content"
-               ariaLabel="Refresh all contents"
-             >
-               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                 <polyline points="23 4 23 10 17 10" />
-                 <polyline points="1 20 1 14 7 14" />
-                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-               </svg>
-             </IconButton>
-
-            <UserProfileDropdown
-              currentUser={currentUser}
-              showUserDropdown={showUserDropdown}
-              setShowUserDropdown={setShowUserDropdown}
-              setShowAuthModal={setShowAuthModal}
-              handleSignOut={handleSignOut}
-              dropdownRef={userDropdownRef}
-              isMobile={false}
-              iconBtnStyle={iconBtnStyle}
-            />
           </div>
-          )}
-        </div>
         )}
 
         {/* ─── MOBILE HEADER (single-row layout) ───────────────────────────── */}

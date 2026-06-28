@@ -20,17 +20,17 @@ export default function UserProfileDropdown({
     }
 
     return {
-      width: '38px',
-      height: '38px',
-      borderRadius: '11px',
+      width: '36px',
+      height: '36px',
+      borderRadius: '50%',
       background: showUserDropdown
-        ? (isDark ? 'rgba(224, 115, 86, 0.22)' : 'rgba(196, 92, 62, 0.12)')
-        : 'var(--color-paper-dark)',
-      backgroundImage: showUserDropdown ? 'none' : 'var(--background-image-ske-button)',
+        ? (isDark ? 'rgba(224, 115, 86, 0.15)' : 'rgba(196, 92, 62, 0.10)')
+        : 'transparent',
+      backgroundImage: 'none',
       border: showUserDropdown
-        ? `1.5px solid ${colors.accent}`
-        : `1px solid var(--color-border)`,
-      boxShadow: showUserDropdown ? 'var(--shadow-ske-inset-sm)' : 'var(--shadow-ske-xs)',
+        ? `1px solid ${colors.accent}`
+        : `1px solid transparent`,
+      boxShadow: showUserDropdown ? 'var(--shadow-ske-inset-sm)' : 'none',
       cursor: 'pointer',
       display: 'flex',
       alignItems: 'center',
@@ -45,26 +45,26 @@ export default function UserProfileDropdown({
     ? {
         width: '34px',
         height: '34px',
-        borderRadius: '10px',
+        borderRadius: '50%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: 0,
         overflow: 'hidden',
         border: currentUser
-          ? `1.5px solid ${colors.accent}60`
-          : `1px solid var(--color-border)`,
+          ? `1px solid ${colors.accent}40`
+          : `1px solid transparent`,
         background: currentUser
           ? `linear-gradient(135deg, ${colors.accent} 0%, ${isDark ? '#F0956C' : '#A84030'} 100%)`
-          : 'var(--color-paper-dark)',
+          : 'transparent',
         cursor: 'pointer',
-        boxShadow: currentUser ? `0 2px 8px ${colors.accent}30` : 'none',
+        boxShadow: 'none',
         transition: 'all 0.2s ease',
       }
     : {
         ...getButtonStyle(),
-        width: 'clamp(36px, 8vw, 40px)',
-        height: 'clamp(36px, 8vw, 40px)',
+        width: '36px',
+        height: '36px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

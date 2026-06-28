@@ -110,6 +110,13 @@ export const parseMusicMetadata = async (filePath) => {
     return null
 }
 
+export const writeMusicMetadata = async (filePath, tagsData) => {
+    if (isElectron()) {
+        return await window.electronAPI.writeMusicMetadata(filePath, tagsData)
+    }
+    return { success: false, error: 'Not running in desktop app' }
+}
+
 // ============================================================================
 // WINDOW CONTROLS
 // ============================================================================

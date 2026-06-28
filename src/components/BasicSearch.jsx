@@ -166,7 +166,11 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
     const [showSuggestions, setShowSuggestions] = useState(false)
     const [selectedIndex, setSelectedIndex] = useState(-1)
     const [isFocused, setIsFocused] = useState(false)
-    const [isExpanded, setIsExpanded] = useState(false)
+    const [isExpanded, _setIsExpanded] = useState(false)
+    const setIsExpanded = (val) => {
+        _setIsExpanded(val)
+        onExpandChange?.(val)
+    }
     const [placeholderIndex, setPlaceholderIndex] = useState(0)
     const [isAnimating, setIsAnimating] = useState(false)
     const [isHovered, setIsHovered] = useState(false)
@@ -174,10 +178,6 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
     const inputRef = useRef(null)
     const containerRef = useRef(null)
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
-
-    useEffect(() => {
-        onExpandChange?.(isExpanded)
-    }, [isExpanded, onExpandChange])
 
     useEffect(() => {
         if (isMobile && isExpanded) {
@@ -315,52 +315,49 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                 style={{
                     position: 'relative',
                     background: isExpanded
-                        ? (isDark ? 'rgba(26, 22, 20, 0.65)' : 'rgba(253, 251, 249, 0.65)')
-                        : colors.paperDark,
-                    backgroundImage: isExpanded ? 'none' : 'var(--background-image-ske-recessed)',
-                    backdropFilter: isExpanded ? 'blur(20px) saturate(160%)' : 'none',
-                    WebkitBackdropFilter: isExpanded ? 'blur(20px) saturate(160%)' : 'none',
-                    borderRadius: isExpanded ? '18px' : '22px',
+                        ? (isDark ? 'rgba(22, 19, 18, 0.85)' : 'rgba(253, 251, 249, 0.85)')
+                        : (isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)'),
+                    backdropFilter: isExpanded ? 'blur(24px) saturate(180%)' : 'none',
+                    WebkitBackdropFilter: isExpanded ? 'blur(24px) saturate(180%)' : 'none',
+                    borderRadius: isExpanded ? '14px' : '10px',
                     border: isExpanded
-                        ? (isDark ? '1px solid rgba(255, 255, 255, 0.10)' : '1px solid rgba(0, 0, 0, 0.06)')
+                        ? (isDark ? '1px solid rgba(255, 255, 255, 0.10)' : '1px solid rgba(0, 0, 0, 0.08)')
                         : (isFocused
-                            ? `1.5px solid ${colors.accent}`
+                            ? `1px solid ${colors.accent}`
                             : isHovered
-                                ? `1.5px solid ${isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'}`
-                                : `1px solid var(--color-border)`),
+                                ? `1px solid ${isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)'}`
+                                : `1px solid ${isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)'}`),
                     boxShadow: isExpanded
                         ? (isDark 
-                            ? 'inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 20px 50px rgba(0, 0, 0, 0.5)' 
-                            : 'inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 20px 50px rgba(26, 22, 20, 0.12)')
+                            ? 'inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 30px 60px rgba(0, 0, 0, 0.5)' 
+                            : 'inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 30px 60px rgba(0, 0, 0, 0.12)')
                         : (isFocused
-                            ? `0 0 0 3px ${colors.accent}24, 0 8px 24px ${colors.accent}12, var(--shadow-ske-inset-sm)`
-                            : isHovered
-                                ? `inset 1px 2px 6px var(--ske-inner-shadow), 0 2px 8px ${colors.accent}12`
-                                : `inset 1px 2px 6px var(--ske-inner-shadow), inset -1px -1px 3px var(--ske-inner-highlight)`),
-                    transition: 'all 350ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+                            ? `0 0 0 3px ${colors.accent}24`
+                            : 'none'),
+                    transition: 'all 400ms cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
             >
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    padding: '0 16px',
-                    height: isMobile ? '42px' : (isExpanded ? '56px' : '44px'),
+                    padding: '0 14px',
+                    height: isMobile ? '40px' : (isExpanded ? '56px' : '40px'),
                     gap: '12px',
-                    transition: 'height 0.3s ease',
+                    transition: 'height 400ms cubic-bezier(0.16, 1, 0.3, 1)',
                 }}>
                     <svg
-                        width={isExpanded && !isMobile ? "20" : "18"}
-                        height={isExpanded && !isMobile ? "20" : "18"}
+                        width={isExpanded && !isMobile ? "18" : "16"}
+                        height={isExpanded && !isMobile ? "18" : "16"}
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke={isFocused ? colors.accent : (isHovered ? colors.ink : colors.inkMuted)}
-                        strokeWidth="2.5"
-                        style={{ flexShrink: 0, transition: 'all 0.3s', transform: isFocused ? 'scale(1.08)' : 'scale(1)' }}
+                        strokeWidth="1.8"
+                        style={{ flexShrink: 0, transition: 'all 0.3s', transform: isFocused ? 'scale(1.04)' : 'scale(1)' }}
                     >
                         <circle cx="11" cy="11" r="8" />
                         <line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
-
+ 
                     <div style={{ flex: 1, position: 'relative', height: '24px' }}>
                         {!query && (
                             <div
@@ -374,7 +371,7 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                                     display: 'flex',
                                     alignItems: 'center',
                                     fontFamily: fonts.primary,
-                                    fontSize: (isExpanded && !isMobile) ? '0.95rem' : '0.875rem',
+                                    fontSize: (isExpanded && !isMobile) ? '0.92rem' : '0.85rem',
                                     color: colors.inkMuted,
                                     whiteSpace: 'nowrap',
                                     overflow: 'hidden',
@@ -388,7 +385,7 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                                 {placeholders[placeholderIndex]}
                             </div>
                         )}
-
+ 
                         <input
                             ref={inputRef}
                             type="text"
@@ -411,7 +408,7 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                                 width: '100%',
                                 height: '100%',
                                 padding: 0,
-                                fontSize: (isExpanded && !isMobile) ? '0.95rem' : '0.875rem',
+                                fontSize: (isExpanded && !isMobile) ? '0.92rem' : '0.85rem',
                                 fontFamily: fonts.primary,
                                 background: 'transparent',
                                 color: colors.ink,
@@ -421,7 +418,7 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                             }}
                         />
                     </div>
-
+ 
                     {loading ? (
                         <div style={{
                             width: '16px',
@@ -441,9 +438,9 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                                 inputRef.current?.focus()
                             }}
                             style={{
-                                width: '20px',
-                                height: '20px',
-                                background: colors.paperDarker,
+                                width: '18px',
+                                height: '18px',
+                                background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
                                 border: 'none',
                                 borderRadius: '50%',
                                 cursor: 'pointer',
@@ -454,7 +451,7 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                                 flexShrink: 0,
                             }}
                         >
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                 <line x1="18" y1="6" x2="6" y2="18" />
                                 <line x1="6" y1="6" x2="18" y2="18" />
                             </svg>
@@ -468,8 +465,8 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                                 setIsFocused(false)
                             }}
                             style={{
-                                width: '20px',
-                                height: '20px',
+                                width: '18px',
+                                height: '18px',
                                 background: 'transparent',
                                 border: 'none',
                                 borderRadius: '50%',
@@ -481,7 +478,7 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                                 flexShrink: 0,
                             }}
                         >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                 <line x1="18" y1="6" x2="6" y2="18" />
                                 <line x1="6" y1="6" x2="18" y2="18" />
                             </svg>
@@ -492,20 +489,19 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '3px',
-                                padding: '3px 7px',
-                                borderRadius: '6px',
-                                background: 'var(--color-paper-dark)',
-                                backgroundImage: 'var(--background-image-ske-button)',
-                                border: '1px solid var(--color-border)',
+                                padding: '2px 6px',
+                                borderRadius: '5px',
+                                background: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)',
+                                border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.08)',
                                 fontFamily: fonts.mono,
-                                fontSize: '0.62rem',
-                                fontWeight: 700,
-                                color: colors.inkMuted,
+                                fontSize: '0.6rem',
+                                fontWeight: 600,
+                                color: colors.inkLight,
                                 userSelect: 'none',
-                                boxShadow: 'var(--shadow-ske-xs)',
                                 pointerEvents: 'none',
+                                letterSpacing: '0.02em',
                             }}>
-                                <span style={{ fontSize: '0.55rem', opacity: 0.8 }}>Ctrl</span>
+                                <span style={{ opacity: 0.8 }}>Ctrl</span>
                                 <span>K</span>
                             </div>
                         )
@@ -521,20 +517,22 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
             {showSuggestions && suggestions.length > 0 && (
                 <div style={{
                     position: 'absolute',
-                    top: 'calc(100% + 10px)',
+                    top: 'calc(100% + 8px)',
                     left: 0,
                     right: 0,
                     background: isDark
-                        ? 'linear-gradient(135deg, rgba(26, 22, 20, 0.92) 0%, rgba(37, 34, 32, 0.92) 100%)'
-                        : 'linear-gradient(135deg, rgba(253, 251, 249, 0.94) 0%, rgba(245, 242, 235, 0.94) 100%)',
-                    backdropFilter: 'blur(24px) saturate(190%)',
-                    WebkitBackdropFilter: 'blur(24px) saturate(190%)',
-                    borderRadius: 'clamp(14px, 3vw, 18px)',
-                    border: '1px solid var(--color-border)',
-                    boxShadow: 'var(--shadow-ske-lg)',
+                        ? 'rgba(26, 22, 20, 0.85)'
+                        : 'rgba(253, 251, 249, 0.85)',
+                    backdropFilter: 'blur(24px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                    borderRadius: '12px',
+                    border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)'}`,
+                    boxShadow: isDark
+                        ? '0 20px 40px rgba(0, 0, 0, 0.35)'
+                        : '0 20px 40px rgba(26, 22, 20, 0.08)',
                     overflow: 'hidden',
                     zIndex: 100,
-                    animation: 'dropIn 0.15s cubic-bezier(0.25,0.46,0.45,0.94)',
+                    animation: 'dropIn 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
                 }}>
                     <div style={{
                         maxHeight: '280px',
@@ -560,11 +558,11 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
                                         alignItems: 'center',
                                         gap: '12px',
                                         padding: isExpanded ? '10px 12px' : '8px 10px',
-                                        borderRadius: '8px',
+                                        borderRadius: '10px',
                                         cursor: 'pointer',
-                                        background: isSelected ? (isDark ? 'rgba(224, 115, 86, 0.12)' : 'rgba(196, 92, 62, 0.08)') : 'transparent',
-                                        transform: isSelected ? 'translateX(4px)' : 'translateX(0)',
-                                        transition: 'background 0.2s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                                        background: isSelected ? (isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)') : 'transparent',
+                                        transform: isSelected ? 'translateX(2px)' : 'translateX(0)',
+                                        transition: 'all 200ms cubic-bezier(0.16, 1, 0.3, 1)',
                                     }}
                                 >
                                     <div style={{
@@ -730,15 +728,19 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
             {isExpanded && !query && (
                 <div style={{
                     position: 'absolute',
-                    top: 'calc(100% + 10px)',
+                    top: 'calc(100% + 8px)',
                     left: 0,
                     right: 0,
-                    background: 'var(--color-overlay-deep)',
-                    backdropFilter: 'blur(20px) saturate(180%)',
-                    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                    borderRadius: 'clamp(14px, 3vw, 18px)',
-                    border: '1px solid var(--color-border)',
-                    boxShadow: 'var(--shadow-ske-lg)',
+                    background: isDark
+                        ? 'rgba(26, 22, 20, 0.85)'
+                        : 'rgba(253, 251, 249, 0.85)',
+                    backdropFilter: 'blur(24px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                    borderRadius: '12px',
+                    border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)'}`,
+                    boxShadow: isDark
+                        ? '0 20px 40px rgba(0, 0, 0, 0.35)'
+                        : '0 20px 40px rgba(26, 22, 20, 0.08)',
                     overflow: 'hidden',
                     zIndex: 100,
                     padding: '20px',
@@ -875,11 +877,10 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
             ) : (
                 /* ── DESKTOP: absolute-positioned expanding search ─────── */
                 <>
-                    {/* Spacer to preserve layout height */}
                     <div style={{
                         width: '100%',
                         maxWidth: '480px',
-                        height: '44px',
+                        height: '40px',
                         flexShrink: 0,
                         visibility: 'hidden',
                         pointerEvents: 'none',
@@ -932,9 +933,9 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
             background-color: rgba(0, 0, 0, 0);
           }
           to {
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            background-color: rgba(10, 8, 7, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            background-color: rgba(10, 8, 7, 0.4);
           }
         }
         @keyframes backdropBlurInLight {
@@ -944,9 +945,9 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
             background-color: rgba(0, 0, 0, 0);
           }
           to {
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            background-color: rgba(253, 251, 249, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            background-color: rgba(253, 251, 249, 0.3);
           }
         }
         @keyframes backdropBlurInMobileDark {
@@ -956,9 +957,9 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
             background-color: rgba(0, 0, 0, 0);
           }
           to {
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            background-color: rgba(10, 8, 7, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            background-color: rgba(10, 8, 7, 0.4);
           }
         }
         @keyframes backdropBlurInMobileLight {
@@ -968,9 +969,9 @@ export default function BasicSearch({ onSelectSong, setSearchResults, setIsSearc
             background-color: rgba(0, 0, 0, 0);
           }
           to {
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            background-color: rgba(253, 251, 249, 0.55);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            background-color: rgba(253, 251, 249, 0.3);
           }
         }
       `}</style>

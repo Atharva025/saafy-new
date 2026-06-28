@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useTheme } from '@/context/ThemeContext'
+import { usePlayer } from '@/context/PlayerContext'
 import { isElectron, electronStore, selectMusicFolder, getSystemInfo } from '@/lib/electron'
 import { clearAppStorage } from '@/lib/security'
 import { encryptedGetItem, encryptedSetItem } from '@/lib/encryption'
 
 export default function Settings() {
     const { colors, fonts, isDark, toggleTheme } = useTheme()
+    const { premiumSettings, togglePremiumSetting } = usePlayer()
 
     // State
     const [settings, setSettings] = useState({
@@ -367,6 +369,78 @@ export default function Settings() {
                         </div>
                     </section>
                 )}
+
+                {/* Premium Personalization */}
+                <section style={{ marginBottom: '30px' }}>
+                    <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '20px', fontFamily: fonts.display }}>
+                        Premium Personalization
+                    </h2>
+                    <div 
+                        className="ske-card ske-textured"
+                        style={{
+                            ...cardStyle,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '16px'
+                        }}
+                    >
+                        {[
+                            { key: 'dynamicAccent', label: 'Dynamic theme matching (extract color from album art)' },
+                            { key: 'smartAutoplay', label: 'AI Smart Autoplay (extends queue automatically)' },
+                        ].map(({ key, label }) => (
+                            <label key={key} style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                cursor: 'pointer',
+                                padding: '10px 12px',
+                                borderRadius: '10px',
+                                background: premiumSettings?.[key]
+                                    ? (isDark ? 'rgba(196,92,62,0.08)' : 'rgba(196,92,62,0.05)')
+                                    : 'transparent',
+                                boxShadow: premiumSettings?.[key]
+                                    ? `inset 1px 2px 4px var(--ske-inner-shadow), inset -1px -1px 2px var(--ske-inner-highlight)`
+                                    : 'none',
+                                border: `1px solid ${premiumSettings?.[key] ? colors.accent + '44' : 'transparent'}`,
+                                transition: 'all 0.15s ease',
+                            }}>
+                                <div
+                                    onClick={() => togglePremiumSetting(key)}
+                                    style={{
+                                        width: '44px',
+                                        height: '24px',
+                                        borderRadius: '12px',
+                                        background: premiumSettings?.[key]
+                                            ? `linear-gradient(145deg, ${colors.accent}, ${isDark ? '#F0956C' : '#A84030'})`
+                                            : colors.paperDarker,
+                                        backgroundImage: 'var(--background-image-ske-button)',
+                                        border: `1px solid ${premiumSettings?.[key] ? 'rgba(255,255,255,0.22)' : (isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.65)')}`,
+                                        boxShadow: premiumSettings?.[key]
+                                            ? `inset 0 1px 1px rgba(255,255,255,0.25), inset 0 -1px 2px rgba(0,0,0,0.2), 0 2px 6px ${colors.accent}45`
+                                            : `inset 1px 2px 4px var(--ske-inner-shadow), inset -1px -1px 2px var(--ske-inner-highlight)`,
+                                        position: 'relative',
+                                        cursor: 'pointer',
+                                        flexShrink: 0,
+                                        transition: 'background 0.2s ease, box-shadow 0.15s ease',
+                                    }}>
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '3px',
+                                        left: premiumSettings?.[key] ? '22px' : '3px',
+                                        width: '16px',
+                                        height: '16px',
+                                        borderRadius: '50%',
+                                        background: premiumSettings?.[key] ? '#fff' : colors.paperDark,
+                                        backgroundImage: 'var(--background-image-ske-button)',
+                                        boxShadow: `1px 1px 3px var(--ske-shadow), -1px -1px 2px var(--ske-highlight)`,
+                                        transition: 'left 0.18s cubic-bezier(0.25,0.46,0.45,0.94)',
+                                    }} />
+                                </div>
+                                <span style={{ fontSize: '15px' }}>{label}</span>
+                            </label>
+                        ))}
+                    </div>
+                </section>
 
                 {/* Data Management */}
                 <section style={{ marginBottom: '30px' }}>

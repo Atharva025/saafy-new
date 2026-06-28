@@ -5,6 +5,9 @@ import { useTheme } from '@/context/ThemeContext'
 import { adjustColorForTheme, formatDuration } from '@/lib/utils'
 import AudioVisualizer from './AudioVisualizer'
 import Tooltip from './Tooltip'
+import DSPPanel from './DSPPanel'
+import AIAssistantModal from './AIAssistantModal'
+import { Sparkles, Sliders } from 'lucide-react'
 import {
     ChevronDown,
     Play,
@@ -1059,6 +1062,7 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
     } = usePlayer()
 
     const [tab, setTab] = useState('lyrics')
+    const [isAIOpen, setIsAIOpen] = useState(false)
     const [isMobile, setIsMobile] = useState(false)
     const [liked, setLiked] = useState(false)
 
@@ -1386,10 +1390,15 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                     justifyContent: 'space-between',
                     padding: '16px 24px',
                 }}>
-                    {/* Chevron down — skeuomorphic */}
-                    <SkeuoBtn onClick={onClose} title="Minimize" size={38}>
-                        <ChevronDown size={18} strokeWidth={2.5} />
-                    </SkeuoBtn>
+                    {/* Left corner: Minimize & AI buttons */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <SkeuoBtn onClick={onClose} title="Minimize" size={38}>
+                            <ChevronDown size={18} strokeWidth={2.5} />
+                        </SkeuoBtn>
+                        <SkeuoBtn onClick={() => setIsAIOpen(true)} title="AI Vibe Playlist" size={38} style={{ color: 'var(--color-accent)' }}>
+                            <Sparkles size={16} fill="currentColor" />
+                        </SkeuoBtn>
+                    </div>
 
                     {/* Center tab switcher */}
                     <div style={{
@@ -1403,6 +1412,7 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                         {[
                             ...(isMobile ? [{ id: 'player', icon: <Music2 size={12} />, label: 'Player' }] : []),
                             { id: 'lyrics', icon: <Mic2 size={12} />, label: 'Lyrics' },
+                            { id: 'dsp', icon: <Sliders size={12} />, label: 'DSP' },
                             { id: 'queue', icon: <ListMusic size={12} />, label: isMobile ? 'Queue' : 'Up Next' }
                         ].map(({ id, icon, label }) => (
                             <button key={id} onClick={() => setTab(id)} style={{
@@ -1833,9 +1843,9 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                     )}
 
                     {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                        RIGHT COLUMN: LYRICS / QUEUE
+                        RIGHT COLUMN: LYRICS / QUEUE / DSP
                     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-                    {(!isMobile || tab === 'lyrics' || tab === 'queue') && (
+                    {(!isMobile || tab === 'lyrics' || tab === 'queue' || tab === 'dsp') && (
                         <div style={{
                             height: isMobile ? '100%' : 'calc(100% - 8px)', minHeight: 0,
                             display: 'flex', flexDirection: 'column',
@@ -1863,6 +1873,8 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                                     seekTo={seekTo}
                                     isMobile={isMobile}
                                 />
+                            ) : tab === 'dsp' ? (
+                                <DSPPanel />
                             ) : (
                                 <ImmersiveQueuePanel
                                     queue={queue}
@@ -1880,6 +1892,9 @@ export default function ImmersivePlayer({ isOpen, onClose }) {
                         </div>
                     )}
                 </div>
+
+                {/* AI Vibe Playlist Assistant */}
+                <AIAssistantModal isOpen={isAIOpen} onClose={() => setIsAIOpen(false)} />
             </motion.div>
         </AnimatePresence>
     )

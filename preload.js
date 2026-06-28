@@ -28,6 +28,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     selectMusicFiles: () => ipcRenderer.invoke('select-music-files'),
     scanMusicFolder: (folderPath) => ipcRenderer.invoke('scan-music-folder', folderPath),
     parseMusicMetadata: (filePath) => ipcRenderer.invoke('parse-music-metadata', filePath),
+    writeMusicMetadata: (filePath, tagsData) => ipcRenderer.invoke('write-music-metadata', filePath, tagsData),
 
     // Window controls
     windowMinimize: () => ipcRenderer.send('window-minimize'),

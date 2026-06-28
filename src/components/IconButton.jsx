@@ -15,15 +15,15 @@ export default function IconButton({
   const defaultStyle = {
     width: 'clamp(36px, 8vw, 40px)',
     height: 'clamp(36px, 8vw, 40px)',
-    borderRadius: '11px',
+    borderRadius: '50%',
     background: isActive
-      ? (isDark ? 'rgba(224, 115, 86, 0.22)' : 'rgba(196, 92, 62, 0.12)')
-      : 'var(--color-paper-dark)',
-    backgroundImage: isActive ? 'none' : 'var(--background-image-ske-button)',
+      ? (isDark ? 'rgba(224, 115, 86, 0.15)' : 'rgba(196, 92, 62, 0.10)')
+      : 'transparent',
+    backgroundImage: 'none',
     border: isActive
-      ? `1.5px solid ${colors.accent}`
-      : `1px solid var(--color-border)`,
-    boxShadow: isActive ? 'var(--shadow-ske-inset-sm)' : 'var(--shadow-ske-xs)',
+      ? `1px solid ${colors.accent}`
+      : `1px solid transparent`,
+    boxShadow: isActive ? 'var(--shadow-ske-inset-sm)' : 'none',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
@@ -41,8 +41,16 @@ export default function IconButton({
       className={`icon-button ${className}`}
       title={title}
       aria-label={ariaLabel || title}
-      onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
+      onMouseEnter={(e) => {
+        if (!isActive && !style.background) {
+          e.currentTarget.style.background = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)'
+        }
+        e.currentTarget.style.transform = 'scale(1.05)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = defaultStyle.background
+        e.currentTarget.style.transform = 'none'
+      }}
     >
       {children}
       {badge !== null && badge !== undefined && (

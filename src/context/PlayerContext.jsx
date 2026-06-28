@@ -6,6 +6,8 @@ import { addToSessionPlayedSongs, hasBeenPlayedInSession } from '@/utils/session
 import { updateTray, registerMediaControlHandler } from '@/lib/electron'
 import { extractDominantColor } from '@/utils/colorExtractor'
 import { cacheSong, getCachedSong } from '@/lib/offlineCache'
+import { useTheme } from '@/context/ThemeContext'
+import { adjustColorForTheme } from '@/lib/utils'
 
 
 // ============================================================================
@@ -67,6 +69,12 @@ const getInitialState = () => {
 }
 
 const initialState = getInitialState()
+
+const appendUnique = (list, newItems) => {
+    const existingIds = new Set(list.map(s => s.id))
+    const unique = newItems.filter(s => !existingIds.has(s.id))
+    return [...list, ...unique]
+}
 
 // ============================================================================
 // REDUCER
@@ -152,28 +160,31 @@ const playerReducer = (state, action) => {
             }
         }
 
-        case 'REMOVE_FROM_QUEUE': {
-            const index = action.payload
+        case 'EXTEND_QUEUE': {
+            // For autoplay queue extension
             return {
                 ...state,
-                queue: state.queue.filter((_, i) => i !== index),
-                originalQueue: state.shuffleMode
-                    ? state.originalQueue.filter((_, i) => i !== index)
-                    : state.queue.filter((_, i) => i !== index)
+                queue: appendUnique(state.queue, action.payload),
+                originalQueue: state.shuffleMode 
+                    ? appendUnique(state.originalQueue, action.payload) 
+                    : appendUnique(state.queue, action.payload)
             }
         }
 
-        case 'REORDER_QUEUE': {
-            const { startIndex, endIndex } = action.payload
-            const newQueue = Array.from(state.queue)
-            const [removed] = newQueue.splice(startIndex, 1)
-            newQueue.splice(endIndex, 0, removed)
+        case 'REMOVE_FROM_QUEUE': {
+            const songId = action.payload
             return {
                 ...state,
-                queue: newQueue,
-                originalQueue: state.shuffleMode ? state.originalQueue : newQueue
+                queue: state.queue.filter(song => song.id !== songId),
+                originalQueue: state.originalQueue.filter(song => song.id !== songId)
             }
         }
+
+        case 'REORDER_QUEUE':
+            return {
+                ...state,
+                queue: action.payload
+            }
 
         case 'PLAY_NEXT': {
             // Move to next song in queue
@@ -210,23 +221,6 @@ const playerReducer = (state, action) => {
             }
         }
 
-        case 'EXTEND_QUEUE': {
-            // Add songs to queue (for auto-continue)
-            const newSongs = action.payload
-            const existingIds = new Set(state.queue.map(s => s?.id))
-            const uniqueSongs = newSongs.filter(s => s?.id && !existingIds.has(s.id))
-
-            if (uniqueSongs.length === 0) return state
-
-            return {
-                ...state,
-                queue: [...state.queue, ...uniqueSongs],
-                originalQueue: state.shuffleMode
-                    ? [...state.originalQueue, ...uniqueSongs]
-                    : [...state.queue, ...uniqueSongs]
-            }
-        }
-
         case 'CLEAR_QUEUE':
             return {
                 ...state,
@@ -237,7 +231,7 @@ const playerReducer = (state, action) => {
         case 'SET_VOLUME':
             return {
                 ...state,
-                volume: Math.max(0, Math.min(1, action.payload))
+                volume: action.payload
             }
 
         case 'SET_PROGRESS':
@@ -302,11 +296,45 @@ const playerReducer = (state, action) => {
     }
 }
 
+// Helper to generate a synthetic impulse response for convolution reverb
+function createReverbImpulseResponse(audioContext, type) {
+    let duration = 2.5;
+    let decay = 2.0;
+    
+    if (type === 'Cozy Room') {
+        duration = 0.8;
+        decay = 0.6;
+    } else if (type === 'Concert Hall') {
+        duration = 2.5;
+        decay = 1.8;
+    } else if (type === 'Cathedral') {
+        duration = 5.0;
+        decay = 4.0;
+    } else if (type === 'Deep Cave') {
+        duration = 4.0;
+        decay = 3.5;
+    }
+    
+    const sampleRate = audioContext.sampleRate;
+    const length = sampleRate * duration;
+    const impulse = audioContext.createBuffer(2, length, sampleRate);
+    const left = impulse.getChannelData(0);
+    const right = impulse.getChannelData(1);
+
+    for (let i = 0; i < length; i++) {
+        const decayFactor = Math.exp(-i / (sampleRate * decay));
+        left[i] = (Math.random() * 2 - 1) * decayFactor;
+        right[i] = (Math.random() * 2 - 1) * decayFactor;
+    }
+    return impulse;
+}
+
 // ============================================================================
 // PROVIDER COMPONENT
 // ============================================================================
 
 export function PlayerProvider({ children }) {
+    const { isDark } = useTheme()
     const [state, dispatch] = useReducer(playerReducer, initialState)
     const audioRef = useRef(null)
     const autoQueueingRef = useRef(false)
@@ -327,6 +355,45 @@ export function PlayerProvider({ children }) {
     // Playlist system state
     const [playlists, setPlaylists] = useState([])
     const [playlistsLoading, setPlaylistsLoading] = useState(false)
+    
+    // DSP & Audio Effects state / refs
+    const eqFiltersRef = useRef([])
+    const convolverNodeRef = useRef(null)
+    const dryGainRef = useRef(null)
+    const wetGainRef = useRef(null)
+    const vocalReducerNodeRef = useRef(null)
+    const audioContextRef = useRef(null)
+    const analyserRef = useRef(null)
+    const [analyserNode, setAnalyserNode] = useState(null)
+
+    const [vocalReducerEnabled, setVocalReducerEnabled] = useState(() => {
+        return getSafeLocalStorage('saafy_dsp_vocal_reducer', false)
+    })
+    
+    const [eqGains, setEqGains] = useState(() => {
+        return getSafeLocalStorage('saafy_dsp_eq_gains', [0, 0, 0, 0, 0])
+    })
+    const [eqPreset, setEqPresetState] = useState(() => {
+        return getSafeLocalStorage('saafy_dsp_eq_preset', 'Flat')
+    })
+    
+    const [reverbEnabled, setReverbEnabled] = useState(() => {
+        return getSafeLocalStorage('saafy_dsp_reverb_enabled', false)
+    })
+    const [reverbMix, setReverbMix] = useState(() => {
+        return getSafeLocalStorage('saafy_dsp_reverb_mix', 0.3)
+    })
+    const [reverbType, setReverbType] = useState(() => {
+        return getSafeLocalStorage('saafy_dsp_reverb_type', 'Concert Hall')
+    })
+    
+    // Premium Settings
+    const [settings, setSettings] = useState(() => {
+        return getSafeLocalStorage('saafy_settings_premium', {
+            dynamicAccent: true,
+            smartAutoplay: true
+        })
+    })
 
     // Playlist loop context state
     const [playlistLoopSongs, setPlaylistLoopSongs] = useState(null)
@@ -340,11 +407,6 @@ export function PlayerProvider({ children }) {
     // Fullscreen Immersive Playback Mode state
     const [isImmersiveOpen, setIsImmersiveOpen] = useState(false)
 
-    // Global Web Audio Analyser references
-    const audioContextRef = useRef(null)
-    const analyserRef = useRef(null)
-    const [analyserNode, setAnalyserNode] = useState(null)
-
     // Setup visualizer analyser logic safely
     const initAudioAnalyser = useCallback(() => {
         if (analyserRef.current) return
@@ -357,17 +419,104 @@ export function PlayerProvider({ children }) {
 
             // Connect element source
             const source = audioContext.createMediaElementSource(audioRef.current)
-            source.connect(analyser)
+            
+            // 1. Equalizer Filters
+            const frequencies = [60, 230, 910, 4000, 14000]
+            const filters = frequencies.map((freq, i) => {
+                const filter = audioContext.createBiquadFilter()
+                filter.frequency.value = freq
+                if (freq === 60) {
+                    filter.type = 'lowshelf'
+                } else if (freq === 14000) {
+                    filter.type = 'highshelf'
+                } else {
+                    filter.type = 'peaking'
+                    filter.Q.value = 1.0
+                }
+                filter.gain.value = eqGains[i] || 0
+                return filter
+            })
+            eqFiltersRef.current = filters
+
+            // Connect source to EQ chain
+            let currentConnection = source
+            filters.forEach(filter => {
+                currentConnection.connect(filter)
+                currentConnection = filter
+            })
+
+            // 2. Vocal Reducer (Karaoke) Setup
+            const vrDirectGain = audioContext.createGain()
+            const vrProcessedGain = audioContext.createGain()
+            
+            const splitter = audioContext.createChannelSplitter(2)
+            const leftGain = audioContext.createGain()
+            const rightGain = audioContext.createGain()
+            const sumGain = audioContext.createGain()
+            const merger = audioContext.createChannelMerger(2)
+            
+            rightGain.gain.value = -1.0
+            sumGain.gain.value = 0.5 // prevent clipping
+            
+            currentConnection.connect(vrDirectGain)
+            currentConnection.connect(splitter)
+            
+            splitter.connect(leftGain, 0)
+            splitter.connect(rightGain, 1)
+            leftGain.connect(sumGain)
+            rightGain.connect(sumGain)
+            sumGain.connect(merger, 0, 0)
+            sumGain.connect(merger, 0, 1)
+            merger.connect(vrProcessedGain)
+            
+            vrDirectGain.gain.value = vocalReducerEnabled ? 0.0 : 1.0
+            vrProcessedGain.gain.value = vocalReducerEnabled ? 1.4 : 0.0 // slight boost to balance lost elements
+            
+            vocalReducerNodeRef.current = { vrDirectGain, vrProcessedGain }
+
+            const vrMixNode = audioContext.createGain()
+            vrDirectGain.connect(vrMixNode)
+            vrProcessedGain.connect(vrMixNode)
+            
+            currentConnection = vrMixNode
+
+            // 3. Spatial Reverb Setup
+            const convolver = audioContext.createConvolver()
+            const dryGain = audioContext.createGain()
+            const wetGain = audioContext.createGain()
+            
+            convolverNodeRef.current = convolver
+            dryGainRef.current = dryGain
+            wetGainRef.current = wetGain
+            
+            convolver.buffer = createReverbImpulseResponse(audioContext, reverbType)
+            
+            const mixVal = reverbMix
+            dryGain.gain.value = reverbEnabled ? (1.0 - mixVal) : 1.0
+            wetGain.gain.value = reverbEnabled ? mixVal * 1.5 : 0.0
+            
+            currentConnection.connect(dryGain)
+            currentConnection.connect(convolver)
+            convolver.connect(wetGain)
+            
+            const reverbMixNode = audioContext.createGain()
+            dryGain.connect(reverbMixNode)
+            wetGain.connect(reverbMixNode)
+            
+            currentConnection = reverbMixNode
+
+            // Connect final output to analyser and destination
+            currentConnection.connect(analyser)
             analyser.connect(audioContext.destination)
 
             analyserRef.current = analyser
             setAnalyserNode(analyser)
             audioContextRef.current = audioContext
-            log.info('✅ Global Audio Analyser successfully initialized')
+            log.info('✅ Global Audio Analyser successfully initialized with DSP pipeline')
         } catch (err) {
-            log.error('❌ Failed to initialize Web Audio Analyser:', err)
+            log.error('❌ Failed to initialize Web Audio Analyser with DSP:', err)
         }
-    }, [setAnalyserNode])
+    }, [setAnalyserNode, eqGains, vocalReducerEnabled, reverbEnabled, reverbMix, reverbType])
 
     const resumeAudioContext = useCallback(async () => {
         if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
@@ -378,6 +527,95 @@ export function PlayerProvider({ children }) {
                 log.warn('Failed to resume AudioContext:', err)
             }
         }
+    }, [])
+
+    const setEqGain = useCallback((index, gain) => {
+        setEqGains(prev => {
+            const next = [...prev]
+            next[index] = gain
+            localStorage.setItem('saafy_dsp_eq_gains', JSON.stringify(next))
+            if (eqFiltersRef.current[index]) {
+                eqFiltersRef.current[index].gain.value = gain
+            }
+            return next
+        })
+    }, [])
+
+    const setEqPreset = useCallback((presetName) => {
+        setEqPresetState(presetName)
+        localStorage.setItem('saafy_dsp_eq_preset', presetName)
+        
+        let gains = [0, 0, 0, 0, 0]
+        if (presetName === 'Bass Boost') {
+            gains = [6, 4, 0, 0, -2]
+        } else if (presetName === 'Vocal Boost') {
+            gains = [-2, 0, 5, 4, 1]
+        } else if (presetName === 'Acoustic') {
+            gains = [4, 1, 2, 3, 2]
+        } else if (presetName === 'Treble Boost') {
+            gains = [-3, -1, 1, 4, 7]
+        } // Flat is all 0
+        
+        setEqGains(gains)
+        localStorage.setItem('saafy_dsp_eq_gains', JSON.stringify(gains))
+        
+        gains.forEach((gain, i) => {
+            if (eqFiltersRef.current[i]) {
+                eqFiltersRef.current[i].gain.value = gain
+            }
+        })
+    }, [])
+
+    const toggleReverb = useCallback(() => {
+        setReverbEnabled(prev => {
+            const next = !prev
+            localStorage.setItem('saafy_dsp_reverb_enabled', String(next))
+            if (dryGainRef.current && wetGainRef.current) {
+                const mixVal = reverbMix
+                dryGainRef.current.gain.value = next ? (1.0 - mixVal) : 1.0
+                wetGainRef.current.gain.value = next ? mixVal * 1.5 : 0.0
+            }
+            return next
+        })
+    }, [reverbMix])
+
+    const setReverbMixValue = useCallback((mixVal) => {
+        setReverbMix(mixVal)
+        localStorage.setItem('saafy_dsp_reverb_mix', String(mixVal))
+        if (dryGainRef.current && wetGainRef.current && reverbEnabled) {
+            dryGainRef.current.gain.value = 1.0 - mixVal
+            wetGainRef.current.gain.value = mixVal * 1.5
+        }
+    }, [reverbEnabled])
+
+    const updateReverbType = useCallback((type) => {
+        setReverbType(type)
+        localStorage.setItem('saafy_dsp_reverb_type', type)
+        if (convolverNodeRef.current && audioContextRef.current) {
+            const buffer = createReverbImpulseResponse(audioContextRef.current, type)
+            convolverNodeRef.current.buffer = buffer
+        }
+    }, [])
+
+    const toggleVocalReducer = useCallback(() => {
+        setVocalReducerEnabled(prev => {
+            const next = !prev
+            localStorage.setItem('saafy_dsp_vocal_reducer', String(next))
+            if (vocalReducerNodeRef.current) {
+                const { vrDirectGain, vrProcessedGain } = vocalReducerNodeRef.current
+                vrDirectGain.gain.value = next ? 0.0 : 1.0
+                vrProcessedGain.gain.value = next ? 1.4 : 0.0
+            }
+            return next
+        })
+    }, [])
+
+    const togglePremiumSetting = useCallback((key) => {
+        setSettings(prev => {
+            const next = { ...prev, [key]: !prev[key] }
+            localStorage.setItem('saafy_settings_premium', JSON.stringify(next))
+            return next
+        })
     }, [])
 
     // Persist volume, repeat, shuffle and state changes in localStorage
@@ -475,6 +713,34 @@ export function PlayerProvider({ children }) {
         }
     }, [state.currentSong])
 
+    useEffect(() => {
+        if (settings.dynamicAccent && dominantColor) {
+            const adjusted = adjustColorForTheme(dominantColor, isDark)
+            const hex = adjusted?.hex || dominantColor.hex
+            const rgba = (alpha) => adjusted?.rgba(alpha) || dominantColor.rgba(alpha)
+            
+            document.documentElement.style.setProperty('--color-accent', hex)
+            document.documentElement.style.setProperty('--color-accent-hover', rgba(0.85))
+            document.documentElement.style.setProperty('--color-accent-active', rgba(0.70))
+            document.documentElement.style.setProperty('--color-accent-subtle', rgba(0.12))
+            document.documentElement.style.setProperty('--color-accent-border', rgba(0.22))
+        } else {
+            document.documentElement.style.removeProperty('--color-accent')
+            document.documentElement.style.removeProperty('--color-accent-hover')
+            document.documentElement.style.removeProperty('--color-accent-active')
+            document.documentElement.style.removeProperty('--color-accent-subtle')
+            document.documentElement.style.removeProperty('--color-accent-border')
+        }
+        
+        return () => {
+            document.documentElement.style.removeProperty('--color-accent')
+            document.documentElement.style.removeProperty('--color-accent-hover')
+            document.documentElement.style.removeProperty('--color-accent-active')
+            document.documentElement.style.removeProperty('--color-accent-subtle')
+            document.documentElement.style.removeProperty('--color-accent-border')
+        }
+    }, [dominantColor, settings.dynamicAccent, isDark])
+
 
     /**
      * Normalize song image to consistent array format
@@ -558,10 +824,39 @@ export function PlayerProvider({ children }) {
         autoQueueingRef.current = true
 
         try {
-            const mix = await getForYouMix(12)
-            if (mix?.songs?.length) {
-                const normalized = mix.songs.map(normalizeImageForSong)
-                dispatch({ type: 'EXTEND_QUEUE', payload: normalized })
+            let tracksToAppend = []
+            
+            if (settings.smartAutoplay && state.currentSong?.id) {
+                log.info('🧠 Smart Autoplay: Fetching recommendations for song:', state.currentSong.id)
+                const response = await getRecommendations(state.currentSong.id, 10)
+                if (response.success && response.recommendations && response.recommendations.length > 0) {
+                    const fullSongs = await Promise.all(
+                        response.recommendations.map(async (rec) => {
+                            try {
+                                const songResponse = await getSong(rec.song_id)
+                                if (songResponse.success && songResponse.data) {
+                                    return normalizeImageForSong(songResponse.data)
+                                }
+                            } catch (e) {}
+                            return null
+                        })
+                    )
+                    tracksToAppend = fullSongs.filter(song => song !== null)
+                    log.info(`🧠 Smart Autoplay resolved ${tracksToAppend.length} recommendations`)
+                }
+            }
+            
+            // Fallback to general mix if no smart recommendations found
+            if (tracksToAppend.length === 0) {
+                log.info('🧠 Smart Autoplay: Falling back to general For You Mix')
+                const mix = await getForYouMix(12)
+                if (mix?.songs?.length) {
+                    tracksToAppend = mix.songs.map(normalizeImageForSong)
+                }
+            }
+
+            if (tracksToAppend.length > 0) {
+                dispatch({ type: 'EXTEND_QUEUE', payload: tracksToAppend })
             }
         } catch (error) {
             log.warn('Auto-queue fetch failed:', error?.message || error)
@@ -1442,7 +1737,23 @@ export function PlayerProvider({ children }) {
         isImmersiveOpen,
         setIsImmersiveOpen,
         // Global Audio Analyser Node
-        analyserNode
+        analyserNode,
+        // DSP & Audio Effects
+        eqGains,
+        setEqGain,
+        eqPreset,
+        setEqPreset,
+        reverbEnabled,
+        toggleReverb,
+        reverbMix,
+        setReverbMix: setReverbMixValue,
+        reverbType,
+        setReverbType: updateReverbType,
+        vocalReducerEnabled,
+        toggleVocalReducer,
+        // Premium Settings
+        premiumSettings: settings,
+        togglePremiumSetting
     }
 
 

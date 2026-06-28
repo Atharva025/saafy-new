@@ -3,6 +3,7 @@ import { useTheme } from '@/context/ThemeContext'
 import { usePlayer } from '@/context/PlayerContext'
 import { isElectron, selectMusicFiles, selectMusicFolder, scanMusicFolder, parseMusicMetadata, electronStore } from '@/lib/electron'
 import SongList from './SongList'
+import MetadataTaggerModal from './MetadataTaggerModal'
 
 export default function LocalMusicPlayer() {
     const { colors, fonts, isDark } = useTheme()
@@ -13,6 +14,8 @@ export default function LocalMusicPlayer() {
     const [scanProgress, setScanProgress] = useState({ current: 0, total: 0 })
     const [folders, setFolders] = useState([])
     const [showClearConfirm, setShowClearConfirm] = useState(false)
+    const [isTaggerOpen, setIsTaggerOpen] = useState(false)
+    const [selectedTaggerSong, setSelectedTaggerSong] = useState(null)
 
     // Load saved local songs on mount
     useEffect(() => {
@@ -44,6 +47,22 @@ export default function LocalMusicPlayer() {
         if (isElectron()) {
             await electronStore.set('musicFolders', folders)
         }
+    }
+
+    const handleEditLocalSong = (song) => {
+        setSelectedTaggerSong(song)
+        setIsTaggerOpen(true)
+    }
+
+    const handleTaggerSaveSuccess = async (updatedSong) => {
+        const updatedList = localSongs.map(s => {
+            if (s.filePath === updatedSong.filePath) {
+                return updatedSong
+            }
+            return s
+        })
+        setLocalSongs(updatedList)
+        await saveSongs(updatedList)
     }
 
     const handleAddFiles = async () => {
@@ -410,6 +429,7 @@ export default function LocalMusicPlayer() {
                         songs={localSongs}
                         onSongClick={playSong}
                         onAddToQueue={addToQueue}
+                        onEditLocalSong={handleEditLocalSong}
                         showArtist={true}
                         showAlbum={true}
                     />
@@ -429,6 +449,14 @@ export default function LocalMusicPlayer() {
                     </div>
                 )}
             </div>
+
+            {/* Metadata Tagger Modal */}
+            <MetadataTaggerModal
+                isOpen={isTaggerOpen}
+                song={selectedTaggerSong}
+                onClose={() => setIsTaggerOpen(false)}
+                onSaveSuccess={handleTaggerSaveSuccess}
+            />
         </div>
     )
 }

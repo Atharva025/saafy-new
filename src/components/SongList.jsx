@@ -5,8 +5,9 @@ import { useToast } from '@/context/ToastContext'
 import { encryptedGetItem } from '@/lib/encryption'
 import { adjustColorForTheme } from '@/lib/utils'
 import Tooltip from './Tooltip'
+import { Pencil } from 'lucide-react'
 
-export default function SongList({ songs, onPlaySong, onAddToQueue }) {
+export default function SongList({ songs, onPlaySong, onAddToQueue, onEditLocalSong }) {
     const { colors, fonts, isDark } = useTheme()
     const { playSong, addToQueue, currentSong, isPlaying, togglePlay, playlists, addSongToPlaylist, createPlaylist, dominantColor } = usePlayer()
     const { success: toastSuccess, error: toastError } = useToast()
@@ -341,6 +342,49 @@ export default function SongList({ songs, onPlaySong, onAddToQueue }) {
                                             <path d="M8 5v14l11-7L8 5z" />
                                         </svg>
                                     )}
+                                </button>
+                            )}
+
+                            {/* Edit Local Song Metadata Tag */}
+                            {song.filePath && onEditLocalSong && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        onEditLocalSong(song)
+                                    }}
+                                    className="icon-btn"
+                                    style={{
+                                        width: isMobile ? '24px' : '32px',
+                                        height: isMobile ? '24px' : '32px',
+                                        borderRadius: isMobile ? '6px' : '8px',
+                                        background: colors.paperDarker,
+                                        backgroundImage: 'var(--background-image-ske-button)',
+                                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'}`,
+                                        padding: 0,
+                                        minWidth: 0,
+                                        minHeight: 0,
+                                        boxSizing: 'border-box',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: colors.inkMuted,
+                                        boxShadow: 'var(--shadow-ske-xs)',
+                                        transition: 'all 0.1s'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = colors.accent
+                                        e.currentTarget.style.color = '#fff'
+                                        e.currentTarget.style.borderColor = colors.accent
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = colors.paperDarker
+                                        e.currentTarget.style.color = colors.inkMuted
+                                        e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.70)'
+                                    }}
+                                    title="Edit Local File Metadata"
+                                >
+                                    <Pencil size={13} />
                                 </button>
                             )}
 

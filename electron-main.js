@@ -342,6 +342,58 @@ ipcMain.handle('parse-music-metadata', async (event, filePath) => {
     }
 })
 
+ipcMain.handle('write-music-metadata', async (event, filePath, tagsData) => {
+    try {
+        const NodeID3 = require('node-id3')
+        const tags = {
+            title: tagsData.name || tagsData.title,
+            artist: tagsData.artist || tagsData.primaryArtists,
+            album: tagsData.album,
+            year: tagsData.year ? String(tagsData.year) : undefined
+        }
+
+        const imageUrl = tagsData.image
+        if (imageUrl) {
+            if (imageUrl.startsWith('data:')) {
+                const base64Data = imageUrl.split(';base64,')[1]
+                const buffer = Buffer.from(base64Data, 'base64')
+                tags.image = {
+                    mime: imageUrl.split(';base64,')[0].split('data:')[1],
+                    type: { id: 3, name: 'front cover' },
+                    description: 'Cover',
+                    imageBuffer: buffer
+                }
+            } else if (imageUrl.startsWith('http')) {
+                try {
+                    const https = require('https')
+                    const imageBuffer = await new Promise((resolve, reject) => {
+                        https.get(imageUrl, (res) => {
+                            const chunks = []
+                            res.on('data', (chunk) => chunks.push(chunk))
+                            res.on('end', () => resolve(Buffer.concat(chunks)))
+                            res.on('error', (e) => reject(e))
+                        }).on('error', (e) => reject(e))
+                    })
+                    tags.image = {
+                        mime: 'image/jpeg',
+                        type: { id: 3, name: 'front cover' },
+                        description: 'Cover',
+                        imageBuffer: imageBuffer
+                    }
+                } catch (err) {
+                    console.error('Failed to download cover image in write-music-metadata:', err)
+                }
+            }
+        }
+
+        const success = NodeID3.write(tags, filePath)
+        return { success }
+    } catch (error) {
+        console.error('Error writing metadata:', error)
+        return { success: false, error: error.message }
+    }
+})
+
 // Window controls
 ipcMain.on('update-tray', (event, songName, isPlaying) => {
     updateTrayMenu(songName, isPlaying)
